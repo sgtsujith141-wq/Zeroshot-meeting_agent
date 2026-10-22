@@ -1,0 +1,81 @@
+# ---- Secrets & credentials -------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+client_secret*.json
+token*.json
+.secrets/
+secrets/
+
+# ---- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# ---- Node / frontend ---------------------------------------------------------
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# ---- Local data (may contain personal information) ---------------------------
+# SQLite databases hold transcripts, participant names and tasks.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+backend/data/
+data/
+uploads/
+# Meeting recordings are never committed unless participants authorised it.
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.ogg
+*.flac
+*.webm
+*.mp4
+*.mov
+*.mkv
+# Private (real) transcripts and annotations live outside git.
+evaluation/private/
+evaluation/real_meetings/
+
+# ---- Logs & temp -------------------------------------------------------------
+*.log
+logs/
+tmp/
+.tmp/
+*.swp
+*~
+
+# ---- OS / editor -------------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+*.code-workspace
+
+# ---- Redundant archive of the starter kit (contents committed unzipped) ------
+ZeroShot_PS53_Claude_Starter_Kit.zip
