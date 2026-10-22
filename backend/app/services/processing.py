@@ -8,6 +8,7 @@ earlier good results; nothing is deleted on failure.
 from __future__ import annotations
 
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
@@ -21,6 +22,7 @@ from ..models import (
 from . import changesets, media, memory
 from .clock import now_utc
 from .identity import is_anonymous_label
+from .similarity import title_similarity
 from .llm import LLMError, LLMOutputError, LLMUnavailable, get_llm
 from .llm_schemas import MinutesOut
 from .pipelines import interpret
@@ -146,12 +148,16 @@ def step_minutes(session: Session, meeting: Meeting) -> None:
         else:
             dropped += 1
     session.exec(delete(Decision).where(Decision.meeting_id == meeting.id, Decision.approval_status == "proposed"))
+    work = work_item_evidence(session, meeting.id, ledger)
+    reclassified = []
     for d in out.decisions:
-        if ev(d.segment_ids):
+        if not ev(d.segment_ids):
+            dropped += 1
+        elif (why := assignment_like(d.text, ev(d.segment_ids), work)):
+            reclassified.append({"text": d.text, "segment_ids": ev(d.segment_ids), "reason": why})
+        else:
             session.add(Decision(meeting_id=meeting.id, text=d.text, rationale=d.rationale,
                                  evidence_segment_ids=ev(d.segment_ids), source="minutes"))
-        else:
-            dropped += 1
     session.exec(delete(OpenQuestion).where(OpenQuestion.meeting_id == meeting.id))
     for q in out.open_questions:
         if ev(q.segment_ids):
@@ -163,9 +169,44 @@ def step_minutes(session: Session, meeting: Meeting) -> None:
             dropped += 1
     meeting.minutes = {"summary": out.summary, "discussion": topics,
                        "generated_by": f"{call.provider}/{call.model}", "dropped_unsupported_items": dropped,
+                       "reclassified_as_actions": reclassified,
                        "generated_at": now_utc().isoformat(timespec="seconds")}
-    _log(meeting, "minutes", "ok", f"{len(out.decisions)} decisions, {len(out.open_questions)} questions; "
-                                   f"{dropped} items without valid evidence dropped")
+    _log(meeting, "minutes", "ok", f"{len(out.decisions) - len(reclassified)} decisions "
+                                   f"({len(reclassified)} assignment-like moved to actions), "
+                                   f"{len(out.open_questions)} questions; {dropped} items without valid evidence dropped")
+
+
+WORK_EVENTS = ("PROPOSE", "CONFIRM", "REASSIGN", "CHANGE_DEADLINE", "REPORT_COMPLETE")
+
+
+def work_item_evidence(session: Session, meeting_id: int, ledger) -> dict[str, list[tuple[str, str]]]:  # noqa: ANN001
+    """segment key -> [(owner, title)] of the work-item events that cite it."""
+    titles = {t.task_id.lower(): t.title for t in ledger}
+    out: dict[str, list[tuple[str, str]]] = {}
+    for e in session.exec(select(CommitmentEvent).where(CommitmentEvent.meeting_id == meeting_id)).all():
+        if e.type not in WORK_EVENTS:
+            continue
+        p = e.payload
+        title = p.get("title") or titles.get((e.task_key or "").lower()) or (e.task_key or "").replace("-", " ")
+        for sid in e.segment_ids:
+            out.setdefault(sid, []).append(((p.get("owner") or ""), title))
+    return out
+
+
+def assignment_like(text: str, seg_ids: list[str], work: dict[str, list[tuple[str, str]]]) -> str | None:
+    """A minutes 'decision' that only restates a task assignment/status already captured as an
+    action: every cited segment carries a work-item event, and the text names that item's owner
+    or matches its title. Returns the reason, or None if it is a genuine decision."""
+    if not seg_ids or not all(s in work for s in seg_ids):
+        return None
+    low = text.lower()
+    for sid in seg_ids:
+        for owner, title in work[sid]:
+            if owner and owner.upper() != "SELF" and re.search(rf"\b{re.escape(owner.lower())}\b", low):
+                return f"names the owner ({owner}) of an action from the same lines"
+            if title and title_similarity(text, title) >= 0.5:
+                return f"restates the action “{title}” from the same lines"
+    return None
 
 
 def run_pipeline(meeting_id: int, steps: tuple[str, ...] = ("transcribe", "interpret", "minutes")) -> None:

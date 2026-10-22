@@ -365,3 +365,65 @@ def test_spoken_completion_marks_existing_task_done_only_after_approval(client, 
     assert approve(client, cs).json()["result"]["completed"] == [code]
     t = client.get(f"/api/tasks/{code}").json()
     assert t["status"] == "done" and t["revision"] == 2
+
+
+def test_reported_done_item_linked_by_organiser_completes_existing_task(client, llm):
+    # Defect B end to end: no duplicate task, and linking proposes the completion.
+    first_meeting(client, llm)
+    approve(client, change_set(client, 1))
+    code = next(t["code"] for t in client.get("/api/tasks").json() if t["title"] == "Complete authentication API")
+    mid = make_meeting(client, "Standup", "2026-10-22T10:00:00+05:30")
+    llm.push("interpret_events", {"events": [
+        {"type": "PROPOSE", "task_key": "auth-api", "title": "Complete authentication API", "owner": "Rahul",
+         "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "CONFIRM", "task_key": "auth-api", "owner": "Rahul", "segment_ids": ["s2"]}]})
+    upload_transcript(client, mid, [("Lead", "Update on the authentication API?"),
+                                    ("Rahul", "The authentication API is done and merged.")])
+    cs = change_set(client, mid)
+    [q] = [c for c in cs["proposal"]["clarifications"] if not c["deferred"]]
+    assert q["kind"] == "possible_existing_match" and code in q["data"]["candidates"]
+    cs = client.patch(f"/api/changesets/{cs['id']}", json={"answers": {
+        f"{q['item_keys'][0]}|{q['kind']}": {"choice": "link", "value": code}}}).json()
+    [item] = cs["proposal"]["items"]
+    assert (item["state"], item["operation"], item["existing_task_id"]) == ("proposed", "complete", code)
+    assert approve(client, cs).status_code == 200
+    tasks = client.get("/api/tasks").json()
+    assert len(tasks) == 2 and next(t for t in tasks if t["code"] == code)["status"] == "done"
+
+
+def test_minutes_assignment_decisions_moved_to_actions(client, llm):
+    mid = make_meeting(client)
+    llm.push("interpret_events", {"events": [
+        {"type": "PROPOSE", "task_key": "runbook", "title": "Prepare the rollback runbook", "owner": "Rahul",
+         "deadline_text": "by Saturday", "strength": "firm", "segment_ids": ["s1"]}]})
+    llm.push("minutes", {"summary": "s", "discussion": [], "open_questions": [], "decisions": [
+        {"text": "Rahul will prepare the rollback runbook by Saturday.", "rationale": None, "segment_ids": ["s1"]},
+        {"text": "Keep Stripe as the payment provider", "rationale": "switching delays the release",
+         "segment_ids": ["s2"]}]})
+    upload_transcript(client, mid, [("Asha", "Rahul, prepare the rollback runbook by Saturday."),
+                                    ("Asha", "We keep Stripe because switching now would delay the release.")])
+    d = client.get(f"/api/meetings/{mid}").json()
+    assert [x["text"] for x in d["decisions"]] == ["Keep Stripe as the payment provider"]
+    assert d["minutes"]["reclassified_as_actions"][0]["text"].startswith("Rahul will prepare")
+
+
+def test_memory_passages_carry_labelled_system_reading_defect_d(client, llm):
+    # Defect D: retrieval found the right code-mixed line but the model could not read it.
+    # Each transcript passage now carries the app's labelled reading of that line.
+    first_meeting(client, llm)
+    r = client.post("/api/memory/query", json={"question": "authentication API Friday", "use_llm": False}).json()
+    seg = next(p for p in r["passages"] if p["doc_type"] == "segment" and p["seg_key"] == "s1")
+    assert any("Complete authentication API" in x and "not approved" in x for x in seg["system_reading"])
+    approve(client, change_set(client, 1))
+    r = client.post("/api/memory/query", json={"question": "authentication API Friday", "use_llm": False}).json()
+    seg = next(p for p in r["passages"] if p["doc_type"] == "segment" and p["seg_key"] == "s1")
+    assert any(x.endswith("; approved") for x in seg["system_reading"])
+
+
+def test_reinterpreting_an_approved_meeting_is_refused(client, llm):
+    mid = first_meeting(client, llm)
+    approve(client, change_set(client, mid))
+    r = client.post(f"/api/meetings/{mid}/process", json={"steps": ["interpret", "minutes"]})
+    assert r.status_code == 409 and "already approved" in r.text
+    assert client.post(f"/api/meetings/{mid}/process", json={"steps": ["minutes"]}).status_code == 200
+    assert len(client.get("/api/tasks").json()) == 2

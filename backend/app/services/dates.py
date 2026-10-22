@@ -261,3 +261,19 @@ def _derived(info: DeadlineInfo, d: date) -> DeadlineInfo:
     info.date = d.isoformat()
     info.kind = "derived"
     return info
+
+
+_FINDERS = [RE_ISO, RE_DAY_MONTH, RE_MONTH_DAY, RE_IN_DAYS, DAY_AFTER, TOMORROW_WORDS, TODAY_WORDS,
+            END_OF_WEEK, NEXT_WEEK, END_OF_MONTH, re.compile(r"\bkal\s+tak\b", re.I), RE_WEEKDAY]
+
+
+def find_temporal_phrases(text: str) -> list[str]:
+    """Spoken deadline-like phrases in a segment, longest non-overlapping spans first.
+    Bare Hindi 'kal' is excluded (it also means 'yesterday', e.g. 'kal hi complete kar diya')."""
+    spans: list[tuple[int, int]] = []
+    for rx in _FINDERS:
+        for m in rx.finditer(text):
+            a, b = m.span()
+            if not any(a < y and x < b for x, y in spans):
+                spans.append((a, b))
+    return [text[a:b] for a, b in sorted(spans)]

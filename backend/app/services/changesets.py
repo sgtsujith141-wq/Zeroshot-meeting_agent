@@ -161,7 +161,8 @@ def overlay(base: dict, edits: dict, ledger: list[LedgerTask], meeting: Meeting)
                     if not item["deadline"].get("date") and t.due_date:
                         item["deadline"] = {**item["deadline"], "date": t.due_date, "kind": "explicit"}
                     item["title"] = t.title
-                    item["operation"] = _existing_op(item, ledger_by_id)
+                    item["operation"] = ("complete" if item.get("reported_complete")
+                                         else _existing_op(item, ledger_by_id))
                 elif choice == "new":
                     item["existing_task_id"], item["before"] = None, None
                     item["operation"] = "create"

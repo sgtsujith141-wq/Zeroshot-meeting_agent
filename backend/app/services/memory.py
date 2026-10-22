@@ -13,7 +13,7 @@ import unicodedata
 from sqlalchemy import text
 from sqlmodel import Session, select
 
-from ..models import Decision, LLMRun, Meeting, OpenQuestion, Task, TranscriptSegment
+from ..models import ChangeSet, Decision, LLMRun, Meeting, OpenQuestion, Task, TranscriptSegment
 from .llm import LLMError, LLMUnavailable, get_llm
 from .llm_schemas import GroundedAnswerOut
 from .prompts import MEMORY_SYSTEM
@@ -69,6 +69,31 @@ def _fts_query(q: str) -> str | None:
     return " OR ".join(f'"{t}"*' for t in dict.fromkeys(toks))  # quoted: no FTS syntax injection
 
 
+def _readings(session: Session, meeting_id: int, cache: dict) -> dict[str, list[str]]:
+    """segment key -> the system's reading of that line from the meeting's latest change set,
+    labelled with its approval state (it is an interpretation, not the transcript)."""
+    if meeting_id in cache:
+        return cache[meeting_id]
+    out: dict[str, list[str]] = {}
+    cs = session.exec(select(ChangeSet).where(ChangeSet.meeting_id == meeting_id)
+                      .order_by(ChangeSet.id.desc())).first()
+    if cs and cs.proposal:
+        applied = cs.state == "APPLIED"
+        for it in cs.proposal.get("items", []):
+            if it.get("state") in ("excluded",):
+                continue
+            verb = {"complete": "reported done", "cancel": "cancellation", "update": "change to existing task",
+                    "create": "task", "suggest": "suggestion only", "hold": "unclear item"}.get(it.get("operation"), "item")
+            status = ("approved" if applied and it.get("state") == "proposed"
+                      else "not approved" if not applied else it.get("state", "").replace("_", " "))
+            text = (f"{verb} “{it.get('title')}”, owner {it.get('owner') or 'unassigned'}, "
+                    f"due {(it.get('deadline') or {}).get('date') or 'none'}; {status}")
+            for sid in it.get("evidence_segment_ids", []):
+                out.setdefault(sid, []).append(text)
+    cache[meeting_id] = out
+    return out
+
+
 def search(session: Session, q: str, limit: int = 8) -> list[dict]:
     fq = _fts_query(q)
     if not fq:
@@ -76,7 +101,7 @@ def search(session: Session, q: str, limit: int = 8) -> list[dict]:
     rows = session.execute(text(
         "SELECT doc_type, doc_id, meeting_id, text, bm25(memory_fts) AS score FROM memory_fts "
         "WHERE memory_fts MATCH :q ORDER BY score LIMIT :n"), {"q": fq, "n": limit}).all()
-    out = []
+    out, cache = [], {}
     for i, r in enumerate(rows, start=1):
         meeting = session.get(Meeting, int(r.meeting_id)) if r.meeting_id is not None else None
         p = {"passage_id": f"P{i}", "doc_type": r.doc_type, "doc_id": r.doc_id, "text": r.text,
@@ -91,7 +116,8 @@ def search(session: Session, q: str, limit: int = 8) -> list[dict]:
                 continue  # stale index row; never cite something that no longer exists
             p.update({"seg_key": seg.seg_key, "speaker": seg.speaker_label,
                       "start_seconds": seg.start_seconds, "end_seconds": seg.end_seconds,
-                      "timestamp_granularity": "segment (phrase/chunk), not word-level"})
+                      "timestamp_granularity": "segment (phrase/chunk), not word-level",
+                      "system_reading": _readings(session, seg.meeting_id, cache).get(seg.seg_key, [])})
         if r.doc_type == "task":
             t = session.exec(select(Task).where(Task.code == r.doc_id.split(":", 1)[1])).first()
             if t:
@@ -124,7 +150,9 @@ def answer(session: Session, question: str, use_llm: bool = True) -> dict:
             numbered = "\n".join(
                 f"[{p['passage_id']}] ({p['doc_type']}; meeting “{p['meeting_title']}” {p['meeting_date']}"
                 + (f"; {p['speaker']} at {p['start_seconds']:.0f}s" if p["doc_type"] == "segment" else "")
-                + f") {p['text']}" for p in passages)
+                + f") {p['text']}"
+                + (f"  [system reading of this line, an interpretation: {' | '.join(p['system_reading'])}]"
+                   if p.get("system_reading") else "") for p in passages)
             user = f"<passages>\n{numbered}\n</passages>\n\nQuestion: {question}"
             out, call = llm.generate_json(MEMORY_SYSTEM, user, GroundedAnswerOut, purpose="memory_answer")
             session.add(LLMRun(purpose=call.purpose, provider=call.provider, model=call.model,

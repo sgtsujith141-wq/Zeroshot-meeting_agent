@@ -19,7 +19,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import date
 
-from .dates import DeadlineInfo, resolve_deadline
+from .dates import DeadlineInfo, find_temporal_phrases, resolve_deadline
 from .identity import OwnerResolution, SpeakerDirectory, resolve_owner
 from .llm_schemas import CommitmentEventOut, EventType
 from .similarity import content_tokens, title_similarity
@@ -101,6 +101,15 @@ DEP_CUE = re.compile(
 DEP_CUE_IN = re.compile(
     r"(?P<x>[A-Za-z][\w' ]{1,60}?)\s+(?:ready|done|finish|complete|merge)?\s*(?:aadmele|aadamele|aada mele|aadhmele|ke baad|hone ke baad)\b",
     re.I)
+# Past-tense / perfective completion reports ("done and merged", "kar diya", "mugidide").
+# Base forms ("please complete it") are deliberately absent.
+COMPLETION_CUE = re.compile(
+    r"\b(done|finished|completed|merged|shipped|deployed|submitted|delivered|fixed|resolved|closed|"
+    r"kar diya|kar diye|kar di|ho gaya|ho gayi|ho chuka|mugidide|mugisidini|mugiside|aaythu|aagide)\b", re.I)
+NOT_DONE = re.compile(
+    r"\b(almost|nearly|not|isn't|aren't|wasn't|yet|will|going to|gonna|still|half|partly|partially|"
+    r"pending|in progress|should|must|need to|needs to|have to|has to|after|once|when|until|before|if|"
+    r"unless|as soon as|hopefully|maybe|kya|nahi|illa|aagilla)\b", re.I)
 FIRST_PERSON = re.compile(r"\b(i|i'll|i will|i can|i'm|me|naanu|nanu|main|mein)\b", re.I)
 
 
@@ -152,6 +161,7 @@ class Draft:
     history: list[dict] = field(default_factory=list)
     issues: list[Issue] = field(default_factory=list)
     pending_unclear_cancel: bool = False
+    reported_complete: bool = False
 
     def add_evidence(self, seg_ids: list[str]) -> None:
         for s in seg_ids:
@@ -217,15 +227,23 @@ class Reconciler:
         valid.sort(key=lambda s: self.seg_index[s])
         if ev.deadline_text and not self._spoken_in(ev.deadline_text, valid):
             # The deadline must be words actually spoken in the cited segments; a date the
-            # model copied from the ledger or invented is not evidence.
-            self.warnings.append({"kind": "deadline_not_in_evidence", "segment_ids": valid,
-                                  "detail": f"event {n}: deadline “{ev.deadline_text}” does not occur in the cited "
-                                            "speech; ignored"})
-            if ev.type == EventType.CHANGE_DEADLINE:
-                self.rejected.append({"index": n, "event": ev.model_dump(mode="json"),
-                                      "reason": "CHANGE_DEADLINE words not found in cited speech"})
-                return None
-            ev = ev.model_copy(update={"deadline_text": None})
+            # model copied from the ledger or invented is not evidence. If exactly one
+            # deadline-like phrase WAS spoken there (e.g. "naale"), use those words instead.
+            spoken = sorted({p for s in valid for p in find_temporal_phrases(self.seg_by_id[s].text)})
+            if len(spoken) == 1:
+                self.warnings.append({"kind": "deadline_words_replaced", "segment_ids": valid,
+                                      "detail": f"event {n}: deadline “{ev.deadline_text}” was not spoken; "
+                                                f"used the spoken “{spoken[0]}”"})
+                ev = ev.model_copy(update={"deadline_text": spoken[0]})
+            else:
+                self.warnings.append({"kind": "deadline_not_in_evidence", "segment_ids": valid,
+                                      "detail": f"event {n}: deadline “{ev.deadline_text}” does not occur in the "
+                                                "cited speech; ignored"})
+                if ev.type == EventType.CHANGE_DEADLINE:
+                    self.rejected.append({"index": n, "event": ev.model_dump(mode="json"),
+                                          "reason": "CHANGE_DEADLINE words not found in cited speech"})
+                    return None
+                ev = ev.model_copy(update={"deadline_text": None})
         needs_task = ev.type not in (EventType.DECISION, EventType.OPEN_QUESTION)
         if ev.type in (EventType.CANCEL, EventType.REJECT) and not (ev.task_key or ev.title):
             # A cancellation with no stated target is never dropped silently: ask what it cancels.
@@ -251,6 +269,16 @@ class Reconciler:
                                   "reason": "ADD_DEPENDENCY without a prerequisite"})
             return None
         return ev.model_copy(update={"segment_ids": valid})
+
+    def _completion_cue(self, seg_ids: list[str]) -> str | None:
+        for sid in seg_ids:
+            if sid in self.injected:
+                continue  # speech addressed to the assistant never reports work as done
+            for clause in re.split(r"[.;!?,]", self.seg_by_id[sid].text):
+                m = COMPLETION_CUE.search(clause)
+                if m and not NOT_DONE.search(clause):
+                    return clause.strip()
+        return None
 
     def _spoken_in(self, phrase: str, seg_ids: list[str]) -> bool:
         words = lambda t: set(re.findall(r"[^\W_]+", t.lower()))  # noqa: E731
@@ -405,6 +433,14 @@ class Reconciler:
         speaker = self._speaker_for(ev)
         self._last_target = None
         self._apply_type(ev, speaker)
+        d = self._last_target
+        if (d is not None and ev.type in (EventType.PROPOSE, EventType.CONFIRM, EventType.REASSIGN,
+                                          EventType.CHANGE_DEADLINE)
+                and d.status not in ("cancelled", "rejected", "completed")):
+            cue = self._completion_cue(ev.segment_ids)
+            if cue:
+                d.status, d.reported_complete = "completed", True
+                self._log(d, ev, f"completion inferred from the words “{cue}” (rule-based, check it)")
         # A prerequisite stated on any work-item event (not only ADD_DEPENDENCY) is honoured.
         if (ev.depends_on_key and ev.type in (EventType.PROPOSE, EventType.CONFIRM, EventType.REASSIGN,
                                               EventType.CHANGE_DEADLINE)):
@@ -540,7 +576,7 @@ class Reconciler:
             return
 
         if t == EventType.REPORT_COMPLETE:
-            d.status = "completed"
+            d.status, d.reported_complete = "completed", True
             self._log(d, ev, "reported complete (spoken report; verify before closing)")
             return
 
@@ -600,6 +636,16 @@ class Reconciler:
 
     # -- final derivation -------------------------------------------------------
     def _finalise_draft(self, d: Draft) -> None:
+        if d.status == "completed" and not d.existing_task_id:
+            # "X is done" about something not linked to the board: if it resembles an approved
+            # task, ask which one (linking proposes completing it); never create a duplicate.
+            cands = self._ledger_candidates(d.title, d.key)
+            if cands:
+                titles = ", ".join(f"{c} “{self.ledger[c].title}”" for c in cands)
+                d.add_issue(Issue("possible_existing_match",
+                                  f"“{d.title}” was reported done. Is it the existing task {titles} "
+                                  "(mark it done) or something else?", d.evidence[-1:], {"candidates": cands}))
+            return
         if d.status in ("cancelled", "rejected", "completed", "tentative"):
             return
         if d.evidence and all(s in self.injected for s in d.evidence) and not d.existing_task_id:
@@ -678,6 +724,8 @@ class Reconciler:
             # Cancelling or completing APPROVED work is itself a proposed change that
             # the organiser approves (operation cancel/complete), not a final state.
             if not (d.existing_task_id and d.status in ("cancelled", "completed")):
+                if d.status == "completed" and any(i.kind in EXISTENCE_ISSUES for i in d.issues):
+                    return "held"
                 return d.status
         kinds = {i.kind for i in d.issues}
         if kinds & EXISTENCE_ISSUES:
@@ -770,7 +818,7 @@ class Reconciler:
                 "deadline": d.deadline.to_dict(), "priority": self._priority(d),
                 "depends_on": deps, "blocked_reason": d.blocked_reason,
                 "evidence_segment_ids": d.evidence, "history": d.history,
-                "clarification_ids": clar_ids, "before": d.before,
+                "clarification_ids": clar_ids, "before": d.before, "reported_complete": d.reported_complete,
             })
         clar.sort(key=lambda c: (c["rank"], c["id"]))
         # Recall safety net: lines no valid event cited, so the organiser can check them.

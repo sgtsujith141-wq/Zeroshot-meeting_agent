@@ -170,6 +170,11 @@ def process(meeting_id: int, body: ProcessRequest, actor: str = Depends(require_
     if m.processing_status in processing.BUSY:
         raise HTTPException(409, "meeting is already processing")
     steps = tuple(s for s in body.steps if s != "transcribe" or m.source_type in ("audio", "video"))
+    if ("interpret" in steps or "transcribe" in steps) and session.exec(select(ChangeSet).where(
+            ChangeSet.meeting_id == m.id, ChangeSet.state == "APPLIED")).first():
+        # Re-interpreting approved work would re-propose the meeting's own tasks against itself.
+        raise HTTPException(409, "this meeting's changes were already approved; re-running interpretation is "
+                                 "disabled (minutes can still be regenerated)")
     if "transcribe" not in steps and not session.exec(
             select(TranscriptSegment.id).where(TranscriptSegment.meeting_id == m.id)).first():
         raise HTTPException(409, "no transcript yet: upload audio or a transcript first")
