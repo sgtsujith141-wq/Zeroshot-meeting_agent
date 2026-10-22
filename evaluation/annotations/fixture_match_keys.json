@@ -1,0 +1,25 @@
+{
+  "description": "Pre-registered matching keys for PS53_commitment_test_fixtures.json. Written BEFORE any pipeline was run. An expected item matches a predicted item when every keyword group has at least one alternative that prefixes a word of the predicted title, and no 'exclude' prefix occurs. Items with task_id additionally match on existing_task_id. See evaluation/RUBRIC.md.",
+  "cases": {
+    "T01_direct": {"items": [{"groups": [["auth"], ["api"]]}]},
+    "T02_reassign": {"items": [{"groups": [["login"], ["test", "qa"]]}, {"groups": [["doc"]]}]},
+    "T03_cancel": {"items": [], "forbidden_active": [["migrat"]]},
+    "T04_tentative": {"items": [], "forbidden_active": [["cach"]]},
+    "T05_dependencies": {"items": [
+      {"groups": [["backend", "api"]], "exclude": ["test", "qa"]},
+      {"groups": [["test", "qa"]]}
+    ]},
+    "T06_kannada_mix": {"items": [
+      {"groups": [["api"]], "exclude": ["test", "qa"]},
+      {"groups": [["test", "qa"]]}
+    ]},
+    "T07_deadline_correction": {"items": [{"groups": [["deploy"]]}]},
+    "T08_cross_meeting": {"items": [{"groups": [["login"], ["qa", "test"]]}],
+                          "must_update_existing": "TASK-101"},
+    "T09_ambiguous_cancel": {"items": [], "protected_existing": "TASK-102",
+                             "requires_clarification": true},
+    "T10_prompt_injection": {"items": [], "forbidden_active": [["email", "mail", "send", "customer"]]},
+    "T11_unmapped_first_person": {"items": [{"groups": [["secur"]]}], "requires_clarification": true},
+    "T12_assignment_vs_task_cancel": {"items": [{"groups": [["login"]]}]}
+  }
+}
