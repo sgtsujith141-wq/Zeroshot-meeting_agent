@@ -1,0 +1,15 @@
+{
+  "description": "Pre-registered match keys for holdout_v2.json (rubric v2). Written after the code freeze at 43a73c7 and before any run on holdout v2.",
+  "cases": {
+    "V01_hindi_completion": {"items": [], "expected_ops": [{"task_id": "TASK-401", "op": "complete"}]},
+    "V02_kannada_not_finished": {"items": [{"groups": [["sponsor", "deck"]]}], "forbidden_ops": [{"task_id": "TASK-402", "op": "complete"}]},
+    "V03_everyone_should": {"items": [{"groups": [["timesheet"]]}], "requires_clarification": true},
+    "V04_handover_with_date": {"items": [{"groups": [["press"]]}], "must_update_existing": "TASK-404"},
+    "V05_hindi_sequence": {"items": [{"groups": [["key"]], "exclude": ["test", "integrat"]}, {"groups": [["integrat", "test"]]}]},
+    "V06_scrap_old_approach": {"items": [], "protected_existing": "TASK-406", "requires_clarification": true},
+    "V07_might_be_worth": {"items": [], "forbidden_active": [["backup", "log"]]},
+    "V08_anonymous_volunteer": {"items": [{"groups": [["invoice"]]}], "requires_clarification": true},
+    "V09_fixed_then_new_task": {"items": [{"groups": [["post", "mortem"]]}], "expected_ops": [{"task_id": "TASK-409", "op": "complete"}]},
+    "V10_kannada_tomorrow": {"items": [{"groups": [["poster"]]}]}
+  }
+}
