@@ -1,0 +1,16 @@
+{
+  "synthetic": true,
+  "note": "SYNTHETIC demo transcript written by the developers to exercise cross-meeting reconciliation. Not a real meeting or recording.",
+  "title": "Payments release follow-up (synthetic)",
+  "scheduled_at": "2026-10-22T10:00:00+05:30",
+  "timezone": "Asia/Kolkata",
+  "segments": [
+    {"speaker": "Asha", "start_seconds": 0, "end_seconds": 4, "text": "Quick update on the refund API task."},
+    {"speaker": "Rahul", "start_seconds": 4, "end_seconds": 8, "text": "The refund API is done and merged."},
+    {"speaker": "Asha", "start_seconds": 8, "end_seconds": 18, "text": "Priya is travelling, so Samiksha takes over the regression tests, due Monday, October 26."},
+    {"speaker": "Samiksha", "start_seconds": 18, "end_seconds": 22, "text": "Yes, I'll own the regression tests."},
+    {"speaker": "Asha", "start_seconds": 22, "end_seconds": 27, "text": "Also, cancel the old release notes plan."},
+    {"speaker": "Asha", "start_seconds": 27, "end_seconds": 31, "text": "Rahul, can you prepare the rollback runbook?"},
+    {"speaker": "Rahul", "start_seconds": 31, "end_seconds": 36, "text": "Yes, I'll write the rollback runbook by Saturday."}
+  ]
+}

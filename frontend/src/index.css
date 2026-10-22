@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@import "@fontsource/public-sans/400.css";
+@import "@fontsource/public-sans/500.css";
+@import "@fontsource/public-sans/600.css";
+@import "@fontsource/public-sans/700.css";
+@import "@fontsource/source-serif-4/400.css";
+@import "@fontsource/source-serif-4/400-italic.css";
+
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --color-paper: #F3F5F7;
+  --color-panel: #FFFFFF;
+  --color-ink: #1C2430;
+  --color-slate: #5B6676;
+  --color-rule: #D9DEE4;
+  --color-create: #0F6E6E;
+  --color-create-soft: #E3F1F0;
+  --color-update: #2F5DA8;
+  --color-update-soft: #E6EDF8;
+  --color-ask: #9A5B00;
+  --color-ask-soft: #FBF0DE;
+  --color-cancel: #B4233C;
+  --color-cancel-soft: #F8E5E8;
+}
+
+html { background: var(--color-paper); color: var(--color-ink); }
+body { font-family: var(--font-sans); font-size: 15px; line-height: 1.5; }
+:focus-visible { outline: 2px solid var(--color-update); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.spoken { font-family: var(--font-serif); font-size: 15.5px; line-height: 1.6; }

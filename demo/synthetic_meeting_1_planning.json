@@ -1,0 +1,17 @@
+{
+  "synthetic": true,
+  "note": "SYNTHETIC demo transcript written by the developers to exercise the pipeline. Not a real meeting or recording; not part of the official three-real-meeting evaluation.",
+  "title": "Payments release planning (synthetic)",
+  "scheduled_at": "2026-10-19T10:00:00+05:30",
+  "timezone": "Asia/Kolkata",
+  "segments": [
+    {"speaker": "Asha", "start_seconds": 0, "end_seconds": 9, "text": "Let's plan the payments release. Rahul, please finish the refund API by Thursday."},
+    {"speaker": "Rahul", "start_seconds": 9, "end_seconds": 14, "text": "Okay, I will have the refund API done by Thursday."},
+    {"speaker": "Asha", "start_seconds": 14, "end_seconds": 22, "text": "Priya, once the refund API is ready, you will run the regression tests."},
+    {"speaker": "Priya", "start_seconds": 22, "end_seconds": 28, "text": "Sure, I'll start regression testing after Rahul's API is merged."},
+    {"speaker": "Asha", "start_seconds": 28, "end_seconds": 39, "text": "We decided to keep Stripe as the payment provider, because switching now would delay the release by two weeks."},
+    {"speaker": "SPEAKER_03", "start_seconds": 39, "end_seconds": 44, "text": "I can update the release notes by Friday."},
+    {"speaker": "Asha", "start_seconds": 44, "end_seconds": 50, "text": "Maybe someone should look into the flaky login test at some point."},
+    {"speaker": "Asha", "start_seconds": 50, "end_seconds": 58, "text": "Open question: do we need finance sign-off before enabling refunds for all users?"}
+  ]
+}

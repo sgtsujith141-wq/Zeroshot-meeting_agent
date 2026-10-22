@@ -1,0 +1,14 @@
+{
+  "synthetic": true,
+  "note": "SYNTHETIC code-mixed (Kannada-English and Hindi-English) TEXT transcript written by the developers. It tests interpretation only; it is NOT code-mixed speech and does not satisfy the real code-mixed recording requirement.",
+  "title": "Payments status, code-mixed (synthetic)",
+  "scheduled_at": "2026-10-26T10:00:00+05:30",
+  "timezone": "Asia/Kolkata",
+  "segments": [
+    {"speaker": "Asha", "start_seconds": 0, "end_seconds": 4, "text": "Regression testing status enu? Samiksha?"},
+    {"speaker": "Samiksha", "start_seconds": 4, "end_seconds": 10, "text": "Testing almost mugidide, naale finish maadthini."},
+    {"speaker": "Rahul", "start_seconds": 10, "end_seconds": 16, "text": "Rollback runbook ready hai, maine kal hi complete kar diya."},
+    {"speaker": "Asha", "start_seconds": 16, "end_seconds": 24, "text": "Sari, finance sign-off bagge Priya follow up maadli, Wednesday olage."},
+    {"speaker": "Priya", "start_seconds": 24, "end_seconds": 30, "text": "Theek hai, main Wednesday tak finance team se baat kar lungi."}
+  ]
+}
