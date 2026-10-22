@@ -528,7 +528,13 @@ class Reconciler:
                 d.status = "proposed"
             d.confirmed = True
             spk_name = self.ctx.directory.name_for(speaker)
-            if ev.owner:
+            res = resolve_owner(ev.owner, speaker, self.ctx.directory) if ev.owner else None
+            if res and res.needs_identity and d.owner.name:
+                # An acceptance from an unmapped label (e.g. no diarization: everyone is
+                # SPEAKER_00) does not erase an owner who was explicitly named.
+                self._log(d, ev, f"confirmed by unmapped {res.unmapped_label}; kept named owner "
+                                 f"{d.owner.name} (confirmer's identity not verified)")
+            elif ev.owner:
                 self._set_owner(d, ev.owner, speaker, ev, "confirmed")
             elif d.owner_candidate and spk_name == d.owner_candidate:
                 self._set_owner(d, "SELF", speaker, ev, "accepted")

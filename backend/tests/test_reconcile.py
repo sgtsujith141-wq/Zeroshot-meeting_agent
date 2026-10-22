@@ -446,3 +446,20 @@ def test_self_owner_requires_personal_speech(text, owner):
     r = run(segs(("Asha", text)), [{"type": "PROPOSE", "task_key": "x", "title": "Do the thing", "owner": "SELF",
                                      "strength": "firm", "segment_ids": ["s1"]}])
     assert r.items[0]["owner"] == owner
+
+
+def test_unmapped_acceptance_keeps_explicitly_named_owner():
+    # From the live UI audio check (local Whisper, no diarization: every line is SPEAKER_00).
+    s = segs(("SPEAKER_00", "Kavya, please finish the login screen by Friday."),
+             ("SPEAKER_00", "Theek hai, main login screen Friday tak poora kar dungi."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "login", "title": "Finish the login screen", "owner": "Kavya",
+         "deadline_text": "by Friday", "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "CONFIRM", "task_key": "login", "owner": "SELF", "segment_ids": ["s2"]}])
+    [item] = r.items
+    assert item["owner"] == "Kavya" and not any(c["kind"] == "unmapped_speaker" for c in r.clarifications)
+    # without a named owner, an unmapped volunteer still needs identity (fixture T11 behaviour)
+    r2 = run(segs(("SPEAKER_02", "I can take the security review by Friday.")), [
+        {"type": "PROPOSE", "task_key": "sec", "title": "Security review", "owner": "SELF", "strength": "firm",
+         "segment_ids": ["s1"]}])
+    assert r2.items[0]["owner"] is None and r2.clarifications[0]["kind"] == "unmapped_speaker"

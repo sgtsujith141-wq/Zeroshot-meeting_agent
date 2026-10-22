@@ -109,8 +109,22 @@ test('audio: upload a recording through the UI and get a transcript', async ({ p
   await expect(page.getByText('Ready for review')).toBeVisible({ timeout: 1_440_000 })
   await page.waitForLoadState('networkidle')
   await shot(page, 'a-02-meeting')
-  await page.getByRole('link', { name: 'Review changes' }).first().click()
+  await page.getByRole('main').getByRole('link', { name: 'Review changes' }).click()
   await expect(page.getByRole('heading', { name: /Review:/ })).toBeVisible()
   await page.waitForLoadState('networkidle')
   await shot(page, 'a-03-review')
+})
+
+test('read-only: screens of one processed meeting and its review', async ({ page }) => {
+  test.skip(STEP !== 'meeting-screens' || !TOKEN || !process.env.MEETING_ID, 'set DEMO_FLOW=meeting-screens and MEETING_ID')
+  const id = process.env.MEETING_ID
+  await signIn(page)
+  await page.goto(`/meetings/${id}`)
+  await expect(page.getByRole('heading', { name: /Transcript/ })).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  await shot(page, `m${id}-meeting`)
+  await page.goto(`/review/${id}`)
+  await expect(page.getByRole('heading', { name: /Review:/ })).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  await shot(page, `m${id}-review`)
 })

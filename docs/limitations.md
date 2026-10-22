@@ -8,10 +8,18 @@ Ordered by how much they matter for the PS 5.3 evaluation.
    code-mixed. None were provided, so there is no WER, real-data action
    precision/recall, speaker attribution score or human summary rating. The tooling is
    ready: `evaluation/real_eval.py`, plus the instructions in `docs/evaluation.md`.
-2. **Sarvam STT is unverified.** The adapter follows the documented batch SDK flow, but
-   no `SARVAM_API_KEY` was available, so no recording has been transcribed. Code-mixed
-   *speech* is therefore not demonstrated. Code-mixed *text* interpretation is: fixture
-   T06 and synthetic demo meeting 3.
+2. **Speech-to-text.**
+   - Sarvam (`saaras:v4`, `codemix`, diarization) is **unverified**: no key.
+   - The local `faster-whisper-small` fallback works through the UI, but has three limits:
+     - **no diarization**: everything is SPEAKER_00, so "I will…" cannot be attributed and
+       the organiser must set owners on the items;
+     - weak on Kannada/Hindi: on a synthetic clip, Kannada came out phonetically in
+       Devanagari;
+     - transcription runs on CPU.
+   - Use Sarvam for real code-mixed meetings.
+   - Only a synthetic TTS recording has been transcribed; no real recording has. Real
+     code-mixed *speech* is therefore not demonstrated. Code-mixed *text*
+     interpretation is demonstrated on synthetic cases and demo meeting 3.
 3. **Gemini is unverified.** No `GEMINI_API_KEY`. All live results come from local
    Ollama models (qwen3:8b, llama3.1:8b) on a CPU. Quality and latency with
    `gemini-3.8-flash` are unknown.
@@ -47,6 +55,13 @@ Ordered by how much they matter for the PS 5.3 evaluation.
   that produced nothing so the organiser can check them.
 - **Speed.** About 90 s per model call on an Intel i9 CPU, so a short meeting takes about
   3 minutes to analyse. Use pre-processed meetings for a live demo.
+
+- **Opener lines as tasks.** On the synthetic audio check, "Okay team, quick sync on the
+  mobile app launch" became a proposed task. The organiser excludes it in review.
+- **Accepting by an unmapped speaker.** Kavya was named as the owner, then "मैं… कर दूंगी"
+  came from SPEAKER_00 (no diarization). That `SELF` confirmation replaced the named
+  owner with an identity question. See `docs/evaluation.md` for the fix and when it was
+  made.
 
 ## Engine limitations
 

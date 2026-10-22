@@ -116,6 +116,69 @@ happened during these runs, are a likely cause. Treat differences of roughly ±0
 these 11 items as noise. The safety-check gap has held in all four live runs (candidate 8/8, 8/8, 8/8, 7/8 vs
 baseline 4–5/8).
 
+### 1c. Holdout v1: unseen cases for the 2026-10-23 defect fixes
+
+`fixtures/holdout_v1.json` holds 12 new cases with new names, domains, phrasing and a
+Wednesday meeting date. It and rubric v2 were committed in `2fa9e69`, **before** any run
+on them. Rubric v2 scores completing or cancelling approved work as an operation, not as
+an active item. Model qwen3:8b, temperature 0, seed 7.
+
+| candidate | strict F1 | safety | fully correct |
+|---|---|---|---|
+| pre-fix code (`2fa9e69`, prompt v2) | 0.706 | 11/11 | 9/12 |
+| fixes as committed (`e78d265`: fold fixes **and** prompt v3) | **0.625** | **9/11** | 8/12 |
+| ablation: pre-fix model outputs replayed through the `e78d265` fold | 0.824 | 11/11 | 10/12 |
+
+Baseline (pre-fix): strict F1 0.111, safety 6/11. Baseline + date rules: 0.333.
+
+- **The deterministic fixes helped. Prompt v3 hurt.** Its new completion example led the
+  model to report "almost done" as complete (H02) and to emit `SELF` for "We will all…"
+  (H12).
+- On the starter-kit cases, the same prompt v3 reached the best-ever 0.952. Improving on
+  the tuned set while getting worse on unseen cases is an overfitting signal.
+- Prompt v3 was therefore **reverted** (`43a73c7`; extraction prompts byte-identical to
+  v2). Two guards that check the model's claim against the spoken words were added:
+  - an explicit completion contradicted by "almost / will…" is not applied;
+  - `SELF` on group speech without a first-person singular is not assigned to the
+    speaker.
+- Those guards were designed after seeing holdout v1, so **holdout v1 is contaminated
+  from `43a73c7` on**. A fresh holdout v2 was written after the code freeze.
+
+### 1d. Holdout v2: fresh, clean measurement of the final code
+
+`fixtures/holdout_v2.json` holds 10 cases written **after** the code was frozen at
+`43a73c7` and committed (`6ae4778`) before any run. It uses a Friday meeting date and
+Kannada/Hindi phrasings unlike the rules' examples. Run `20261022T234744Z_ollama_qwen3-8b_holdout-v2-final`: qwen3:8b, prompt v2.
+
+| metric | baseline | baseline + date rules | **candidate** |
+|---|---|---|---|
+| strict precision / recall / F1 | 0.50 / 0.50 / 0.50 | 0.75 / 0.75 / **0.75** | 0.625 / 0.625 / 0.625 |
+| lenient (title-only) F1 | 0.875 | 0.875 | 0.875 |
+| owner / due-date errors | 1 / 2 | 0 / 1 | 1 / 1 |
+| false-positive active items | 1 | 1 | 1 |
+| dependencies correct | 1/1 | 1/1 | 0/1 |
+| safety checks passed | 5/10 | 5/10 | **10/10** |
+| cases fully correct | 3/10 | 3/10 | **7/10** |
+
+**What this clean measurement supports:**
+- On fresh cases the engine's advantage is **safety and whole-meeting correctness**: 10/10
+  vs 5/10 safety, and 7/10 vs 3/10 cases fully correct. It produced no ghost tasks, did
+  not act on the ambiguous "scrap the old approach", did not promote "might be worth
+  someone…", and did not assign work to the anonymous SPEAKER_03.
+- On **item-level extraction it is not better**: baseline plus deterministic date rules
+  scored a higher strict F1 (0.75 vs 0.625).
+- The candidate's misses are model interpretation errors on code-mixed lines:
+  - V02 "innu mugidilla, Monday kodthini" (not finished, Monday): change missed;
+  - V05 "uske baad" (after that): dependency missed;
+  - V10 "naale maadbeku" (must do tomorrow): owner misread, plus a false positive.
+- One model, one trial, 10 cases: differences of about ±0.1 F1 are within run-to-run
+  noise (see 1b).
+
+**Post-measurement change.** An acceptance from an unmapped speaker now keeps an
+explicitly named owner. This came from the live audio check, not from a holdout.
+Replaying every recorded run (starter kit, holdout v1, holdout v2) with the final code
+gives **unchanged** scores, including holdout v2 at 0.625 / 10/10.
+
 ### Gate decision
 
 The candidate showed a meaningful correctness benefit on the failure classes it targets
@@ -154,8 +217,17 @@ claimed.** Steps for the team:
    - 5 = no error or omission;
    - 3 = one notable omission or minor error;
    - 1 = misleading.
-5. **Run** `backend/.venv/bin/python evaluation/real_eval.py report
-   evaluation/private/*`. Commit the generated JSON only if it contains no private text.
+5. **Run**
+   ```
+   backend/.venv/bin/python evaluation/real_eval.py init evaluation/private/<name> --meeting-id <id>
+   backend/.venv/bin/python evaluation/real_eval.py export evaluation/private/<name>
+   backend/.venv/bin/python evaluation/real_eval.py report evaluation/private/*
+   ```
+   - `init` writes **empty** templates.
+   - `export` saves the system's actual transcript, actions, decisions and summary as
+     `system_*` files.
+   - `report` prints every metric that has no annotation as **NOT MEASURED**, and checks
+     "≥3 real, ≥1 code-mixed". Commit the generated JSON only if it contains no private text.
    It contains metrics, the speaker label mapping and action titles; check it first.
 
 Metric definitions:
@@ -165,3 +237,24 @@ Metric definitions:
 | WER | (S + D + I) / N over the whole meeting. Lowercase and Unicode NFC. Letters, digits and combining marks are kept (Indic vowel signs are preserved). Punctuation is removed. No transliteration. |
 | Action precision / recall | Lenient: keyword match on the title. Strict: also the same owner, and the same due date when annotated. Computed on the *proposed* items before organiser edits, so the model plus engine is measured, not the human. |
 | Speaker attribution accuracy | Share of reference speech time whose hypothesis label maps to the correct person, after a greedy one-to-one mapping of diarization labels to reference speakers. Timestamps are segment-level, so boundary error is included. |
+
+## 3. Speech-to-text verification (not the official evaluation)
+
+| Provider | Status |
+|---|---|
+| Sarvam `saaras:v4` batch (`codemix`, diarization) | **UNVERIFIED**: no `SARVAM_API_KEY`. The adapter's parameters, literals and output types were checked against the installed `sarvamai` 0.1.37 SDK (`tests/test_providers.py`). That check found and fixed a missing `with_timestamps=True` (the SDK defaults to `False`). |
+| Local `faster-whisper-small` (fallback, no key) | **Verified mechanically** on a synthetic macOS text-to-speech clip, through the real UI upload (2026-10-23). |
+
+The synthetic clip (`scripts/make_tts_sample.sh`) is 24.5 s long and has 6 lines in
+Indian-English, Hindi (Devanagari) and Kannada (Kannada script) voices. The reference is
+the exact text given to the TTS.
+
+| Whisper setting | WER | Observation |
+|---|---|---|
+| default (one language for the whole file) | 0.340 | Hindi line **translated** to English; Kannada "ಸರಿ, ನಾನು ನಾಳೆ… ಶುರು ಮಾಡ್ತೀನಿ" → "Sorry, I don't start the release notes" (**meaning inverted**) |
+| per-segment language detection (now the default) | 0.245 | Hindi in Devanagari with errors; Kannada written **phonetically in Devanagari**; English lines near-perfect |
+
+- **No diarization:** every segment is SPEAKER_00.
+- **Speed:** 24.5 s of audio transcribed in 13.9 s on CPU.
+- **Scope:** this is synthetic TTS speech. It is not the WER of real meetings, which is
+  **NOT MEASURED**.

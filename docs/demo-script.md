@@ -9,7 +9,10 @@ processed by then, show them instead and say so.
 - Backend running and the UI open.
 - Meetings 1 and 2 processed and approved.
 - Meeting 3 processed, not approved.
-- Diagnostics page loaded.
+- The audio meeting processed: a real recording if available, else the synthetic TTS
+  check (meeting 4).
+- Diagnostics page loaded. It shows which LLM and STT are live.
+- Never run a first-ever provider call live on stage.
 
 ---
 
@@ -27,17 +30,30 @@ processed by then, show them instead and say so.
 > correct version of each task across meetings, and we ask instead of guessing when
 > something is ambiguous."
 
-## 1:00 Ingest and evidence (60 s): Meetings → *Payments release planning (synthetic)*
+## 1:00 Real audio and speakers (60 s)
 
-- Show the consent attestation on *Add a meeting*, and the data-flow notice (Sarvam for
-  audio, Gemini or a local model for text).
-- Open the meeting:
-  - the speaker-labelled transcript with segment timestamps;
-  - minutes and decisions, each with a quote;
-  - "How this meeting was interpreted": the model only emits events like PROPOSE,
-    CONFIRM and REASSIGN, each citing a segment.
-- Be honest: "This transcript is synthetic. Sarvam speech-to-text with diarization is
-  integrated but we did not have a key, so audio is not demonstrated today."
+**Preferred: one of the team's real, consented recordings** (pre-processed before the talk).
+- Open it and point out the transcript with segment timestamps.
+- Say which provider transcribed it, as shown on the page ("Transcribed by sarvam" or
+  "whisper-local").
+- Rename a speaker. Proposals re-check instantly, without another model call.
+
+**Fallback, if no real recording has been processed: "Audio upload check (synthetic
+TTS)".**
+- Say: "This is a text-to-speech clip we generated, not a real meeting."
+- Show the upload went through the real pipeline: FFmpeg, then local Whisper, then
+  interpretation.
+- State the limits plainly:
+  - no speaker separation, so everything is SPEAKER_00;
+  - the Kannada line came out phonetically in Devanagari;
+  - Sarvam, which separates speakers and handles code-mix, needs a key we have not
+    used yet.
+- For speaker correction, use meeting 1 instead: SPEAKER_03 → Meera.
+
+Then:
+- Show minutes and decisions with quotes, and "How this meeting was interpreted": the
+  model only emits typed events, each citing a segment.
+- Consent: show the attestation on *Add a meeting* and the data-flow notice.
 
 ## 2:00 The review screen (75 s): Review changes → meeting 1
 
@@ -95,6 +111,9 @@ processed by then, show them instead and say so.
 - "About half the qwen gain is just deterministic date handling. We measured that with
   an ablation."
 - "Where we were worse: dependency recall on llama3.1. We show that rather than hide it."
+- "On a fresh holdout written after we froze the code: safety 10/10 vs 5/10, whole cases
+  correct 7/10 vs 3/10. But on item extraction alone, the baseline with our date rules was
+  better (strict F1 0.75 vs 0.625). Our claim is safer state, not better extraction."
 - "These are synthetic engineering tests. The official three-real-meeting evaluation
   (WER, precision/recall vs human labels, human summary ratings) is our next step; the
   tooling is ready."

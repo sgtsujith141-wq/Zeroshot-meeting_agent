@@ -18,9 +18,12 @@ The differentiator is a **commitment reconciliation engine**:
 
 > **Honest status**, as of the last commit:
 > - Live LLM verified with a **local Ollama model (qwen3:8b)**.
-> - Gemini and Sarvam adapters are implemented but **unverified (no API keys)**.
-> - The official **three-real-meeting evaluation has not been done** (no recordings yet).
-> - The demo meetings are clearly labelled **synthetic** transcripts.
+> - Audio upload verified through the UI with a **local Whisper** fallback (no diarization),
+>   on a synthetic TTS clip.
+> - Gemini and Sarvam adapters are implemented and checked against their SDKs, but
+>   **unverified live (no API keys)**.
+> - The official **three-real-meeting evaluation is NOT MEASURED** (no recordings yet).
+> - Demo meetings are clearly labelled **synthetic**.
 >
 > Details are in [`SUBMISSION_CHECKLIST.md`](SUBMISSION_CHECKLIST.md).
 
@@ -34,8 +37,8 @@ Requirements: Python 3.12, Node 20+, FFmpeg, and either a Gemini API key or a lo
 ./scripts/setup_env.sh
 #    Optional: add GEMINI_API_KEY and SARVAM_API_KEY to .env (never commit it)
 
-# 2. Backend (Python 3.12 via uv)
-cd backend && uv sync && cd ..
+# 2. Backend (Python 3.12 via uv). Add --group local-stt for the local Whisper fallback
+cd backend && uv sync --group local-stt && cd ..
 
 # 3. Frontend build (served by the backend)
 cd frontend && npm ci && npm run build && cd ..
@@ -76,10 +79,13 @@ The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 ## Tests and evaluation
 
 ```bash
-cd backend && .venv/bin/pytest -q          # 68 offline tests: fold, dates, identity, API flows, metrics
+cd backend && .venv/bin/pytest -q          # offline tests: fold, dates, identity, API flows, providers, metrics
 cd frontend && E2E_TOKEN=<token> npx playwright test   # UI smoke tests against a running server
 backend/.venv/bin/python evaluation/run_eval.py --provider ollama --model qwen3:8b   # fixture experiment
-backend/.venv/bin/python evaluation/real_eval.py report evaluation/private/*         # official metrics (real data)
+backend/.venv/bin/python evaluation/run_eval.py --fixtures evaluation/fixtures/holdout_v2.json \
+    --keys evaluation/annotations/holdout_v2_match_keys.json                         # fresh holdout
+backend/.venv/bin/python scripts/provider_smoke.py --audio <recording>               # live Gemini/Ollama/STT check
+backend/.venv/bin/python evaluation/real_eval.py init|export|report ...              # official metrics (real data)
 ```
 
 - API integration tests use recorded LLM JSON (provider `test-fixture`). They test the
@@ -107,7 +113,8 @@ what these synthetic numbers do *not* show are covered in
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | Gemini via `google-genai` (default `gemini-3.8-flash`). |
 | `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_NUM_CTX` | Local model (default `qwen3:8b`). |
 | `LLM_TEMPERATURE`, `LLM_SEED`, `LLM_TIMEOUT_SECONDS` | Generation settings (0, 7, 600). |
-| `SARVAM_API_KEY`, `SARVAM_STT_MODEL`, `SARVAM_STT_MODE`, `SARVAM_LANGUAGE_CODE` | Sarvam batch STT (`saaras:v4`, `codemix`). |
+| `STT_PROVIDER`, `WHISPER_MODEL`, `WHISPER_LANGUAGE` | `auto` (Sarvam if a key exists, else local Whisper if installed), `sarvam` or `whisper`. |
+| `SARVAM_API_KEY`, `SARVAM_STT_MODEL`, `SARVAM_STT_MODE`, `SARVAM_LANGUAGE_CODE` | Sarvam batch STT (`saaras:v4`, `codemix`, diarization). |
 | `DATA_DIR`, `MAX_UPLOAD_MB`, `CORS_ORIGINS`, `DEFAULT_TIMEZONE`, `REMINDER_POLL_SECONDS` | Storage and server. |
 | `SMTP_*` | Optional. Without it, nothing is ever emailed. |
 
