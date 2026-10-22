@@ -105,7 +105,7 @@ F1, 8/8 → 7/8 safety). In T09 the model emitted a `CANCEL` with no target. The
 rejected it, so TASK-102 was safely untouched, but no clarification question was
 raised, and that is the first failed safety check for the candidate in any run. Since
 then, a cancellation without a target becomes an explicit open question for the
-organiser (`a4b…`, product behaviour). Open questions are deliberately **not** counted
+organiser (commit `923e8d3`, product behaviour). Open questions are deliberately **not** counted
 by the rubric, so the recorded 7/8 stands. Replays of all four recorded runs with the
 final code give the same scores as in the tables.
 
