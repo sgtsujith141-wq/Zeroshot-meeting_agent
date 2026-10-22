@@ -32,7 +32,7 @@ from app.services.llm_schemas import BaselineOut, InterpretationOut  # noqa: E40
 from app.services.pipelines import (  # noqa: E402
     baseline_clarifications, baseline_items, candidate_items, run_baseline, run_candidate,
 )
-from app.services.prompts import BASELINE_SYSTEM, CANDIDATE_SYSTEM  # noqa: E402
+from app.services.prompts import BASELINE_SYSTEM, CANDIDATE_SYSTEM, PROMPT_VERSION  # noqa: E402
 from app.services.reconcile import (  # noqa: E402
     LedgerTask, ReconcileContext, Segment, reconcile,
 )
@@ -109,7 +109,8 @@ def render_markdown(report: dict) -> str:
         f"# Baseline vs candidate — synthetic fixtures ({m['run_id']})", "",
         "> SYNTHETIC ENGINEERING FIXTURES — not the official three-real-meeting evaluation.", "",
         f"- Provider / model: **{m['provider']} / {m['model']}** (same for all pipelines)",
-        f"- temperature={m['temperature']}, seed={m['seed']}, trials={m['trials']}",
+        f"- temperature={m['temperature']}, seed={m['seed']}, trials={m['trials']}, "
+        f"prompt version={m.get('prompt_version', 'v1')}",
         f"- Mode: **{m['mode']}**" + (f" (raw responses from `{m['replayed_from']}`)" if m.get("replayed_from") else ""),
         f"- Started {m['started_at']}, wall time {m['wall_seconds']}s, host {m['host']}", "",
         "## Aggregate (micro-averaged over all cases and trials)", "",
@@ -211,7 +212,7 @@ def main() -> int:
         "seed": seed, "trials": trials, "mode": "replay" if args.replay else "live",
         "replayed_from": args.replay, "started_at": started.isoformat(),
         "host": f"{platform.system()} {platform.machine()}", "fixtures": args.fixtures,
-        "synthetic": True,
+        "synthetic": True, "prompt_version": PROMPT_VERSION,
         "prompts_sha": __import__("hashlib").sha256((BASELINE_SYSTEM + CANDIDATE_SYSTEM).encode()).hexdigest()[:12],
     }, "trials": []}
 

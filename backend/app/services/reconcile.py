@@ -166,6 +166,7 @@ class ReconcileResult:
     open_questions: list[dict]
     rejected_events: list[dict]
     warnings: list[dict]
+    uncovered_segment_ids: list[str] = field(default_factory=list)
     fingerprint: str = ""
 
     def to_dict(self) -> dict:
@@ -702,9 +703,12 @@ class Reconciler:
                 "clarification_ids": clar_ids, "before": d.before,
             })
         clar.sort(key=lambda c: (c["rank"], c["id"]))
+        # Recall safety net: lines no valid event cited, so the organiser can check them.
+        cited = {s for _, _, ev in valid for s in ev.segment_ids}
+        uncovered = [s.id for s in self.segments if s.id not in cited and len(s.text.split()) >= 4]
         result = ReconcileResult(items=items, clarifications=clar, decisions=self.decisions,
                                  open_questions=self.open_questions, rejected_events=self.rejected,
-                                 warnings=self.warnings)
+                                 warnings=self.warnings, uncovered_segment_ids=uncovered)
         result.fingerprint = hashlib.sha256(
             json.dumps([items, clar], sort_keys=True, default=str).encode()).hexdigest()[:16]
         return result

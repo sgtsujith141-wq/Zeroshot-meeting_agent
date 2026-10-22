@@ -230,3 +230,11 @@ def test_dependency_stated_on_propose_event_is_honoured():
     ])
     testing = next(i for i in r.items if i["key"] == "testing")
     assert [d["key"] for d in testing["depends_on"]] == ["backend-api"]
+
+
+def test_uncovered_segments_are_reported_for_review():
+    s = segs(("Lead", "Rahul, please complete the authentication API by Friday."),
+             ("Samiksha", "API ready aadmele naanu testing start maadthini."))
+    r = run(s, [{"type": "PROPOSE", "task_key": "auth", "title": "Auth API", "owner": "Rahul",
+                 "strength": "firm", "segment_ids": ["s1"]}])
+    assert r.uncovered_segment_ids == ["s2"]
