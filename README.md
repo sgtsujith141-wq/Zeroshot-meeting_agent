@@ -76,7 +76,7 @@ The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 ## Tests and evaluation
 
 ```bash
-cd backend && .venv/bin/pytest -q          # 65 offline tests: fold, dates, identity, API flows, metrics
+cd backend && .venv/bin/pytest -q          # 68 offline tests: fold, dates, identity, API flows, metrics
 cd frontend && E2E_TOKEN=<token> npx playwright test   # UI smoke tests against a running server
 backend/.venv/bin/python evaluation/run_eval.py --provider ollama --model qwen3:8b   # fixture experiment
 backend/.venv/bin/python evaluation/real_eval.py report evaluation/private/*         # official metrics (real data)

@@ -21,6 +21,17 @@ Ordered by how much they matter for the PS 5.3 evaluation.
 
 ## Model-quality issues observed in live runs (qwen3:8b, synthetic transcripts)
 
+- **Code-mixed meeting 3 (live).**
+  - Worked: Hindi completion → TASK-4 completion proposal; Kannada "Wednesday olage" →
+    new task due 28 Oct.
+  - Missed: "Testing almost mugidide, naale finish maadthini" ("I'll finish tomorrow").
+    The model emitted a confirmation carrying the ledger date instead of the spoken
+    "naale". A deterministic evidence check now ignores deadline words that were not
+    spoken, but the real deadline change was not captured.
+- **Code-mixed memory Q&A.** "When is the finance sign-off follow-up due and who owns
+  it?": retrieval ranked the right Kannada-mixed line first, but qwen3:8b answered "not
+  found" (logged raw output). The system did not invent an answer, and the UI now shows
+  the closest passages, labelled as unconfirmed.
 - **Missed completion report.** "The refund API is done and merged" became a
   re-proposal, not `REPORT_COMPLETE`. The engine prevented a duplicate by asking
   "existing TASK-1 or new?", but the organiser had to mark the task done by hand.

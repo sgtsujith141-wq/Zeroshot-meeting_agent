@@ -56,6 +56,17 @@ export default function MemoryPage() {
                 </ul>
               </>
             )}
+            {!res.found && res.passages.length > 0 && (
+              <>
+                <h3 className="mb-2 mt-4 font-semibold">Closest stored passages (not confirmed as an answer)</h3>
+                <ul className="space-y-3">{res.passages.slice(0, 3).map(p => (
+                  <li key={p.passage_id} className="border-l-2 border-rule pl-3">
+                    <p className={p.doc_type === 'segment' ? 'spoken' : ''}>{p.doc_type === 'segment' ? `“${p.text}”` : p.text}</p>
+                    <div className="text-[12.5px] text-slate">{p.meeting_id && <Link className="text-update hover:underline" to={`/meetings/${p.meeting_id}${p.seg_key ? `#${p.seg_key}` : ''}`}>{p.meeting_title}</Link>}{p.speaker && `, ${p.speaker} at ${fmtTime(p.start_seconds)}`}</div>
+                  </li>))}
+                </ul>
+              </>
+            )}
           </Panel>
           <Panel title="Current approved state">
             {!res.current_state.length ? <p className="text-slate">No approved task is linked to these passages.</p> : (

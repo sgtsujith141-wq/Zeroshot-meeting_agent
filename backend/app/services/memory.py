@@ -7,12 +7,13 @@ retrieved passages; otherwise the answer is "not found in stored meetings".
 
 from __future__ import annotations
 
+import re
 import unicodedata
 
 from sqlalchemy import text
 from sqlmodel import Session, select
 
-from ..models import Decision, Meeting, OpenQuestion, Task, TranscriptSegment
+from ..models import Decision, LLMRun, Meeting, OpenQuestion, Task, TranscriptSegment
 from .llm import LLMError, LLMUnavailable, get_llm
 from .llm_schemas import GroundedAnswerOut
 from .prompts import MEMORY_SYSTEM
@@ -116,7 +117,7 @@ def answer(session: Session, question: str, use_llm: bool = True) -> dict:
     current = related_tasks(session, passages)
     base = {"question": question, "passages": passages, "current_state": current}
     if not passages:
-        return {**base, "answer": NOT_FOUND, "found": False, "mode": "retrieval", "citations": []}
+        return {**base, "answer": NOT_FOUND, "found": False, "mode": "retrieval", "citations": [], "current_state": []}
     if use_llm:
         try:
             llm = get_llm()
@@ -126,12 +127,18 @@ def answer(session: Session, question: str, use_llm: bool = True) -> dict:
                 + f") {p['text']}" for p in passages)
             user = f"<passages>\n{numbered}\n</passages>\n\nQuestion: {question}"
             out, call = llm.generate_json(MEMORY_SYSTEM, user, GroundedAnswerOut, purpose="memory_answer")
+            session.add(LLMRun(purpose=call.purpose, provider=call.provider, model=call.model,
+                               temperature=call.temperature, seed=call.seed, latency_ms=call.latency_ms,
+                               attempts=call.attempts, usage=call.usage, raw_text=call.raw_text))
+            session.commit()
             valid = {p["passage_id"] for p in passages}
-            cites = [c for c in out.citations if c in valid]
+            # Accept "P1", "[P1]", "p1 " etc.; anything else is not a citation.
+            cites = [c for c in (re.sub(r"[^A-Za-z0-9]", "", x).upper() for x in out.citations) if c in valid]
             if not out.found or not cites:
                 return {**base, "answer": NOT_FOUND, "found": False, "mode": "llm_grounded",
-                        "citations": [], "llm": {"provider": call.provider, "model": call.model},
-                        "note": "model gave no valid citation" if out.found else None}
+                        "citations": [], "current_state": [],
+                        "llm": {"provider": call.provider, "model": call.model},
+                        "note": "model gave no valid citation" if out.found else "model found no supporting passage"}
             cited = [p for p in passages if p["passage_id"] in cites]
             return {**base, "answer": out.answer, "found": True, "mode": "llm_grounded",
                     "current_state": related_tasks(session, cited),  # scoped to what was cited

@@ -265,9 +265,13 @@ def test_memory_grounded_and_not_found(client, llm):
     assert r["mode"] == "llm_grounded" and r["citations"] and r["current_state"]
     cited_ids = {p["passage_id"] for p in r["citations"]}
     assert cited_ids == {"P1"}  # current state is derived only from cited passages
+    llm.push("memory_answer", {"answer": "Rahul owns it.", "citations": ["[P1]"], "found": True})
+    r = client.post("/api/memory/query", json={"question": "who owns the authentication API"}).json()
+    assert r["found"] and [p["passage_id"] for p in r["citations"]] == ["P1"]  # bracketed id normalised
     llm.push("memory_answer", {"answer": "made up", "citations": ["P99"], "found": True})
     r = client.post("/api/memory/query", json={"question": "authentication API owner"}).json()
     assert r["found"] is False and r["answer"] == "not found in stored meetings"  # invalid citation rejected
+    assert r["current_state"] == []
     r = client.post("/api/memory/query", json={"question": "quarterly marketing budget", "use_llm": False}).json()
     assert r["found"] is False and r["answer"] == "not found in stored meetings"
 

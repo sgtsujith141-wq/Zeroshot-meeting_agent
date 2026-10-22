@@ -75,3 +75,22 @@ test('meeting 2: cross-meeting changes to existing tasks', async ({ page }) => {
   await expect(page.getByRole('dialog').getByText('waiting for prerequisites')).toHaveCount(0)  // unblocked
   await shot(page, 'm2-04-task2-history')
 })
+
+test('read-only screens: agenda, memory answer, code-mixed meeting', async ({ page }) => {
+  test.skip(STEP !== 'screens' || !TOKEN, 'set DEMO_FLOW=screens')
+  test.setTimeout(600_000)
+  await signIn(page)
+  await page.goto('/agenda')
+  await expect(page.getByRole('heading', { name: 'Next meeting agenda' })).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  await shot(page, 's-agenda')
+  await page.goto('/memory')
+  await page.getByLabel('Question').fill('When is the finance sign-off follow-up due and who owns it?')
+  await page.getByRole('button', { name: 'Ask' }).click()
+  await expect(page.getByRole('heading', { name: 'Current approved state' })).toBeVisible({ timeout: 540_000 })
+  await shot(page, 's-memory')
+  await page.goto('/meetings/3')
+  await expect(page.getByRole('heading', { name: /code-mixed/ })).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  await shot(page, 's-meeting3')
+})

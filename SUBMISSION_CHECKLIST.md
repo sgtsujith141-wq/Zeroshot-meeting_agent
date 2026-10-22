@@ -19,7 +19,7 @@ Sarvam keys, no SMTP, synthetic transcripts only.
 | 1 | Ingest transcripts | **PASS** | JSON / Sarvam JSON / VTT / SRT / text parsers. Live ingestion of 3 synthetic meetings via API and UI. `test_full_flow_transcript_to_approved_tasks`. |
 | 1b | Ingest audio/video recordings | **UNVERIFIED** | Upload validation with ffprobe, 16 kHz conversion and the Sarvam batch adapter are implemented. No `SARVAM_API_KEY`, so no recording was transcribed. Invalid media is rejected (`test_request_validation`). |
 | 2 | Identify speakers; correct/rename | **PARTIAL** | Rename/map speakers in the UI; mapping re-folds proposals with no model call. Live UI walkthrough mapped SPEAKER_03 → Meera; `test_unmapped_speaker_resolved_by_mapping_without_new_llm_call`. **Diarization itself is unverified** (Sarvam). |
-| 3 | English + ≥1 Indian language / code-mixed | **PARTIAL** | Code-mixed *text*: fixture T06; synthetic Kannada/Hindi-English meeting 3 processed live; romanised Hindi/Kannada date words; Kannada-script search and WER. **Code-mixed speech is unverified.** |
+| 3 | English + ≥1 Indian language / code-mixed | **PARTIAL** | Code-mixed *text*: fixture T06; synthetic meeting 3 processed live by qwen3:8b. The Hindi "runbook ready hai, maine kal hi complete kar diya" became a completion proposal for existing TASK-4. The Kannada "Priya follow up maadli, Wednesday olage" became a new task due 2026-10-28. Missed: "naale finish maadthini" (no deadline change). Also romanised Hindi/Kannada date words, and Kannada-script search and WER. **Code-mixed speech is unverified.** |
 | 4 | Minutes, discussion, decisions **and reasons**, unresolved questions | **PARTIAL** | Generated live with evidence validation (unsupported items dropped). Gap: the 8B model sometimes lists assignments as decisions and misses stated reasons (`docs/limitations.md`). |
 | 5 | Actions with owner, due date, priority, dependencies; flag unclear owner/deadline | **PASS** | Live runs and 23 reconcile/date tests. Ranked clarification questions (missing, anonymous or group owner; ambiguous deadline). |
 | 6 | Organiser review, edit, approve before tasks/messages | **PASS** | Hash-pinned server-side approval. No direct task creation route. `test_full_flow…` (stale hash → 409), `test_ambiguous_cancellation_blocks_approval_until_answered`, `test_prompt_injection_cannot_create_task_or_send`. Live UI approvals of meetings 1 and 2. |
@@ -51,8 +51,8 @@ Sarvam keys, no SMTP, synthetic transcripts only.
 
 | Item | Status |
 |---|---|
-| Backend tests (offline) | **PASS**: 65 passing (`cd backend && .venv/bin/pytest`) |
-| UI smoke tests | **PASS**: 3 Playwright tests against the live server; 2 scripted organiser walkthroughs on live data |
+| Backend tests (offline) | **PASS**: 68 passing (`cd backend && .venv/bin/pytest`) |
+| UI smoke tests | **PASS**: 4 Playwright tests against the live server (incl. phone-width overflow); 2 scripted organiser walkthroughs on live data |
 | CI | **PASS**: GitHub Actions green from commit `7b86116` (backend tests and frontend build) |
 | Secrets | `.env` git-ignored; `.env.example` placeholders only. Staged diffs scanned before each commit. |
 
