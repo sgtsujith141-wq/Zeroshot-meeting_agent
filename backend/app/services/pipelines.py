@@ -105,6 +105,7 @@ def baseline_items(out: BaselineOut, segments: list[Segment], ledger: list[Ledge
             "title": a.title, "owner": owner, "due_date": due, "state": state,
             "existing_task_id": existing,
             "operation": ("cancel" if state == "cancelled" and existing else
+                          "complete" if state == "completed" and existing else
                           "update" if existing else "create"),
             "blocked_by": [a.depends_on] if a.depends_on else [],
             "evidence": ev, "clarification_question": a.clarification_question,

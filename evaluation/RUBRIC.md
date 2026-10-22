@@ -83,3 +83,24 @@ Also reported:
 - A small local CPU model was used because no Gemini key was available. Absolute numbers
   are therefore not representative of `gemini-3.8-flash`. The comparison is only
   meaningful within one model.
+
+## Rubric v2 (2026-10-23, pre-registered with `fixtures/holdout_v1.json`)
+
+These additions were committed together with the holdout set, **before** any pipeline run
+on it:
+
+- **Closing operations are not active items.** A predicted item that completes or cancels
+  an *approved* task (`operation` `complete` or `cancel`) is not counted as an active
+  commitment. It is scored instead by per-case operation checks:
+  - `expected_ops`: some predicted item with that `existing_task_id` has that
+    operation and is not held or excluded;
+  - `forbidden_ops`: no such item exists (for example "almost done" must not
+    complete a task).
+- **The baseline may report `status: "completed"`** for a ledger task the meeting reports
+  as finished. This mirrors the candidate's `REPORT_COMPLETE`.
+- All other rules are unchanged. Replaying every recorded starter-kit run under v2 gives
+  the same scores, because no starter-kit case contains a closing operation.
+
+The holdout was written by the same developer who made the 2026-10-23 fixes, so it is a
+guard against overfitting to the 12 starter cases, **not** an independent benchmark. It is
+not the official real-meeting evaluation.

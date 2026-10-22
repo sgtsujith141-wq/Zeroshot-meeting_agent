@@ -223,6 +223,12 @@ def main() -> int:
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     json_path = out_dir / f"{run_id}.json"
+    n = 2
+    while json_path.exists():  # never overwrite an earlier report started in the same second
+        report["meta"]["run_id"] = f"{run_id}-{n}"
+        json_path = out_dir / f"{run_id}-{n}.json"
+        n += 1
+    run_id = report["meta"]["run_id"]
     for trial in range(1, trials + 1):
         cases = []
         rec_cases = {c["id"]: c for c in recorded_trials[trial - 1]["cases"]} if recorded_trials else {}

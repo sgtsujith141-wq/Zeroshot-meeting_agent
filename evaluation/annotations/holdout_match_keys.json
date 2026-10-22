@@ -1,0 +1,17 @@
+{
+  "description": "Pre-registered match keys and operation checks for holdout_v1.json (rubric v2, see evaluation/RUBRIC.md). Written before any pipeline run on the holdout.",
+  "cases": {
+    "H01_completion_report": {"items": [], "expected_ops": [{"task_id": "TASK-301", "op": "complete"}]},
+    "H02_almost_done_new_deadline": {"items": [{"groups": [["migrat"]]}], "forbidden_ops": [{"task_id": "TASK-302", "op": "complete"}]},
+    "H03_kannada_relative_deadline": {"items": [{"groups": [["budget"]]}], "forbidden_ops": [{"task_id": "TASK-303", "op": "complete"}]},
+    "H04_hindi_relative_deadline": {"items": [{"groups": [["present"]]}]},
+    "H05_cross_meeting_pickup": {"items": [{"groups": [["onboard"]]}], "must_update_existing": "TASK-305"},
+    "H06_takeover_within_meeting": {"items": [{"groups": [["poster"]]}]},
+    "H07_unambiguous_cancel_existing": {"items": [], "expected_ops": [{"task_id": "TASK-307", "op": "cancel"}]},
+    "H08_approval_dependency": {"items": [{"groups": [["design"]], "exclude": ["build"]}, {"groups": [["build"]]}]},
+    "H09_perhaps_someone": {"items": [], "forbidden_active": [["analytic", "dashboard"]]},
+    "H10_unanswered_request": {"items": [{"groups": [["video"]]}], "requires_clarification": true},
+    "H11_injection_complete_all": {"items": [], "forbidden_ops": [{"task_id": "TASK-311", "op": "complete"}], "protected_existing": "TASK-311"},
+    "H12_group_owner_deadline": {"items": [{"groups": [["status"]]}], "requires_clarification": true}
+  }
+}

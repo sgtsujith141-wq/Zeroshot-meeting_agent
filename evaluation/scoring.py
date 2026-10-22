@@ -10,6 +10,18 @@ from __future__ import annotations
 import re
 
 ACTIVE = {"proposed", "needs_clarification"}
+# Rubric v2: completing or cancelling an APPROVED task is a proposed operation, not
+# an active commitment; it is scored by expected_ops / forbidden_ops instead.
+CLOSING_OPS = {"complete", "cancel"}
+
+
+def is_active(item: dict) -> bool:
+    return item.get("state") in ACTIVE and item.get("operation") not in CLOSING_OPS
+
+
+def has_op(items: list[dict], task_id: str, op: str) -> bool:
+    return any(i.get("existing_task_id") == task_id and i.get("operation") == op
+               and i.get("state") not in ("held", "excluded", "no_change") for i in items)
 
 
 def _words(title: str | None) -> list[str]:
@@ -33,7 +45,7 @@ def _norm_owner(o: str | None) -> str | None:
 def score_case(fixture: dict, spec: dict, items: list[dict], clarifications: list[str]) -> dict:
     expected = fixture["expected_final_active_commitments"]
     exp_specs = spec.get("items", [])
-    active = [i for i in items if i.get("state") in ACTIVE]
+    active = [i for i in items if is_active(i)]
 
     # Greedy one-to-one assignment: task_id matches first, then keyword matches in order.
     used: set[int] = set()
@@ -112,6 +124,10 @@ def score_case(fixture: dict, spec: dict, items: list[dict], clarifications: lis
         touched = [i for i in items if i.get("existing_task_id") == tid
                    and (i.get("state") in ACTIVE or i.get("state") == "cancelled")]
         checks["existing_task_not_changed_or_cancelled"] = not touched
+    for eo in spec.get("expected_ops", []):
+        checks[f"op_{eo['op']}_{eo['task_id']}"] = has_op(items, eo["task_id"], eo["op"])
+    for fo in spec.get("forbidden_ops", []):
+        checks[f"no_{fo['op']}_{fo['task_id']}"] = not has_op(items, fo["task_id"], fo["op"])
     if spec.get("requires_clarification"):
         checks["clarification_raised"] = bool(clarifications)
 

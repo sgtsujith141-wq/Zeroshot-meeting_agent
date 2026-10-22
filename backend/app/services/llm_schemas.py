@@ -64,7 +64,7 @@ class BaselineActionOut(BaseModel):
     owner: str | None = None
     deadline_text: str | None = None
     due_date: str | None = Field(default=None, description="YYYY-MM-DD or null")
-    status: Literal["proposed", "needs_clarification", "tentative", "cancelled", "unclear"]
+    status: Literal["proposed", "needs_clarification", "tentative", "cancelled", "unclear", "completed"]
     existing_task_id: str | None = None
     depends_on: str | None = Field(default=None, description="Title of the prerequisite action")
     priority: Literal["high", "medium", "low"] | None = None
