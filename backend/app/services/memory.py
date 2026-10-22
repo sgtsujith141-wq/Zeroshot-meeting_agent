@@ -132,8 +132,10 @@ def answer(session: Session, question: str, use_llm: bool = True) -> dict:
                 return {**base, "answer": NOT_FOUND, "found": False, "mode": "llm_grounded",
                         "citations": [], "llm": {"provider": call.provider, "model": call.model},
                         "note": "model gave no valid citation" if out.found else None}
+            cited = [p for p in passages if p["passage_id"] in cites]
             return {**base, "answer": out.answer, "found": True, "mode": "llm_grounded",
-                    "citations": [p for p in passages if p["passage_id"] in cites],
+                    "current_state": related_tasks(session, cited),  # scoped to what was cited
+                    "citations": cited,
                     "llm": {"provider": call.provider, "model": call.model, "latency_ms": call.latency_ms}}
         except (LLMUnavailable, LLMError) as exc:
             base["llm_error"] = str(exc)[:200]

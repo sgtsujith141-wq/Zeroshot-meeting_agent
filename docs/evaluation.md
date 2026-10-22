@@ -82,7 +82,23 @@ recorded model responses** with the newer deterministic rules; no new model call
 | `59ed990` | Prompt v2 spells out ADD_DEPENDENCY. Uncovered-segment safety net. | requires a new live run (below) |
 | `4a88d15` | Owner restatement guard. Rule-based dependency cues (once/after X is ready, *aadmele*, *ke baad*), never guessing on ties. | strict F1 0.818 → **0.909**, dependencies 2/2, fully correct 11/12 (`20261022T172742Z…replay_posthoc-fold-v3`). llama3.1 unchanged: rules cannot recover items the model never proposed. |
 
-Live prompt-v2 runs: see section 1b once recorded.
+### 1b. Live runs with prompt v2 and the v3 fold (post-hoc; new model calls)
+
+| metric | baseline | baseline + date rules | **candidate** |
+|---|---|---|---|
+| **qwen3:8b** (`20261022T172800Z…prompt-v2`) | | | |
+| strict precision / recall / F1 | 0.417 / 0.455 / 0.435 | 0.667 / 0.727 / 0.696 | **0.909 / 0.909 / 0.909** |
+| owner errors / due-date errors | 3 / 3 | 2 / 0 | 0 / 0 |
+| safety checks passed | 5/8 | 5/8 | **8/8** |
+| dependencies correct | 1/2 | 1/2 | 1/2 |
+| cases fully correct | 7/12 | 7/12 | **11/12** |
+
+**Run-to-run variance.** The baseline prompt was *identical* in the v1 and v2 runs, yet
+baseline strict F1 moved from 0.348 to 0.435. Local CPU inference is not bit-exact even at
+temperature 0 with a fixed seed. Concurrent requests to the same Ollama server, which
+happened during these runs, are a likely cause. Treat differences of roughly ±0.1 F1 on
+these 11 items as noise. The safety-check gap (8/8 vs 4–5/8) has been stable across every
+run so far.
 
 ### Gate decision
 
