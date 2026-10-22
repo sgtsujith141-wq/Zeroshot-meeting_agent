@@ -166,7 +166,7 @@ export default function MeetingPage() {
               <ul className="space-y-4">{m.decisions.map(d => (
                 <li key={d.id}>
                   <div className="flex items-start justify-between gap-2"><p className="font-medium">{d.text}</p><StateChip state={d.approval_status} /></div>
-                  <p className="text-[14px] text-slate">{d.rationale ? <>Reason given: {d.rationale}</> : 'No reason was stated in the meeting.'}</p>
+                  <p className="text-[14px] text-slate">{d.rationale ? <>Reason given: {d.rationale}</> : 'No reason was extracted; check the quote below.'}</p>
                   <div className="mt-2 space-y-2">{d.evidence_segment_ids.map(k => <Quote key={k} segKey={k} seg={segs[k]} speakerName={names[segs[k]?.speaker_label]} />)}</div>
                 </li>))}
               </ul>

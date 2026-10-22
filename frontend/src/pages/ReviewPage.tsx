@@ -282,7 +282,7 @@ function Review({ mid }: { mid: number }) {
             <li key={d.id} className="rounded-[10px] border border-rule bg-panel p-4">
               <label className="flex items-start gap-2 font-medium"><input type="checkbox" className="mt-1" disabled={!editable} checked={d.include}
                 onChange={e => patch({ decisions: { [d.id]: { include: e.target.checked } } })} />{d.text}</label>
-              <p className="pl-6 text-[14px] text-slate">{d.rationale ? `Reason given: ${d.rationale}` : 'No reason was stated.'}</p>
+              <p className="pl-6 text-[14px] text-slate">{d.rationale ? `Reason given: ${d.rationale}` : 'No reason was extracted; check the quote below.'}</p>
               <div className="mt-2 space-y-2 pl-6">{d.evidence_segment_ids.map(k => <Quote key={k} segKey={k} seg={cs.segments[k]} speakerName={names[cs.segments[k]?.speaker_label]} meetingId={mid} />)}</div>
             </li>))}
           </ul>

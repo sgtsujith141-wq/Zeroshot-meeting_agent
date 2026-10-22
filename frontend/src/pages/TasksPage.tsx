@@ -5,6 +5,8 @@ import type { Task, TaskDetail } from '../types'
 import { Button, Chip, Empty, ErrorBox, Loading, PageHeader, StateChip, stateLabel, useLoad } from '../components/ui'
 
 const COLUMNS = ['todo', 'in_progress', 'blocked', 'done', 'cancelled'] as const
+// Task statuses (the shared labels describe proposal states, e.g. 'Cancelled in meeting').
+const taskLabel = (s: string) => (s === 'cancelled' ? 'Cancelled' : stateLabel(s))
 
 function TaskDrawer({ code, onClose, onChanged }: { code: string; onClose: () => void; onChanged: () => void }) {
   const { data: t, error, reload } = useLoad(() => api.get<TaskDetail>(`/api/tasks/${code}`), [code])
@@ -29,12 +31,12 @@ function TaskDrawer({ code, onClose, onChanged }: { code: string; onClose: () =>
               <dt className="text-slate">Owner</dt><dd>{t.owner ?? 'unassigned'} <span className="text-[12.5px] text-slate">({t.owner_certainty.replace(/_/g, ' ')})</span></dd>
               <dt className="text-slate">Due</dt><dd>{fmtDate(t.due_date)} {t.deadline_raw && <span className="text-[12.5px] text-slate">said “{t.deadline_raw}” ({t.deadline_kind})</span>}</dd>
               <dt className="text-slate">Priority</dt><dd>{t.priority ?? 'not set'} {t.priority_basis && <span className="text-[12.5px] text-slate">({t.priority_basis})</span>}</dd>
-              <dt className="text-slate">Waits for</dt><dd>{t.prerequisites.length ? t.prerequisites.map(p => `${p.code} (${stateLabel(p.status)})`).join(', ') : 'nothing'}</dd>
+              <dt className="text-slate">Waits for</dt><dd>{t.prerequisites.length ? t.prerequisites.map(p => `${p.code} (${taskLabel(p.status)})`).join(', ') : 'nothing'}</dd>
               <dt className="text-slate">Calendar</dt><dd>{t.calendar_event ? <>{fmtDate(t.calendar_event.date)}, {t.calendar_event.sync_state === 'local' ? 'in-app only' : 'exported as .ics'} <Button kind="quiet" onClick={() => download(`/api/tasks/${code}/event.ics`, `${code}.ics`)}>Download .ics</Button></> : 'no due date'}</dd>
             </dl>
             <div>
               <h3 className="mb-1 font-semibold">Move to</h3>
-              <div className="flex flex-wrap gap-2">{t.allowed_transitions.map(s => <Button key={s} onClick={() => move(s)}>{stateLabel(s)}</Button>)}</div>
+              <div className="flex flex-wrap gap-2">{t.allowed_transitions.map(s => <Button key={s} onClick={() => move(s)}>{taskLabel(s)}</Button>)}</div>
               <p className="mt-1 text-[12.5px] text-slate">Starting or finishing requires every prerequisite to be done.</p>
             </div>
             <div>
@@ -77,8 +79,8 @@ export default function TasksPage() {
           {COLUMNS.map(col => {
             const items = data.filter(t => (col === 'blocked' ? t.status === 'blocked' || (t.is_blocked && t.status === 'todo') : t.status === col && !(col === 'todo' && t.is_blocked)))
             return (
-              <section key={col} aria-label={stateLabel(col)}>
-                <h2 className="mb-2 flex items-center justify-between text-[14px] font-semibold">{stateLabel(col)}<span className="font-normal text-slate">{items.length}</span></h2>
+              <section key={col} aria-label={taskLabel(col)}>
+                <h2 className="mb-2 flex items-center justify-between text-[14px] font-semibold">{taskLabel(col)}<span className="font-normal text-slate">{items.length}</span></h2>
                 <ul className="space-y-2">
                   {items.map(t => (
                     <li key={t.code}>
