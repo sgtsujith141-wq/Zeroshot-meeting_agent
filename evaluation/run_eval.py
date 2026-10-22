@@ -89,7 +89,7 @@ def evaluate_case(fx: dict, spec: dict, llm, recorded: dict | None) -> dict:
             cr = run_candidate(llm, meeting_dt, tz, segments, ledger, directory)
             interp, result, c_call = cr.interpretation, cr.result, cr.call.to_dict()
         items = candidate_items(result)
-        clar = [c["question"] for c in result.clarifications]
+        clar = [c["question"] for c in result.clarifications if not c.get("deferred")]
         out["candidate"] = {"items": items, "clarifications": clar,
                             "clarification_detail": result.clarifications,
                             "warnings": result.warnings, "rejected_events": result.rejected_events,

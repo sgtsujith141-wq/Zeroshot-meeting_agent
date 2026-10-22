@@ -189,6 +189,7 @@ class Reconciler:
         self.open_questions: list[dict] = []
         self.rejected: list[dict] = []
         self.warnings: list[dict] = []
+        self._last_target: Draft | None = None
         self.injected = injection_markers(segments)
         for sid, why in self.injected.items():
             self.warnings.append({"kind": "possible_prompt_injection", "segment_ids": [sid], "detail": why})
@@ -369,6 +370,16 @@ class Reconciler:
 
     def apply(self, ev: CommitmentEventOut) -> None:
         speaker = self._speaker_for(ev)
+        self._last_target = None
+        self._apply_type(ev, speaker)
+        # A prerequisite stated on any work-item event (not only ADD_DEPENDENCY) is honoured.
+        if (ev.depends_on_key and ev.type in (EventType.PROPOSE, EventType.CONFIRM, EventType.REASSIGN,
+                                              EventType.CHANGE_DEADLINE)):
+            d = self._last_target
+            if d is not None and d.status not in ("cancelled", "rejected"):
+                self._add_dependency(d, ev)
+
+    def _apply_type(self, ev: CommitmentEventOut, speaker: str | None) -> None:
         t = ev.type
         if t == EventType.DECISION:
             self.decisions.append({"text": ev.text or ev.title or "", "rationale": ev.rationale,
@@ -381,6 +392,7 @@ class Reconciler:
         mode = ("propose" if t == EventType.PROPOSE else
                 "destructive" if t in (EventType.CANCEL, EventType.REJECT) else "modify")
         d = self._resolve_target(ev, mode)
+        self._last_target = d
         if d is None:
             if t in (EventType.CANCEL, EventType.REJECT):
                 self.warnings.append({"kind": "unmatched_cancellation", "segment_ids": ev.segment_ids,
@@ -481,20 +493,7 @@ class Reconciler:
             return
 
         if t == EventType.ADD_DEPENDENCY:
-            prereq = self._resolve_prereq(ev)
-            if prereq is None:
-                d.add_issue(Issue("missing_prerequisite",
-                                  f"“{d.title}” depends on “{ev.depends_on_key}”, which is not a known task",
-                                  ev.segment_ids, {"depends_on": ev.depends_on_key}))
-                self._log(d, ev, f"depends on unknown “{ev.depends_on_key}”")
-                return
-            if prereq == d.key or self._reaches(prereq, d.key):
-                self.warnings.append({"kind": "dependency_cycle_rejected", "segment_ids": ev.segment_ids,
-                                      "detail": f"{d.key} → {prereq} would create a cycle"})
-                return
-            if prereq not in d.depends_on:
-                d.depends_on.append(prereq)
-            self._log(d, ev, f"depends on {prereq}")
+            self._add_dependency(d, ev)
             return
 
         if t == EventType.MARK_BLOCKED:
@@ -506,6 +505,22 @@ class Reconciler:
             d.status = "completed"
             self._log(d, ev, "reported complete (spoken report; verify before closing)")
             return
+
+    def _add_dependency(self, d: Draft, ev: CommitmentEventOut) -> None:
+        prereq = self._resolve_prereq(ev)
+        if prereq is None:
+            d.add_issue(Issue("missing_prerequisite",
+                              f"“{d.title}” depends on “{ev.depends_on_key}”, which is not a known task",
+                              ev.segment_ids, {"depends_on": ev.depends_on_key}))
+            self._log(d, ev, f"depends on unknown “{ev.depends_on_key}”")
+            return
+        if prereq == d.key or self._reaches(prereq, d.key):
+            self.warnings.append({"kind": "dependency_cycle_rejected", "segment_ids": ev.segment_ids,
+                                  "detail": f"{d.key} → {prereq} would create a cycle"})
+            return
+        if prereq not in d.depends_on:
+            d.depends_on.append(prereq)
+        self._log(d, ev, f"depends on {prereq}")
 
     def _resolve_prereq(self, ev: CommitmentEventOut) -> str | None:
         key = norm_key(ev.depends_on_key)
@@ -648,10 +663,12 @@ class Reconciler:
             if d.existing_task_id and op == "none" and not d.issues:
                 continue
             clar_ids = []
+            # Smallest useful question set: while an item's existence is in question,
+            # its attribute questions are deferred (re-surfaced once that is answered).
             asked = [i for i in d.issues if i.kind in EXISTENCE_ISSUES] or d.issues
-            deferred = [i.detail for i in d.issues if i not in asked]
-            for issue in asked:
-                if issue.kind == "unmapped_speaker":  # one question per speaker label
+            for issue in d.issues:
+                deferred = issue not in asked
+                if issue.kind == "unmapped_speaker" and not deferred:  # one question per label
                     label = issue.data.get("speaker_label")
                     if label in unmapped_seen:
                         clar_ids.append(unmapped_seen[label])
@@ -660,12 +677,12 @@ class Reconciler:
                                 c["item_keys"].append(d.key)
                         continue
                 cid = f"q{len(clar) + 1}"
-                if issue.kind == "unmapped_speaker":
+                if issue.kind == "unmapped_speaker" and not deferred:
                     unmapped_seen[issue.data.get("speaker_label")] = cid
                 clar.append({"id": cid, "kind": issue.kind, "rank": ISSUE_RANK.get(issue.kind, 5),
                              "question": issue.detail, "item_keys": [d.key],
                              "segment_ids": issue.segment_ids, "data": issue.data,
-                             "blocking": True})
+                             "blocking": True, "deferred": deferred})
                 clar_ids.append(cid)
             deps = []
             for dep in d.depends_on:
@@ -682,7 +699,7 @@ class Reconciler:
                 "deadline": d.deadline.to_dict(), "priority": self._priority(d),
                 "depends_on": deps, "blocked_reason": d.blocked_reason,
                 "evidence_segment_ids": d.evidence, "history": d.history,
-                "clarification_ids": clar_ids, "deferred_questions": deferred, "before": d.before,
+                "clarification_ids": clar_ids, "before": d.before,
             })
         clar.sort(key=lambda c: (c["rank"], c["id"]))
         result = ReconcileResult(items=items, clarifications=clar, decisions=self.decisions,

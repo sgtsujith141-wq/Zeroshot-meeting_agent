@@ -60,6 +60,9 @@ END_OF_WEEK = re.compile(r"\b(end of (?:the |this )?week|eow|week end|weekend)\b
 THIS_WEEK = re.compile(r"\b(this week|within the week|ee vaara)\b", re.I)
 NEXT_WEEK = re.compile(r"\b(next week|mundina vaara|agle hafte)\b", re.I)
 END_OF_MONTH = re.compile(r"\b(end of (?:the |this )?month|eom|month end)\b", re.I)
+CONDITIONAL = re.compile(
+    r"\b(after|once|when|as soon as|aadmele|aadamele|aada mele|aadmel|aadhmele|ke baad|baad mein|hone ke baad)\b",
+    re.I)
 VAGUE = re.compile(r"\b(later|soon|asap|sometime|eventually|whenever|next sprint|at some point)\b", re.I)
 
 
@@ -239,6 +242,12 @@ def resolve_deadline(raw: str | None, meeting_date: date) -> DeadlineInfo:
         info.kind, info.ambiguous = "unknown", True
         info.candidates = [_next_weekday(meeting_date, 4, allow_today=True).isoformat()]
         info.note = "'this week' is a range, not a date"
+        return info
+
+    if CONDITIONAL.search(text):
+        # "after the API is ready" / "API ready aadmele" states a precondition, not a date.
+        info.kind = "none"
+        info.note = "conditional timing (after/once …) — a precondition, not a calendar deadline"
         return info
 
     info.kind = "unknown"

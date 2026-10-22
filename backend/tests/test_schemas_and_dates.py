@@ -62,3 +62,10 @@ def test_owner_resolution_rules():
     assert is_anonymous_label("0") and is_anonymous_label("Speaker_00") and not is_anonymous_label("Rahul")
     strict = SpeakerDirectory({}, strict=True)
     assert resolve_owner("SELF", "Rahul", strict).name is None  # unconfirmed in strict app mode
+
+
+@pytest.mark.parametrize("raw", ["after the API is ready", "aadmele naanu", "once QA signs off", "API ke baad"])
+def test_conditional_timing_is_not_a_deadline(raw):
+    # Post-hoc fix after eval run 20261022T165631Z: "aadmele" (Kannada: after) was read as a deadline.
+    d = resolve_deadline(raw, MON)
+    assert d.kind == "none" and d.date is None and not d.ambiguous

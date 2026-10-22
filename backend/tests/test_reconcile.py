@@ -216,3 +216,17 @@ def test_group_owner_requires_single_person():
                  "deadline_text": "by Friday", "strength": "firm", "segment_ids": ["s1"]}])
     assert r.items[0]["state"] == "needs_clarification"
     assert r.clarifications[0]["kind"] == "group_owner"
+
+
+def test_dependency_stated_on_propose_event_is_honoured():
+    # Post-hoc fix after eval run 20261022T165631Z: the model put depends_on_key on PROPOSE.
+    s = segs(("Lead", "Rahul owns the backend API, due Friday."),
+             ("Lead", "Samiksha starts testing only after the backend API is finished."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "backend-api", "title": "Develop the backend API", "owner": "Rahul",
+         "deadline_text": "Friday", "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "PROPOSE", "task_key": "testing", "title": "Start testing", "owner": "Samiksha",
+         "depends_on_key": "backend-api", "strength": "firm", "segment_ids": ["s2"]},
+    ])
+    testing = next(i for i in r.items if i["key"] == "testing")
+    assert [d["key"] for d in testing["depends_on"]] == ["backend-api"]
