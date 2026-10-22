@@ -340,3 +340,12 @@ def test_deadline_words_must_occur_in_cited_speech():
         {"type": "PROPOSE", "task_key": "x", "title": "Finish it", "owner": "Rahul", "deadline_text": "by Friday",
          "strength": "firm", "segment_ids": ["s1"]}])
     assert ok.items[0]["deadline"]["date"] == "2026-10-23"
+
+
+def test_cancellation_without_target_becomes_open_question():
+    # From the llama3.1 prompt-v2 run (T09): CANCEL had neither task_key nor title.
+    s = segs(("Lead", "Cancel the old testing plan."))
+    r = run(s, [{"type": "CANCEL", "cancel_scope": "task", "text": "Cancel the old testing plan",
+                 "segment_ids": ["s1"]}], [LedgerTask("TASK-102", "QA testing", owner="Priya")])
+    assert r.items == [] and r.rejected_events == []
+    assert r.open_questions and "Cancel the old testing plan" in r.open_questions[0]["text"]

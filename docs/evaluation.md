@@ -93,12 +93,28 @@ recorded model responses** with the newer deterministic rules; no new model call
 | dependencies correct | 1/2 | 1/2 | 1/2 |
 | cases fully correct | 7/12 | 7/12 | **11/12** |
 
+| **llama3.1:8b** (`20261022T174138Z…prompt-v2`) | | | |
+| strict precision / recall / F1 | 0.643 / 0.818 / 0.720 | 0.714 / 0.909 / 0.800 | **0.900 / 0.818 / 0.857** |
+| owner errors / false positives | 2 / 3 | 1 / 3 | 1 / 0 |
+| safety checks passed | 4/8 | 4/8 | **7/8** |
+| dependencies correct | 2/2 | 2/2 | 1/1 |
+| cases fully correct | 8/12 | 8/12 | **9/12** |
+
+**Prompt v2 did not help llama3.1. It was slightly worse than v1** (0.90 → 0.857
+F1, 8/8 → 7/8 safety). In T09 the model emitted a `CANCEL` with no target. The fold
+rejected it, so TASK-102 was safely untouched, but no clarification question was
+raised, and that is the first failed safety check for the candidate in any run. Since
+then, a cancellation without a target becomes an explicit open question for the
+organiser (`a4b…`, product behaviour). Open questions are deliberately **not** counted
+by the rubric, so the recorded 7/8 stands. Replays of all four recorded runs with the
+final code give the same scores as in the tables.
+
 **Run-to-run variance.** The baseline prompt was *identical* in the v1 and v2 runs, yet
 baseline strict F1 moved from 0.348 to 0.435. Local CPU inference is not bit-exact even at
 temperature 0 with a fixed seed. Concurrent requests to the same Ollama server, which
 happened during these runs, are a likely cause. Treat differences of roughly ±0.1 F1 on
-these 11 items as noise. The safety-check gap (8/8 vs 4–5/8) has been stable across every
-run so far.
+these 11 items as noise. The safety-check gap has held in all four live runs (candidate 8/8, 8/8, 8/8, 7/8 vs
+baseline 4–5/8).
 
 ### Gate decision
 

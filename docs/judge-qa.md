@@ -14,8 +14,8 @@ We are not claiming nobody else does this. Our narrow focus is *commitment state
 - "Cancel the old testing plan" is asked about, not executed.
 - "I can take it" from an anonymous speaker label is not assigned to a fake person.
 
-On our 12 synthetic cases, the reconciliation engine passed 8/8 safety checks, against
-4–5/8 for direct extraction with the same model.
+On our 12 synthetic cases, the reconciliation engine passed 8/8 safety checks in three
+of four live runs and 7/8 in one, against 4–5/8 for direct extraction with the same model.
 
 **How are model errors handled?**
 - Structured output is validated against a schema (one repair retry).

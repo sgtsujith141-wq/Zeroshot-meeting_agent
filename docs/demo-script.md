@@ -90,8 +90,8 @@ processed by then, show them instead and say so.
 - Same model, same inputs, pre-registered rubric, 12 synthetic cases:
   - direct extraction strict F1 **0.35** vs our engine **0.82** on qwen3:8b;
   - **0.72 vs 0.90** on llama3.1:8b;
-  - safety checks (no ghost tasks, no silent cancellation, no fake owner, no duplicate)
-    **8/8 vs 4–5/8**.
+  - safety checks (no ghost tasks, no silent cancellation, no fake owner, no duplicate):
+    **8/8 vs 4–5/8**, and 7/8 in one later post-hoc run, which we also show.
 - "About half the qwen gain is just deterministic date handling. We measured that with
   an ablation."
 - "Where we were worse: dependency recall on llama3.1. We show that rather than hide it."

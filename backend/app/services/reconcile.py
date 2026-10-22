@@ -227,6 +227,13 @@ class Reconciler:
                 return None
             ev = ev.model_copy(update={"deadline_text": None})
         needs_task = ev.type not in (EventType.DECISION, EventType.OPEN_QUESTION)
+        if ev.type in (EventType.CANCEL, EventType.REJECT) and not (ev.task_key or ev.title):
+            # A cancellation with no stated target is never dropped silently: ask what it cancels.
+            self.warnings.append({"kind": "unmatched_cancellation", "segment_ids": valid,
+                                  "detail": f"event {n}: a cancellation without a target; nothing changed"})
+            self.open_questions.append({"text": f"What exactly is cancelled by: “{self._cited_text(valid)}”?",
+                                        "segment_ids": valid})
+            return None
         if needs_task and not (ev.task_key or ev.title):
             self.rejected.append({"index": n, "event": ev.model_dump(mode="json"),
                                   "reason": "event has neither task_key nor title"})
