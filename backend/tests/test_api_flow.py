@@ -169,6 +169,7 @@ def test_cross_meeting_update_modifies_existing_task_without_duplicate(client, l
     assert len(tasks) == 2
     t = client.get(f"/api/tasks/{code}").json()
     assert t["owner"] == "Priya" and t["due_date"] == "2026-10-26" and t["revision"] == 2
+    assert t["priority"] == item["priority"]["value"]  # what was reviewed is what was applied
     assert [r["snapshot"]["owner"] for r in t["revisions"]] == ["Rahul", "Priya"]  # immutable history
     assert {e["meeting_id"] for e in t["evidence_detail"]} == {1, mid2}
 

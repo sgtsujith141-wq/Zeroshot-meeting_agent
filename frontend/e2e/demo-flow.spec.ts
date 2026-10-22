@@ -43,5 +43,35 @@ test('meeting 2: cross-meeting changes to existing tasks', async ({ page }) => {
   await signIn(page)
   await page.goto(`/review/${process.env.DEMO_MEETING_ID ?? 2}`)
   await expect(page.getByRole('heading', { name: /Review:/ })).toBeVisible()
+  await expect(page.getByText('Changes to existing tasks')).toBeVisible()
   await shot(page, 'm2-01-review')
+  // Answer the organiser questions shown by the live proposal (resumable).
+  if (!(await page.getByRole('heading', { name: 'Approved and applied' }).count())) {
+    const same = page.getByRole('button', { name: /^Same as TASK-/ })
+    if (await same.count()) { await same.first().click(); await expect(same).toHaveCount(0) }
+    await page.waitForLoadState('networkidle')
+    const keep = page.getByRole('button', { name: 'Keep the task' })
+    if (await keep.count()) { await keep.first().click(); await expect(keep).toHaveCount(0) }
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('button', { name: /^Approve \d+ change/ })).toBeEnabled()
+    await shot(page, 'm2-02-ready')
+    await page.getByRole('button', { name: /^Approve \d+ change/ }).click()
+  }
+  await expect(page.getByRole('heading', { name: 'Approved and applied' })).toBeVisible()
+  await shot(page, 'm2-03-applied')
+  // TASK-1 was reported done in the meeting but the model missed it: the organiser marks it.
+  await page.getByRole('link', { name: 'Task board', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'To do' })).toBeVisible()
+  await page.getByRole('button', { name: /TASK-1\b.*Finish the refund API/ }).click()
+  await expect(page.getByRole('heading', { name: 'Move to' })).toBeVisible()
+  const done = page.getByRole('button', { name: 'Done', exact: true })
+  if (await done.count()) {
+    await done.click()
+    await expect(page.getByRole('dialog').getByText('Done', { exact: true }).first()).toBeVisible()
+  }
+  await page.getByRole('button', { name: 'Close' }).click()
+  await page.getByRole('button', { name: /TASK-2\b.*Run regression tests/ }).click()
+  await expect(page.getByRole('heading', { name: 'Approved history' })).toBeVisible()
+  await expect(page.getByRole('dialog').getByText('waiting for prerequisites')).toHaveCount(0)  // unblocked
+  await shot(page, 'm2-04-task2-history')
 })

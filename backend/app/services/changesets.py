@@ -468,6 +468,9 @@ def _apply(session: Session, cs: ChangeSet, approval: Approval, actor: str) -> d
                 t.deadline_kind = deadline.get("kind", "none")
             if item.get("blocked_reason"):
                 t.status, t.blocked_reason = "blocked", item["blocked_reason"]
+            # Apply the priority shown in the reviewed proposal unless the organiser set one on the board.
+            if item["priority"]["value"] and t.priority_basis not in ("set by organiser",):
+                t.priority, t.priority_basis = item["priority"]["value"], item["priority"]["basis"]
             updated.append(t.code)
         t.last_meeting_id = meeting.id
         t.evidence = list(t.evidence) + [e for e in evidence if e not in t.evidence]

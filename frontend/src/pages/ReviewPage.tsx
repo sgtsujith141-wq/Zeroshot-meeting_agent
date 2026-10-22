@@ -289,7 +289,7 @@ function Review({ mid }: { mid: number }) {
         </section>
       )}
 
-      {(p.warnings.length > 0 || p.rejected_events.length > 0 || (p as { uncovered_segment_ids?: string[] }).uncovered_segment_ids?.length) && (
+      {(p.warnings.length > 0 || p.rejected_events.length > 0 || ((p as { uncovered_segment_ids?: string[] }).uncovered_segment_ids?.length ?? 0) > 0) && (
         <Panel title="Checks" className="mb-8">
           <ul className="space-y-2 text-[14px]">
             {p.warnings.map((w, i) => <li key={i}><Chip tone={w.kind === 'possible_prompt_injection' ? 'cancel' : 'neutral'}>{w.kind.replace(/_/g, ' ')}</Chip> <span className="ml-1">{w.detail}</span> <span className="text-slate">({w.segment_ids.join(', ')})</span></li>)}
