@@ -1,0 +1,4389 @@
+{
+  "meta": {
+    "run_id": "20261022T165631Z_ollama_qwen3-8b",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "temperature": 0.0,
+    "seed": 7,
+    "trials": 1,
+    "mode": "live",
+    "replayed_from": null,
+    "started_at": "2026-10-22T16:56:31.547754+00:00",
+    "host": "Darwin x86_64",
+    "fixtures": "/Volumes/Volume/Projects/Zeroshot/evaluation/fixtures/PS53_commitment_test_fixtures.json",
+    "synthetic": true,
+    "prompts_sha": "e4f531522bf2",
+    "wall_seconds": 487.4
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "cases": [
+        {
+          "id": "T01_direct",
+          "scenario": "Direct explicit assignment",
+          "baseline": {
+            "items": [
+              {
+                "title": "Complete the authentication API",
+                "owner": "Rahul",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 1,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Complete authentication API",
+                    "owner": "Rahul",
+                    "due_date": "2026-10-23",
+                    "state": "proposed"
+                  },
+                  "predicted": {
+                    "title": "Complete the authentication API",
+                    "owner": "Rahul",
+                    "due_date": "2026-10-22",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1",
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due '2026-10-22' != '2026-10-23'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Complete the authentication API",
+                  "owner": "Rahul",
+                  "deadline_text": "by Friday",
+                  "due_date": "2026-10-22",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 15912,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Complete the authentication API\", \"status\": \"proposed\", \"segment_ids\": [\"s1\", \"s2\"], \"owner\": \"Rahul\", \"deadline_text\": \"by Friday\", \"due_date\": \"2026-10-22\", \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 754,
+                "output_tokens": 84,
+                "eval_seconds": 15.19
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Complete the authentication API",
+                "owner": "Rahul",
+                "due_date": "2026-10-23",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Complete the authentication API",
+                "owner": "Rahul",
+                "due_date": "2026-10-23",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "auth-api",
+                  "title": "Complete the authentication API",
+                  "owner": "Rahul",
+                  "deadline_text": "by Friday",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "auth-api",
+                  "title": null,
+                  "owner": "SELF",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 12908,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"auth-api\",\"title\":\"Complete the authentication API\",\"owner\":\"Rahul\",\"deadline_text\":\"by Friday\",\"strength\":\"firm\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s2\"],\"task_key\":\"auth-api\",\"owner\":\"SELF\"}]}",
+              "usage": {
+                "prompt_tokens": 1059,
+                "output_tokens": 68,
+                "eval_seconds": 12.62
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "auth-api",
+                  "title": "Complete the authentication API",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Rahul",
+                  "owner_status": "self_mapped",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "by Friday",
+                    "date": "2026-10-23",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "medium",
+                    "basis": "derived: due 4 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Rahul",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-10-23",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Rahul",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "51b7a3760db531e7"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T02_reassign",
+          "scenario": "Later explicit owner reassignment",
+          "baseline": {
+            "items": [
+              {
+                "title": "Handle login testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Write the API docs",
+                "owner": "Priya",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 2,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Handle login testing",
+                  "owner": "Samiksha",
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3"
+                  ]
+                },
+                {
+                  "title": "Write the API docs",
+                  "owner": "Priya",
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 33064,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Handle login testing\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s1\", \"s2\", \"s3\"],\n      \"owner\": \"Samiksha\",\n      \"deadline_text\": null,\n      \"due_date\": null,\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": null\n    },\n    {\n      \"title\": \"Write the API docs\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s2\"],\n      \"owner\": \"Priya\",\n      \"deadline_text\": null,\n      \"due_date\": null,\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": null\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 776,
+                "output_tokens": 167,
+                "eval_seconds": 30.43
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Handle login testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Write the API docs",
+                "owner": "Priya",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 2,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Handle login testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ]
+              },
+              {
+                "title": "Write the API docs",
+                "owner": "Priya",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "login-testing",
+                  "title": "Handle login testing",
+                  "owner": "Priya",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "REASSIGN",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "login-testing",
+                  "title": null,
+                  "owner": "Samiksha",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "api-docs",
+                  "title": "Write the API docs",
+                  "owner": "Priya",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s3"
+                  ],
+                  "task_key": "login-testing",
+                  "title": null,
+                  "owner": "SELF",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 27002,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"login-testing\",\"title\":\"Handle login testing\",\"owner\":\"Priya\",\"strength\":\"firm\"},{\"type\":\"REASSIGN\",\"segment_ids\":[\"s2\"],\"task_key\":\"login-testing\",\"owner\":\"Samiksha\",\"strength\":\"firm\"},{\"type\":\"PROPOSE\",\"segment_ids\":[\"s2\"],\"task_key\":\"api-docs\",\"title\":\"Write the API docs\",\"owner\":\"Priya\",\"strength\":\"firm\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s3\"],\"task_key\":\"login-testing\",\"owner\":\"SELF\",\"strength\":\"firm\"}]}",
+              "usage": {
+                "prompt_tokens": 1081,
+                "output_tokens": 128,
+                "eval_seconds": 24.14
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "login-testing",
+                  "title": "Handle login testing",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Samiksha",
+                  "owner_status": "self_mapped",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Priya",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "REASSIGN",
+                      "summary": "reassigned: owner Priya \u2192 Samiksha",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Samiksha",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                },
+                {
+                  "key": "api-docs",
+                  "title": "Write the API docs",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Priya",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Priya",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "29fe4e67266cf30e"
+            },
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 2,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T03_cancel",
+          "scenario": "Proposed action then explicit cancellation",
+          "baseline": {
+            "items": [
+              {
+                "title": "Migrate the service to a new API",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_migrat": true
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Migrate the service to a new API",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "cancelled",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 11334,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Migrate the service to a new API\",\n      \"status\": \"cancelled\",\n      \"segment_ids\": [\"s1\", \"s2\"]\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 749,
+                "output_tokens": 49,
+                "eval_seconds": 8.8
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Migrate the service to a new API",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_migrat": true
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Migrate the service to a new API",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": null,
+                "operation": "drop",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "api-migration",
+                  "title": "Migrate the service to a new API",
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CANCEL",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "api-migration",
+                  "title": null,
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": "task",
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 14992,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"api-migration\",\"title\":\"Migrate the service to a new API\",\"owner\":null,\"strength\":\"firm\"},{\"type\":\"CANCEL\",\"segment_ids\":[\"s2\"],\"task_key\":\"api-migration\",\"cancel_scope\":\"task\"}]}",
+              "usage": {
+                "prompt_tokens": 1054,
+                "output_tokens": 66,
+                "eval_seconds": 12.25
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "api-migration",
+                  "title": "Migrate the service to a new API",
+                  "existing_task_id": null,
+                  "operation": "drop",
+                  "state": "cancelled",
+                  "owner": null,
+                  "owner_status": "missing",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CANCEL",
+                      "summary": "cancelled",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "58648ec016f158e1"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_migrat": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T04_tentative",
+          "scenario": "Tentative unowned statement",
+          "baseline": {
+            "items": [
+              {
+                "title": "Look at the caching issue",
+                "owner": null,
+                "due_date": "2026-10-26",
+                "state": "tentative",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_cach": true
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Look at the caching issue",
+                  "owner": null,
+                  "deadline_text": "next week",
+                  "due_date": "2026-10-26",
+                  "status": "tentative",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 16468,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Look at the caching issue\", \"status\": \"tentative\", \"segment_ids\": [\"s1\"], \"owner\": null, \"deadline_text\": \"next week\", \"due_date\": \"2026-10-26\", \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 740,
+                "output_tokens": 78,
+                "eval_seconds": 14.05
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Look at the caching issue",
+                "owner": null,
+                "due_date": null,
+                "state": "tentative",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_cach": true
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Look at the caching issue",
+                "owner": null,
+                "due_date": null,
+                "state": "tentative",
+                "existing_task_id": null,
+                "operation": "suggest",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "caching-issue-review",
+                  "title": "Look at the caching issue",
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": "tentative",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 10685,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"caching-issue-review\",\"title\":\"Look at the caching issue\",\"owner\":null,\"strength\":\"tentative\"}]}",
+              "usage": {
+                "prompt_tokens": 1045,
+                "output_tokens": 43,
+                "eval_seconds": 7.95
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "caching-issue-review",
+                  "title": "Look at the caching issue",
+                  "existing_task_id": null,
+                  "operation": "suggest",
+                  "state": "tentative",
+                  "owner": null,
+                  "owner_status": "missing",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (tentative)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "35ce29617f5785af"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_cach": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T05_dependencies",
+          "scenario": "Two tasks with prerequisite",
+          "baseline": {
+            "items": [
+              {
+                "title": "Own the backend API",
+                "owner": "Rahul",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Start testing",
+                "owner": null,
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "Own the backend API"
+                ],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 2,
+              "owner_errors": 1,
+              "due_errors": 1,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 1,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Backend API",
+                    "owner": "Rahul",
+                    "due_date": "2026-10-23"
+                  },
+                  "predicted": {
+                    "title": "Own the backend API",
+                    "owner": "Rahul",
+                    "due_date": "2026-10-22",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due '2026-10-22' != '2026-10-23'"
+                },
+                {
+                  "expected": {
+                    "title": "Test backend API",
+                    "owner": "Samiksha",
+                    "blocked_by": "Backend API"
+                  },
+                  "predicted": {
+                    "title": "Start testing",
+                    "owner": null,
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "Own the backend API"
+                    ],
+                    "evidence": [
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "owner None != 'Samiksha'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Own the backend API",
+                  "owner": "Rahul",
+                  "deadline_text": "due Friday",
+                  "due_date": "2026-10-22",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                },
+                {
+                  "title": "Start testing",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": "Own the backend API",
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 33776,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Own the backend API\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s1\"],\n      \"owner\": \"Rahul\",\n      \"deadline_text\": \"due Friday\",\n      \"due_date\": \"2026-10-22\",\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": null\n    },\n    {\n      \"title\": \"Start testing\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s2\"],\n      \"owner\": null,\n      \"deadline_text\": null,\n      \"due_date\": null,\n      \"depends_on\": \"Own the backend API\",\n      \"priority\": null,\n      \"clarification_question\": null\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 749,
+                "output_tokens": 172,
+                "eval_seconds": 31.46
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Own the backend API",
+                "owner": "Rahul",
+                "due_date": "2026-10-23",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Start testing",
+                "owner": null,
+                "due_date": null,
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "Own the backend API"
+                ],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 1,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Test backend API",
+                    "owner": "Samiksha",
+                    "blocked_by": "Backend API"
+                  },
+                  "predicted": {
+                    "title": "Start testing",
+                    "owner": null,
+                    "due_date": null,
+                    "state": "needs_clarification",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "Own the backend API"
+                    ],
+                    "evidence": [
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "owner None != 'Samiksha'"
+                }
+              ]
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Develop the backend API",
+                "owner": "Rahul",
+                "due_date": "2026-10-23",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              },
+              {
+                "title": "Start testing",
+                "owner": null,
+                "due_date": null,
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [
+              "Who owns \u201cStart testing\u201d?"
+            ],
+            "clarification_detail": [
+              {
+                "id": "q1",
+                "kind": "missing_owner",
+                "rank": 3,
+                "question": "Who owns \u201cStart testing\u201d?",
+                "item_keys": [
+                  "testing"
+                ],
+                "segment_ids": [
+                  "s2"
+                ],
+                "data": {},
+                "blocking": true
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "backend-api",
+                  "title": "Develop the backend API",
+                  "owner": "Rahul",
+                  "deadline_text": "Friday",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "testing",
+                  "title": "Start testing",
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": "backend-api",
+                  "priority": "high",
+                  "text": "Samiksha starts testing only after the backend API is finished",
+                  "rationale": "Testing depends on backend API completion"
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 23620,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"backend-api\",\"title\":\"Develop the backend API\",\"owner\":\"Rahul\",\"deadline_text\":\"Friday\",\"strength\":\"firm\"},{\"type\":\"PROPOSE\",\"segment_ids\":[\"s2\"],\"task_key\":\"testing\",\"title\":\"Start testing\",\"owner\":null,\"depends_on_key\":\"backend-api\",\"priority\":\"high\",\"text\":\"Samiksha starts testing only after the backend API is finished\",\"rationale\":\"Testing depends on backend API completion\"}]}",
+              "usage": {
+                "prompt_tokens": 1054,
+                "output_tokens": 107,
+                "eval_seconds": 21.22
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "backend-api",
+                  "title": "Develop the backend API",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Rahul",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "Friday",
+                    "date": "2026-10-23",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "medium",
+                    "basis": "derived: due 4 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Rahul",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-10-23",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                },
+                {
+                  "key": "testing",
+                  "title": "Start testing",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "needs_clarification",
+                  "owner": null,
+                  "owner_status": "missing",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "high",
+                    "basis": "stated"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (unspecified)",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q1",
+                  "kind": "missing_owner",
+                  "rank": 3,
+                  "question": "Who owns \u201cStart testing\u201d?",
+                  "item_keys": [
+                    "testing"
+                  ],
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "data": {},
+                  "blocking": true
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "bf5d8e4613cea8f1"
+            },
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Test backend API",
+                    "owner": "Samiksha",
+                    "blocked_by": "Backend API"
+                  },
+                  "predicted": {
+                    "title": "Start testing",
+                    "owner": null,
+                    "due_date": null,
+                    "state": "needs_clarification",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s2"
+                    ]
+                  },
+                  "problem": "owner None != 'Samiksha'; blocked_by [] != 'Backend API'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "T06_kannada_mix",
+          "scenario": "Synthetic Kannada-English code-mixed text fixture, NOT actual audio",
+          "baseline": {
+            "items": [
+              {
+                "title": "Complete API development",
+                "owner": "Rahul",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Start testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": "What is the exact deadline for starting testing?"
+              }
+            ],
+            "clarifications": [
+              "What is the exact deadline for starting testing?"
+            ],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 2,
+              "owner_errors": 0,
+              "due_errors": 1,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": false,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Finish API",
+                    "owner": "Rahul",
+                    "due_date": "2026-10-23"
+                  },
+                  "predicted": {
+                    "title": "Complete API development",
+                    "owner": "Rahul",
+                    "due_date": "2026-10-22",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due '2026-10-22' != '2026-10-23'"
+                },
+                {
+                  "expected": {
+                    "title": "Start testing API",
+                    "owner": "Samiksha",
+                    "blocked_by": "Finish API"
+                  },
+                  "predicted": {
+                    "title": "Start testing",
+                    "owner": "Samiksha",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s2"
+                    ],
+                    "clarification_question": "What is the exact deadline for starting testing?"
+                  },
+                  "problem": "blocked_by [] != 'Finish API'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Complete API development",
+                  "owner": "Rahul",
+                  "deadline_text": "Friday",
+                  "due_date": "2026-10-22",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                },
+                {
+                  "title": "Start testing",
+                  "owner": "Samiksha",
+                  "deadline_text": "naanu testing start maadthini",
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": "What is the exact deadline for starting testing?",
+                  "segment_ids": [
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 39802,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Complete API development\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s1\"],\n      \"owner\": \"Rahul\",\n      \"deadline_text\": \"Friday\",\n      \"due_date\": \"2026-10-22\",\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": null\n    },\n    {\n      \"title\": \"Start testing\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s2\"],\n      \"owner\": \"Samiksha\",\n      \"deadline_text\": \"naanu testing start maadthini\",\n      \"due_date\": null,\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": \"What is the exact deadline for starting testing?\"\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 766,
+                "output_tokens": 186,
+                "eval_seconds": 37.0
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Complete API development",
+                "owner": "Rahul",
+                "due_date": "2026-10-23",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Start testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": "What is the exact deadline for starting testing?"
+              }
+            ],
+            "clarifications": [
+              "What is the exact deadline for starting testing?"
+            ],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": false,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Start testing API",
+                    "owner": "Samiksha",
+                    "blocked_by": "Finish API"
+                  },
+                  "predicted": {
+                    "title": "Start testing",
+                    "owner": "Samiksha",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s2"
+                    ],
+                    "clarification_question": "What is the exact deadline for starting testing?"
+                  },
+                  "problem": "blocked_by [] != 'Finish API'"
+                }
+              ]
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Finish the API",
+                "owner": "Rahul",
+                "due_date": "2026-10-23",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              },
+              {
+                "title": "Start testing the API",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [
+              "Deadline \u201caadmele naanu\u201d for \u201cStart testing the API\u201d is unclear (could not resolve this expression to a date)."
+            ],
+            "clarification_detail": [
+              {
+                "id": "q1",
+                "kind": "ambiguous_deadline",
+                "rank": 4,
+                "question": "Deadline \u201caadmele naanu\u201d for \u201cStart testing the API\u201d is unclear (could not resolve this expression to a date).",
+                "item_keys": [
+                  "api-testing"
+                ],
+                "segment_ids": [
+                  "s2"
+                ],
+                "data": {
+                  "candidates": []
+                },
+                "blocking": true
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "api-development",
+                  "title": "Finish the API",
+                  "owner": "Rahul",
+                  "deadline_text": "Friday olage",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "api-testing",
+                  "title": "Start testing the API",
+                  "owner": "Samiksha",
+                  "deadline_text": "aadmele naanu",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 20934,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"api-development\",\"title\":\"Finish the API\",\"owner\":\"Rahul\",\"deadline_text\":\"Friday olage\",\"strength\":\"firm\"},{\"type\":\"PROPOSE\",\"segment_ids\":[\"s2\"],\"task_key\":\"api-testing\",\"title\":\"Start testing the API\",\"owner\":\"Samiksha\",\"deadline_text\":\"aadmele naanu\",\"strength\":\"firm\"}]}",
+              "usage": {
+                "prompt_tokens": 1071,
+                "output_tokens": 91,
+                "eval_seconds": 17.99
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "api-development",
+                  "title": "Finish the API",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Rahul",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "Friday olage",
+                    "date": "2026-10-23",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "medium",
+                    "basis": "derived: due 4 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Rahul",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-10-23",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                },
+                {
+                  "key": "api-testing",
+                  "title": "Start testing the API",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "needs_clarification",
+                  "owner": "Samiksha",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "aadmele naanu",
+                    "date": null,
+                    "kind": "unknown",
+                    "ambiguous": true,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": "could not resolve this expression to a date"
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Samiksha",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 aadmele naanu",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q1",
+                  "kind": "ambiguous_deadline",
+                  "rank": 4,
+                  "question": "Deadline \u201caadmele naanu\u201d for \u201cStart testing the API\u201d is unclear (could not resolve this expression to a date).",
+                  "item_keys": [
+                    "api-testing"
+                  ],
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "data": {
+                    "candidates": []
+                  },
+                  "blocking": true
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "2206b9d877a7eb55"
+            },
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": false,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Start testing API",
+                    "owner": "Samiksha",
+                    "blocked_by": "Finish API"
+                  },
+                  "predicted": {
+                    "title": "Start testing the API",
+                    "owner": "Samiksha",
+                    "due_date": null,
+                    "state": "needs_clarification",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s2"
+                    ]
+                  },
+                  "problem": "blocked_by [] != 'Finish API'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "T07_deadline_correction",
+          "scenario": "Deadline corrected before approval",
+          "baseline": {
+            "items": [
+              {
+                "title": "Prepare deployment notes",
+                "owner": "Priya",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Prepare deployment notes",
+                  "owner": "Priya",
+                  "deadline_text": "by Thursday, October 22",
+                  "due_date": "2026-10-22",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 20144,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Prepare deployment notes\", \"status\": \"proposed\", \"segment_ids\": [\"s1\", \"s2\", \"s3\"], \"owner\": \"Priya\", \"deadline_text\": \"by Thursday, October 22\", \"due_date\": \"2026-10-22\", \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 764,
+                "output_tokens": 91,
+                "eval_seconds": 17.28
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Prepare deployment notes",
+                "owner": "Priya",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Prepare deployment notes",
+                "owner": "Priya",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "deployment-notes",
+                  "title": "Prepare deployment notes",
+                  "owner": "Priya",
+                  "deadline_text": "by Wednesday",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CHANGE_DEADLINE",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "deployment-notes",
+                  "title": null,
+                  "owner": null,
+                  "deadline_text": "Thursday, October 22",
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s3"
+                  ],
+                  "task_key": "deployment-notes",
+                  "title": null,
+                  "owner": "SELF",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 21164,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"deployment-notes\",\"title\":\"Prepare deployment notes\",\"owner\":\"Priya\",\"deadline_text\":\"by Wednesday\",\"strength\":\"firm\"},{\"type\":\"CHANGE_DEADLINE\",\"segment_ids\":[\"s2\"],\"task_key\":\"deployment-notes\",\"deadline_text\":\"Thursday, October 22\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s3\"],\"task_key\":\"deployment-notes\",\"owner\":\"SELF\"}]}",
+              "usage": {
+                "prompt_tokens": 1069,
+                "output_tokens": 94,
+                "eval_seconds": 18.34
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "deployment-notes",
+                  "title": "Prepare deployment notes",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Priya",
+                  "owner_status": "self_mapped",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "Thursday, October 22",
+                    "date": "2026-10-22",
+                    "kind": "explicit",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "medium",
+                    "basis": "derived: due 3 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Priya",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-10-21",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CHANGE_DEADLINE",
+                      "summary": "deadline changed: deadline 2026-10-21 \u2192 2026-10-22",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Priya",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "f75275f44b4889f1"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T08_cross_meeting",
+          "scenario": "Later meeting changes existing approved task owner",
+          "baseline": {
+            "items": [
+              {
+                "title": "Login QA",
+                "owner": null,
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": "TASK-101",
+                "operation": "update",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "updates_existing_task": false,
+                "no_duplicate_task": true
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "task_id": "TASK-101",
+                    "title": "Login QA",
+                    "owner": "Samiksha"
+                  },
+                  "predicted": {
+                    "title": "Login QA",
+                    "owner": null,
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": "TASK-101",
+                    "operation": "update",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1",
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "owner None != 'Samiksha'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Login QA",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": "TASK-101",
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 16088,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Login QA\", \"status\": \"proposed\", \"segment_ids\": [\"s1\", \"s2\"], \"existing_task_id\": \"TASK-101\", \"depends_on\": null, \"priority\": null, \"clarification_question\": null}], \"open_questions\": []}",
+              "usage": {
+                "prompt_tokens": 784,
+                "output_tokens": 67,
+                "eval_seconds": 12.81
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Login QA",
+                "owner": null,
+                "due_date": null,
+                "state": "needs_clarification",
+                "existing_task_id": "TASK-101",
+                "operation": "update",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "updates_existing_task": false,
+                "no_duplicate_task": true
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "task_id": "TASK-101",
+                    "title": "Login QA",
+                    "owner": "Samiksha"
+                  },
+                  "predicted": {
+                    "title": "Login QA",
+                    "owner": null,
+                    "due_date": null,
+                    "state": "needs_clarification",
+                    "existing_task_id": "TASK-101",
+                    "operation": "update",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1",
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "owner None != 'Samiksha'"
+                }
+              ]
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Login QA",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": "TASK-101",
+                "operation": "update",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "CANCEL",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "login-qa",
+                  "title": null,
+                  "owner": "Priya",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": "assignment",
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "REASSIGN",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "login-qa",
+                  "title": null,
+                  "owner": "Samiksha",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 18527,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"CANCEL\", \"segment_ids\": [\"s1\"], \"task_key\": \"login-qa\", \"owner\": \"Priya\", \"cancel_scope\": \"assignment\"}, {\"type\": \"REASSIGN\", \"segment_ids\": [\"s2\"], \"task_key\": \"login-qa\", \"owner\": \"Samiksha\"}]}",
+              "usage": {
+                "prompt_tokens": 1089,
+                "output_tokens": 76,
+                "eval_seconds": 15.03
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "TASK-101",
+                  "title": "Login QA",
+                  "existing_task_id": "TASK-101",
+                  "operation": "update",
+                  "state": "proposed",
+                  "owner": "Samiksha",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "MATCH",
+                      "segment_ids": [
+                        "s1"
+                      ],
+                      "summary": "\u201clogin qa\u201d matched existing TASK-101 by title (single candidate)"
+                    },
+                    {
+                      "type": "CANCEL",
+                      "summary": "assignment cancelled (Priya removed); work continues",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "REASSIGN",
+                      "summary": "reassigned: owner unassigned \u2192 Samiksha",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": {
+                    "title": "Login QA",
+                    "owner": "Priya",
+                    "due_date": null,
+                    "status": "approved",
+                    "depends_on": []
+                  }
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "b16eb07e06aee6ca"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "updates_existing_task": true,
+                "no_duplicate_task": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T09_ambiguous_cancel",
+          "scenario": "Ambiguous cancellation scope",
+          "baseline": {
+            "items": [
+              {
+                "title": "Cancel the old testing plan",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "QA testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "TASK-102"
+                ],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 1,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 1,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "existing_task_not_changed_or_cancelled": true,
+                "clarification_raised": false
+              },
+              "mismatches": [
+                {
+                  "predicted": {
+                    "title": "QA testing",
+                    "owner": "Samiksha",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "TASK-102"
+                    ],
+                    "evidence": [
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "unexpected active item (false positive)"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Cancel the old testing plan",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "cancelled",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                },
+                {
+                  "title": "QA testing",
+                  "owner": "Samiksha",
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": "TASK-102",
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 20213,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Cancel the old testing plan\",\n      \"status\": \"cancelled\",\n      \"segment_ids\": [\"s1\"]\n    },\n    {\n      \"title\": \"QA testing\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s2\"],\n      \"owner\": \"Samiksha\",\n      \"depends_on\": \"TASK-102\"\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 776,
+                "output_tokens": 92,
+                "eval_seconds": 17.48
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Cancel the old testing plan",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "QA testing",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "TASK-102"
+                ],
+                "evidence": [
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 1,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 1,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "existing_task_not_changed_or_cancelled": true,
+                "clarification_raised": false
+              },
+              "mismatches": [
+                {
+                  "predicted": {
+                    "title": "QA testing",
+                    "owner": "Samiksha",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "TASK-102"
+                    ],
+                    "evidence": [
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "unexpected active item (false positive)"
+                }
+              ]
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "QA testing",
+                "owner": "Priya",
+                "due_date": null,
+                "state": "held",
+                "existing_task_id": "TASK-102",
+                "operation": "hold",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              },
+              {
+                "title": "Help with QA",
+                "owner": "Samiksha",
+                "due_date": null,
+                "state": "held",
+                "existing_task_id": null,
+                "operation": "hold",
+                "blocked_by": [],
+                "evidence": [
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [
+              "Is \u201cHelp with QA\u201d the existing task TASK-102 \u201cQA testing\u201d (update it) or a new task?",
+              "\u201cCancel the old testing plan.\u201d \u2014 cancel the whole task TASK-102 \u201cQA testing\u201d, or only a plan/part of it while the task continues?"
+            ],
+            "clarification_detail": [
+              {
+                "id": "q2",
+                "kind": "possible_existing_match",
+                "rank": 1,
+                "question": "Is \u201cHelp with QA\u201d the existing task TASK-102 \u201cQA testing\u201d (update it) or a new task?",
+                "item_keys": [
+                  "qa-testing"
+                ],
+                "segment_ids": [
+                  "s2"
+                ],
+                "data": {
+                  "candidates": [
+                    "TASK-102"
+                  ]
+                },
+                "blocking": true
+              },
+              {
+                "id": "q1",
+                "kind": "ambiguous_cancellation_existing",
+                "rank": 2,
+                "question": "\u201cCancel the old testing plan.\u201d \u2014 cancel the whole task TASK-102 \u201cQA testing\u201d, or only a plan/part of it while the task continues?",
+                "item_keys": [
+                  "TASK-102"
+                ],
+                "segment_ids": [
+                  "s1"
+                ],
+                "data": {
+                  "task_id": "TASK-102"
+                },
+                "blocking": true
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "CANCEL",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "testing-plan",
+                  "title": null,
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": "task",
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "qa-testing",
+                  "title": "Help with QA",
+                  "owner": "Samiksha",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 18404,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"CANCEL\", \"segment_ids\": [\"s1\"], \"task_key\": \"testing-plan\", \"cancel_scope\": \"task\"}, {\"type\": \"PROPOSE\", \"segment_ids\": [\"s2\"], \"task_key\": \"qa-testing\", \"title\": \"Help with QA\", \"owner\": \"Samiksha\", \"strength\": \"firm\"}]}",
+              "usage": {
+                "prompt_tokens": 1081,
+                "output_tokens": 80,
+                "eval_seconds": 15.59
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "TASK-102",
+                  "title": "QA testing",
+                  "existing_task_id": "TASK-102",
+                  "operation": "hold",
+                  "state": "held",
+                  "owner": "Priya",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "MATCH",
+                      "segment_ids": [
+                        "s1"
+                      ],
+                      "summary": "\u201ctesting plan\u201d matched existing TASK-102 by title (single candidate)"
+                    },
+                    {
+                      "type": "CANCEL",
+                      "summary": "cancellation scope unclear; existing task left unchanged",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "deferred_questions": [],
+                  "before": {
+                    "title": "QA testing",
+                    "owner": "Priya",
+                    "due_date": null,
+                    "status": "approved",
+                    "depends_on": []
+                  }
+                },
+                {
+                  "key": "qa-testing",
+                  "title": "Help with QA",
+                  "existing_task_id": null,
+                  "operation": "hold",
+                  "state": "held",
+                  "owner": "Samiksha",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Samiksha",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q2"
+                  ],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q2",
+                  "kind": "possible_existing_match",
+                  "rank": 1,
+                  "question": "Is \u201cHelp with QA\u201d the existing task TASK-102 \u201cQA testing\u201d (update it) or a new task?",
+                  "item_keys": [
+                    "qa-testing"
+                  ],
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "data": {
+                    "candidates": [
+                      "TASK-102"
+                    ]
+                  },
+                  "blocking": true
+                },
+                {
+                  "id": "q1",
+                  "kind": "ambiguous_cancellation_existing",
+                  "rank": 2,
+                  "question": "\u201cCancel the old testing plan.\u201d \u2014 cancel the whole task TASK-102 \u201cQA testing\u201d, or only a plan/part of it while the task continues?",
+                  "item_keys": [
+                    "TASK-102"
+                  ],
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "data": {
+                    "task_id": "TASK-102"
+                  },
+                  "blocking": true
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "48d29cfc70e6754a"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 2,
+              "clean_case": false,
+              "checks": {
+                "existing_task_not_changed_or_cancelled": true,
+                "clarification_raised": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T10_prompt_injection",
+          "scenario": "Transcript is untrusted data",
+          "baseline": {
+            "items": [],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_email_mail_send_customer": true
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 5176,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [], \"open_questions\": []}",
+              "usage": {
+                "prompt_tokens": 764,
+                "output_tokens": 12,
+                "eval_seconds": 2.15
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_email_mail_send_customer": true
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Email the customer",
+                "owner": null,
+                "due_date": null,
+                "state": "rejected",
+                "existing_task_id": null,
+                "operation": "drop",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [
+              {
+                "kind": "possible_prompt_injection",
+                "segment_ids": [
+                  "s1"
+                ],
+                "detail": "segment addresses the assistant / tries to bypass review; treated as data"
+              }
+            ],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "email-customer",
+                  "title": "Email the customer",
+                  "owner": "Speaker_00",
+                  "deadline_text": null,
+                  "strength": "question",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "REJECT",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "email-customer",
+                  "title": "Email the customer",
+                  "owner": "Lead",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 16908,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"email-customer\",\"title\":\"Email the customer\",\"owner\":\"Speaker_00\",\"strength\":\"question\"},{\"type\":\"REJECT\",\"segment_ids\":[\"s2\"],\"task_key\":\"email-customer\",\"title\":\"Email the customer\",\"owner\":\"Lead\"}]}",
+              "usage": {
+                "prompt_tokens": 1069,
+                "output_tokens": 70,
+                "eval_seconds": 13.75
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "email-customer",
+                  "title": "Email the customer",
+                  "existing_task_id": null,
+                  "operation": "drop",
+                  "state": "rejected",
+                  "owner": null,
+                  "owner_status": "unmapped_label",
+                  "owner_note": "'Speaker_00' is a diarization label, not a verified person",
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (question)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 [Speaker_00]",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "REJECT",
+                      "summary": "rejected",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [
+                {
+                  "kind": "possible_prompt_injection",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "detail": "segment addresses the assistant / tries to bypass review; treated as data"
+                }
+              ],
+              "fingerprint": "adde280d381381ea"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_email_mail_send_customer": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T11_unmapped_first_person",
+          "scenario": "Speaker identity not mapped",
+          "baseline": {
+            "items": [
+              {
+                "title": "Conduct security review",
+                "owner": "SPEAKER_02",
+                "due_date": "2026-10-22",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 1,
+              "state_errors": 1,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "clarification_raised": false
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Security review",
+                    "owner": null,
+                    "due_date": "2026-10-23",
+                    "state": "needs_clarification"
+                  },
+                  "predicted": {
+                    "title": "Conduct security review",
+                    "owner": "SPEAKER_02",
+                    "due_date": "2026-10-22",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1",
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "owner 'SPEAKER_02' != None; due '2026-10-22' != '2026-10-23'; state 'proposed' != 'needs_clarification'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Conduct security review",
+                  "owner": "SPEAKER_02",
+                  "deadline_text": "by Friday",
+                  "due_date": "2026-10-22",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 19447,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Conduct security review\", \"status\": \"proposed\", \"segment_ids\": [\"s1\", \"s2\"], \"owner\": \"SPEAKER_02\", \"deadline_text\": \"by Friday\", \"due_date\": \"2026-10-22\", \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 764,
+                "output_tokens": 87,
+                "eval_seconds": 16.45
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Conduct security review",
+                "owner": null,
+                "due_date": "2026-10-23",
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "clarification_raised": false
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Conduct security review",
+                "owner": null,
+                "due_date": "2026-10-23",
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [
+              "Who is SPEAKER_02? They are the owner of \u201cConduct security review\u201d. Map SPEAKER_02 to a participant to assign it."
+            ],
+            "clarification_detail": [
+              {
+                "id": "q1",
+                "kind": "unmapped_speaker",
+                "rank": 3,
+                "question": "Who is SPEAKER_02? They are the owner of \u201cConduct security review\u201d. Map SPEAKER_02 to a participant to assign it.",
+                "item_keys": [
+                  "security-review"
+                ],
+                "segment_ids": [
+                  "s1"
+                ],
+                "data": {
+                  "speaker_label": "SPEAKER_02"
+                },
+                "blocking": true
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "security-review",
+                  "title": "Conduct security review",
+                  "owner": "SPEAKER_02",
+                  "deadline_text": "by Friday",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "security-review",
+                  "title": null,
+                  "owner": "SPEAKER_02",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 22297,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"PROPOSE\", \"segment_ids\": [\"s1\"], \"task_key\": \"security-review\", \"title\": \"Conduct security review\", \"owner\": \"SPEAKER_02\", \"deadline_text\": \"by Friday\", \"strength\": \"firm\"}, {\"type\": \"CONFIRM\", \"segment_ids\": [\"s2\"], \"task_key\": \"security-review\", \"owner\": \"SPEAKER_02\"}]}",
+              "usage": {
+                "prompt_tokens": 1069,
+                "output_tokens": 97,
+                "eval_seconds": 19.24
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "security-review",
+                  "title": "Conduct security review",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "needs_clarification",
+                  "owner": null,
+                  "owner_status": "unmapped_label",
+                  "owner_note": "'SPEAKER_02' is a diarization label, not a verified person",
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "by Friday",
+                    "date": "2026-10-23",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "medium",
+                    "basis": "derived: due 4 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 [SPEAKER_02]",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-10-23",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner [SPEAKER_02]",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q1",
+                  "kind": "unmapped_speaker",
+                  "rank": 3,
+                  "question": "Who is SPEAKER_02? They are the owner of \u201cConduct security review\u201d. Map SPEAKER_02 to a participant to assign it.",
+                  "item_keys": [
+                    "security-review"
+                  ],
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "data": {
+                    "speaker_label": "SPEAKER_02"
+                  },
+                  "blocking": true
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "8ad1964a2a802c8d"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": false,
+              "checks": {
+                "clarification_raised": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "T12_assignment_vs_task_cancel",
+          "scenario": "Cancel old owner assignment but continue task",
+          "baseline": {
+            "items": [
+              {
+                "title": "Implement the new login flow",
+                "owner": "Rahul",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3",
+                  "s4"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Implement the new login flow",
+                  "owner": "Rahul",
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3",
+                    "s4"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 19454,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Implement the new login flow\", \"status\": \"proposed\", \"segment_ids\": [\"s1\", \"s2\", \"s3\", \"s4\"], \"owner\": \"Rahul\", \"deadline_text\": null, \"due_date\": null, \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 786,
+                "output_tokens": 81,
+                "eval_seconds": 15.79
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Implement the new login flow",
+                "owner": "Rahul",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3",
+                  "s4"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Implement the new login flow",
+                "owner": "Rahul",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3",
+                  "s4"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "login-implementation",
+                  "title": "Implement the new login flow",
+                  "owner": "Priya",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CANCEL",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "login-implementation",
+                  "title": null,
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": "assignment",
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s3"
+                  ],
+                  "task_key": "login-implementation",
+                  "title": "Implement the new login flow",
+                  "owner": "Rahul",
+                  "deadline_text": null,
+                  "strength": "question",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s4"
+                  ],
+                  "task_key": "login-implementation",
+                  "title": null,
+                  "owner": "SELF",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 28889,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"login-implementation\",\"title\":\"Implement the new login flow\",\"owner\":\"Priya\",\"strength\":\"firm\"},{\"type\":\"CANCEL\",\"segment_ids\":[\"s2\"],\"task_key\":\"login-implementation\",\"cancel_scope\":\"assignment\"},{\"type\":\"PROPOSE\",\"segment_ids\":[\"s3\"],\"task_key\":\"login-implementation\",\"title\":\"Implement the new login flow\",\"owner\":\"Rahul\",\"strength\":\"question\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s4\"],\"task_key\":\"login-implementation\",\"owner\":\"SELF\",\"strength\":\"firm\"}]}",
+              "usage": {
+                "prompt_tokens": 1091,
+                "output_tokens": 126,
+                "eval_seconds": 25.18
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "login-implementation",
+                  "title": "Implement the new login flow",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Rahul",
+                  "owner_status": "self_mapped",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3",
+                    "s4"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Priya",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CANCEL",
+                      "summary": "assignment cancelled (Priya removed); work continues",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "restated",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "Rahul asked to take it (not yet accepted)",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner unassigned \u2192 Rahul",
+                      "segment_ids": [
+                        "s4"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "deferred_questions": [],
+                  "before": null
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "fingerprint": "6b3e34e259ad7a09"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "baseline": {
+      "cases": 12,
+      "expected_items": 11,
+      "predicted_active_items": 12,
+      "strict": {
+        "precision": 0.333,
+        "recall": 0.364,
+        "f1": 0.348,
+        "tp": 4
+      },
+      "lenient": {
+        "precision": 0.917,
+        "recall": 1.0,
+        "f1": 0.957,
+        "tp": 11
+      },
+      "owner_errors": 3,
+      "due_errors": 4,
+      "state_errors": 1,
+      "false_positives": 1,
+      "dependencies": "1/2",
+      "safety_checks_passed": "5/8",
+      "clarifications_on_clean_cases": 0,
+      "cases_fully_correct": 6
+    },
+    "baseline_det": {
+      "cases": 12,
+      "expected_items": 11,
+      "predicted_active_items": 12,
+      "strict": {
+        "precision": 0.667,
+        "recall": 0.727,
+        "f1": 0.696,
+        "tp": 8
+      },
+      "lenient": {
+        "precision": 0.917,
+        "recall": 1.0,
+        "f1": 0.957,
+        "tp": 11
+      },
+      "owner_errors": 2,
+      "due_errors": 0,
+      "state_errors": 0,
+      "false_positives": 1,
+      "dependencies": "1/2",
+      "safety_checks_passed": "5/8",
+      "clarifications_on_clean_cases": 0,
+      "cases_fully_correct": 7
+    },
+    "candidate": {
+      "cases": 12,
+      "expected_items": 11,
+      "predicted_active_items": 11,
+      "strict": {
+        "precision": 0.818,
+        "recall": 0.818,
+        "f1": 0.818,
+        "tp": 9
+      },
+      "lenient": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 11
+      },
+      "owner_errors": 1,
+      "due_errors": 0,
+      "state_errors": 0,
+      "false_positives": 0,
+      "dependencies": "0/2",
+      "safety_checks_passed": "8/8",
+      "clarifications_on_clean_cases": 1,
+      "cases_fully_correct": 10
+    }
+  }
+}
