@@ -92,6 +92,8 @@ def resolve_owner(owner_raw: str | None, speaker_label: str | None,
                                note=f"'{speaker_label}' volunteered but is not mapped to a person")
     if low in GROUP_TOKENS:
         return OwnerResolution(None, "group", note=f"'{owner}' is not a single responsible person")
+    if re.search(r",|/|&|\+|\band\b|\bor\b", owner_raw, re.I):
+        return OwnerResolution(None, "group", note=f"'{owner_raw.strip()}' names more than one person or is unclear")
 
     if owner in directory.mapping:  # label that the organiser has mapped
         return OwnerResolution(directory.mapping[owner], "named")

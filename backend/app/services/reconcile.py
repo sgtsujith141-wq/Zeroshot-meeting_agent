@@ -93,6 +93,14 @@ IGNORE_INSTRUCTIONS = re.compile(
     r"\b(ignore|disregard|bypass|skip)\b.{0,40}\b(instruction|instructions|approval|approvals|rules|screen|review|previous)\b",
     re.I,
 )
+# "once the refund API is ready", "only after the backend API is finished",
+# "API ready aadmele" (Kannada: after it becomes), "API ke baad" (Hindi: after).
+DEP_CUE = re.compile(
+    r"\b(?:once|after|only after|as soon as|when)\s+(?P<x>[^,.;]{2,80}?)\s+(?:is|are|has been|have been|gets|get)?\s*"
+    r"(?:ready|done|finished|complete|completed|merged|approved|signed off|deployed|live|in place)\b", re.I)
+DEP_CUE_IN = re.compile(
+    r"(?P<x>[A-Za-z][\w' ]{1,60}?)\s+(?:ready|done|finish|complete|merge)?\s*(?:aadmele|aadamele|aada mele|aadhmele|ke baad|hone ke baad)\b",
+    re.I)
 FIRST_PERSON = re.compile(r"\b(i|i'll|i will|i can|i'm|me|naanu|nanu|main|mein)\b", re.I)
 
 
@@ -421,7 +429,12 @@ class Reconciler:
                 d.title = ev.title
             self._log(d, ev, f"proposed ({ev.strength or 'unspecified'})" if fresh else "restated")
             if ev.owner:
-                self._set_owner(d, ev.owner, speaker, ev, "assigned" if fresh else "restated")
+                res = resolve_owner(ev.owner, speaker, self.ctx.directory)
+                if not fresh and d.owner.name and res.status in ("group", "missing"):
+                    # A restatement with an unclear owner never erases a clear earlier assignment.
+                    self._log(d, ev, f"restated with unclear owner “{ev.owner}”; kept {d.owner.name}")
+                else:
+                    self._set_owner(d, ev.owner, speaker, ev, "assigned" if fresh else "restated")
             if ev.deadline_text:
                 self._set_deadline(d, ev.deadline_text, ev, "deadline" if fresh else "restated")
             if ev.priority:
@@ -607,6 +620,35 @@ class Reconciler:
                                   f"“{d.title}” waits for “{pd.title}”, which was cancelled. Is it still blocked?",
                                   d.evidence[:1], {"depends_on": dep}))
 
+    def _jaccard(self, a: str | None, b: str | None) -> float:
+        ta, tb = content_tokens(a), content_tokens(b)
+        return len(ta & tb) / len(ta | tb) if ta and tb else 0.0
+
+    def _infer_dependencies(self) -> None:
+        """Deterministic dependency cues in a draft's own evidence. Only links items
+        that already exist; the prerequisite must match the cue phrase better than
+        the dependent itself does. Every inferred edge is labelled in the history."""
+        live = [d for d in self.drafts.values() if d.status not in ("cancelled", "rejected")]
+        for d in live:
+            for sid in d.evidence:
+                text = self.seg_by_id[sid].text
+                for m in list(DEP_CUE.finditer(text)) + list(DEP_CUE_IN.finditer(text)):
+                    phrase = m.group("x")
+                    own = self._jaccard(phrase, d.title)
+                    scored = sorted(((self._jaccard(phrase, p.title), p.key) for p in live if p.key != d.key),
+                                    reverse=True)
+                    if not scored or scored[0][0] < 0.5 or scored[0][0] <= own:
+                        continue
+                    if len(scored) > 1 and scored[1][0] == scored[0][0]:
+                        continue  # two equally good prerequisites: do not guess
+                    pre = scored[0][1]
+                    if pre in d.depends_on or self._reaches(pre, d.key):
+                        continue
+                    d.depends_on.append(pre)
+                    d.history.append({"type": "INFERRED_DEPENDENCY", "segment_ids": [sid],
+                                      "summary": f"waits for {pre}: inferred from the words “{m.group(0).strip()}” "
+                                                 "(rule-based, check it)"})
+
     def _state(self, d: Draft) -> str:
         if d.status in ("cancelled", "rejected", "completed", "tentative"):
             return d.status
@@ -653,6 +695,7 @@ class Reconciler:
         for _, _, ev in valid:
             self.apply(ev)
 
+        self._infer_dependencies()
         for d in self.drafts.values():
             self._finalise_draft(d)
 

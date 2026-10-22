@@ -238,3 +238,71 @@ def test_uncovered_segments_are_reported_for_review():
     r = run(s, [{"type": "PROPOSE", "task_key": "auth", "title": "Auth API", "owner": "Rahul",
                  "strength": "firm", "segment_ids": ["s1"]}])
     assert r.uncovered_segment_ids == ["s2"]
+
+
+def test_unclear_restated_owner_keeps_clear_assignment():
+    # Post-hoc, from live synthetic meeting 1: qwen3:8b restated the owner as "Pri, Priya".
+    s = segs(("Asha", "Priya, once the refund API is ready, you will run the regression tests."),
+             ("Priya", "Sure, I'll start regression testing after Rahul's API is merged."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "regression-tests", "title": "Run regression tests", "owner": "Priya",
+         "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "PROPOSE", "task_key": "regression-tests", "title": "Run regression tests", "owner": "Pri, Priya",
+         "strength": "tentative", "segment_ids": ["s2"]},
+    ])
+    assert r.items[0]["owner"] == "Priya" and r.items[0]["state"] == "proposed"
+
+
+def test_explicit_reassign_to_several_people_asks():
+    s = segs(("Lead", "Write the onboarding guide."), ("Lead", "Rahul and Priya take the onboarding guide."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "guide", "title": "Write onboarding guide", "owner": "Lead",
+         "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "REASSIGN", "task_key": "guide", "owner": "Rahul and Priya", "strength": "firm", "segment_ids": ["s2"]},
+    ])
+    assert r.items[0]["owner"] is None and r.clarifications[0]["kind"] == "group_owner"
+
+
+def test_dependency_inferred_from_wording_in_the_dependents_evidence():
+    s = segs(("Asha", "Rahul, please finish the refund API by Thursday."),
+             ("Asha", "Priya, once the refund API is ready, you will run the regression tests."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "refund-api", "title": "Finish the refund API", "owner": "Rahul",
+         "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "PROPOSE", "task_key": "regression", "title": "Run regression tests", "owner": "Priya",
+         "strength": "firm", "segment_ids": ["s2"]},
+    ])
+    by = {i["key"]: i for i in r.items}
+    assert [d["key"] for d in by["regression"]["depends_on"]] == ["refund-api"]
+    assert by["refund-api"]["depends_on"] == []
+    assert any(h["type"] == "INFERRED_DEPENDENCY" for h in by["regression"]["history"])
+
+
+def test_dependency_inference_never_points_backwards_or_guesses():
+    # The segment cites both items; "the API" matches the API item best, so the API
+    # item must not be made to wait for the testing item.
+    s = segs(("Lead", "Samiksha tests the API once the API is done; Rahul builds the API."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "api", "title": "Build the API", "owner": "Rahul", "strength": "firm",
+         "segment_ids": ["s1"]},
+        {"type": "PROPOSE", "task_key": "api-tests", "title": "Test the API", "owner": "Samiksha",
+         "strength": "firm", "segment_ids": ["s1"]},
+    ])
+    by = {i["key"]: i for i in r.items}
+    assert by["api"]["depends_on"] == []
+    # "the API" fits "Build the API" and "Test the API" equally well: no edge is guessed.
+    assert by["api-tests"]["depends_on"] == []
+
+
+def test_kannada_after_cue():
+    s = segs(("Lead", "Rahul, API Friday olage finish maadu."),
+             ("Samiksha", "API ready aadmele naanu testing start maadthini."))
+    r = run(s, [
+        {"type": "PROPOSE", "task_key": "api", "title": "Finish the API", "owner": "Rahul",
+         "deadline_text": "Friday olage", "strength": "firm", "segment_ids": ["s1"]},
+        {"type": "PROPOSE", "task_key": "testing", "title": "Start testing the API", "owner": "SELF",
+         "strength": "firm", "segment_ids": ["s2"]},
+    ])
+    by = {i["key"]: i for i in r.items}
+    assert by["testing"]["owner"] == "Samiksha"
+    assert [d["key"] for d in by["testing"]["depends_on"]] == ["api"]

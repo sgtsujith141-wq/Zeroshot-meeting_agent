@@ -164,10 +164,13 @@ You write concise, factual meeting minutes from a transcript.
 
 {SHARED_RULES}
 
-Produce: a short summary; the main discussion topics; decisions with the reason
-that was actually stated (rationale null if no reason was given); unresolved
-questions. Do not add facts that are not in the transcript. Every item must cite
-the segment IDs it is based on."""
+Produce: a short summary; the main discussion topics; decisions; unresolved
+questions. A decision is a choice the group agreed on (a tool, approach, scope,
+policy). Task assignments ("X will do Y by Friday") are NOT decisions; leave
+them out of decisions. Keep the decision text to the choice itself and put the
+stated reason in rationale (words like "because", "so that", "since", "to
+avoid"); rationale is null if no reason was given. Do not add facts that are
+not in the transcript. Every item must cite the segment IDs it is based on."""
 
 MEMORY_SYSTEM = """\
 You answer questions about past meetings using ONLY the numbered passages

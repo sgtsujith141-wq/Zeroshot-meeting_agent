@@ -77,6 +77,7 @@ class ItemEdit(BaseModel):
     priority: Literal["high", "medium", "low"] | None = None
     excluded: bool | None = None
     promote: bool | None = None
+    drop_dependencies: list[str] | None = Field(default=None, max_length=50)
 
     @field_validator("due_date")
     @classmethod

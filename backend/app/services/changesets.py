@@ -205,6 +205,8 @@ def overlay(base: dict, edits: dict, ledger: list[LedgerTask], meeting: Meeting)
                     c["answer"] = c.get("answer") or {"choice": "set_due", "value": e["due_date"], "via": "edit"}
         if e.get("priority"):
             item["priority"] = {"value": e["priority"], "basis": "set by organiser"}
+        if e.get("drop_dependencies"):
+            item["depends_on"] = [d for d in item["depends_on"] if d["key"] not in e["drop_dependencies"]]
         if e.get("promote") and item["state"] == "tentative":
             if not (e.get("owner") or item.get("owner")):
                 raise ChangeSetError(f"promoting “{item['title']}” requires an owner", 422)
@@ -338,7 +340,7 @@ def edit(session: Session, cs: ChangeSet, actor: str, patch: dict) -> ChangeSet:
         if e.get("due_date"):
             date.fromisoformat(e["due_date"])
         allowed = {k: v for k, v in e.items() if k in ("title", "deliverable", "owner", "due_date", "priority",
-                                                       "excluded", "promote")}
+                                                       "excluded", "promote", "drop_dependencies")}
         edits.setdefault("items", {}).setdefault(key, {}).update(allowed)
     for did, e in (patch.get("decisions") or {}).items():
         edits.setdefault("decisions", {}).setdefault(str(did), {}).update(
