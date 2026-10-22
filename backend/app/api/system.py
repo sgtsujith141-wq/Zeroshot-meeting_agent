@@ -18,6 +18,7 @@ from ..schemas import EvalRunRequest
 from ..services.audit import record
 from ..services.clock import is_simulated, now_utc
 from ..services.llm import LLMError, LLMUnavailable, get_llm, llm_status
+from ..services.speech import stt
 
 router = APIRouter(prefix="/api", tags=["system"])
 RESULTS_DIR = REPO_DIR / "evaluation" / "results"
@@ -44,8 +45,8 @@ def health(request: Request, session: Session = Depends(get_session)) -> dict:
 @router.get("/diagnostics")
 def diagnostics(_: str = Depends(require_organizer), session: Session = Depends(get_session)) -> dict:
     s = get_settings()
-    sarvam_ok = session.exec(select(Meeting).where(Meeting.stt_provider == "sarvam",
-                                                   Meeting.processing_status == "ready_for_review")).first()
+    verified = sorted({m.stt_provider for m in session.exec(select(Meeting).where(
+        Meeting.stt_provider.is_not(None), Meeting.processing_status == "ready_for_review")).all()})
     runs = session.exec(select(LLMRun).order_by(LLMRun.id.desc())).all()
     by_model: dict[str, dict] = {}
     for r in runs:
@@ -59,9 +60,7 @@ def diagnostics(_: str = Depends(require_organizer), session: Session = Depends(
         b["median_latency_ms"] = lat[len(lat) // 2] if lat else None
     return {
         "llm": {**llm_status(s), "last_live_smoke_test": _last_smoke or None, "app_calls_by_model": by_model},
-        "speech": {"provider": "sarvam", "model": s.sarvam_model, "mode": s.sarvam_mode,
-                   "api_key_present": bool(s.sarvam_api_key),
-                   "verified_by_processed_meeting": bool(sarvam_ok),
+        "speech": {**stt.status(), "verified_by_processed_meeting": verified,
                    "ffmpeg": bool(shutil.which("ffmpeg")), "ffprobe": bool(shutil.which("ffprobe"))},
         "outbound": {"smtp_configured": s.smtp_configured,
                      "external_calendar_api": False,

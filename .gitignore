@@ -79,3 +79,6 @@ tmp/
 
 # ---- Redundant archive of the starter kit (contents committed unzipped) ------
 ZeroShot_PS53_Claude_Starter_Kit.zip
+
+# Generated synthetic TTS clips (scripts/make_tts_sample.sh)
+demo/audio/

@@ -1,8 +1,10 @@
 """Sarvam batch speech-to-text with diarization (sarvamai SDK).
 
 Follows the documented flow: create_job -> upload_files -> start ->
-wait_until_complete -> get_file_results -> download_outputs. Timestamps are
-chunk/phrase level, not word level. Reported as verified only after a live run.
+wait_until_complete -> get_file_results -> download_outputs. Parameter names and
+output types were checked against the installed sarvamai 0.1.37 SDK
+(tests/test_providers.py). Timestamps are chunk/phrase level, not word level.
+Reported as verified only after a live run.
 """
 
 from __future__ import annotations
@@ -31,15 +33,14 @@ def transcribe(audio_path: Path, *, num_speakers: int | None = None, mode: str |
     from sarvamai import SarvamAI
 
     client = SarvamAI(api_subscription_key=s.sarvam_api_key)
-    params = {"model": s.sarvam_model, "mode": mode or s.sarvam_mode, "with_diarization": True}
-    lang = language_code or s.sarvam_language_code
-    if lang and lang != "unknown":
-        params["language_code"] = lang
+    # with_timestamps defaults to False in the SDK (0.1.37): without it chunks carry no times.
+    params = {"model": s.sarvam_model, "mode": mode or s.sarvam_mode, "with_diarization": True,
+              "with_timestamps": True, "language_code": language_code or s.sarvam_language_code or "unknown"}
     if num_speakers:
         params["num_speakers"] = int(num_speakers)
     try:
         job = client.speech_to_text_job.create_job(**params)
-        job.upload_files(file_paths=[str(audio_path)])
+        job.upload_files(file_paths=[str(audio_path)], timeout=600.0)
         job.start()
         job.wait_until_complete(poll_interval=5, timeout=timeout)
         results = job.get_file_results()

@@ -8,7 +8,8 @@ interface Diag {
     ollama: { reachable: boolean; model: string; model_available: boolean }; temperature: number; seed: number
     last_live_smoke_test: { ok: boolean; provider?: string; model?: string; latency_ms?: number; error?: string; at: string } | null
     app_calls_by_model: Record<string, { calls: number; errors: number; median_latency_ms: number | null }> }
-  speech: { provider: string; model: string; mode: string; api_key_present: boolean; verified_by_processed_meeting: boolean; ffmpeg: boolean; ffprobe: boolean }
+  speech: { active: string | null; reason: string | null; sarvam: { api_key_present: boolean; model: string; mode: string }
+    whisper_local: { installed: boolean; model: string }; verified_by_processed_meeting: string[]; ffmpeg: boolean; ffprobe: boolean }
   outbound: { smtp_configured: boolean; external_calendar_api: boolean; note: string }
   clock: string
   evaluation_runs: { run_id: string; meta: { provider: string; model: string; mode: string; started_at: string; prompt_version?: string; replayed_from?: string }; aggregate: Record<string, Agg> }[]
@@ -48,8 +49,10 @@ export default function DiagnosticsPage() {
             </Panel>
             <Panel title="Speech and integrations">
               <dl className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-y-1.5 break-words text-[14.5px]">
-                <dt className="text-slate">Sarvam STT</dt><dd><Status ok={d.speech.api_key_present} yes="key present" no="no API key" /> {d.speech.model}, mode {d.speech.mode}</dd>
-                <dt className="text-slate">Verified</dt><dd>{d.speech.verified_by_processed_meeting ? <span className="text-create">a recording was transcribed on this server</span> : <span className="text-ask">not verified: no recording has been transcribed here</span>}</dd>
+                <dt className="text-slate">Active</dt><dd>{d.speech.active ?? <span className="text-cancel">none: {d.speech.reason}</span>}</dd>
+                <dt className="text-slate">Sarvam STT</dt><dd><Status ok={d.speech.sarvam.api_key_present} yes="key present" no="no API key" /> {d.speech.sarvam.model}, mode {d.speech.sarvam.mode}, with speaker separation</dd>
+                <dt className="text-slate">Local Whisper</dt><dd><Status ok={d.speech.whisper_local.installed} yes="installed" no="not installed" /> {d.speech.whisper_local.model}, no speaker separation</dd>
+                <dt className="text-slate">Verified</dt><dd>{d.speech.verified_by_processed_meeting.length ? <span className="text-create">recordings transcribed here by: {d.speech.verified_by_processed_meeting.join(', ')}</span> : <span className="text-ask">not verified: no recording has been transcribed here</span>}</dd>
                 <dt className="text-slate">FFmpeg</dt><dd><Status ok={d.speech.ffmpeg && d.speech.ffprobe} yes="installed" no="missing" /></dd>
                 <dt className="text-slate">Email (SMTP)</dt><dd><Status ok={d.outbound.smtp_configured} yes="configured" no="not configured: nothing can be emailed" /></dd>
                 <dt className="text-slate">External calendar</dt><dd>{d.outbound.note}</dd>

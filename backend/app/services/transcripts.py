@@ -51,19 +51,46 @@ def _finish(rows: list[dict], source: str) -> list[dict]:
     return out
 
 
+def normalise_chunks(rows: list[dict], merge_gap: float = 0.6, max_chars: int = 400) -> list[dict]:
+    """Chunk-level STT output -> evidence segments: order by start time, clamp negative or
+    inverted times, and merge tiny consecutive fragments of the SAME speaker (never across
+    speakers) so a sentence split into chunks becomes one citable segment."""
+    clean = []
+    for r in rows:
+        text = (r.get("text") or "").strip()
+        if not text:
+            continue
+        st = max(0.0, float(r.get("start") or 0.0))
+        en = r.get("end")
+        en = max(st, float(en)) if en is not None else None
+        clean.append({**r, "text": text, "start": st, "end": en})
+    clean.sort(key=lambda r: r["start"])
+    out: list[dict] = []
+    for r in clean:
+        prev = out[-1] if out else None
+        if (prev and prev["speaker"] == r["speaker"] and prev["end"] is not None
+                and r["start"] - prev["end"] <= merge_gap and len(prev["text"]) + len(r["text"]) < max_chars
+                and not re.search(r"[.?!।]$", prev["text"])):
+            prev["text"] = f"{prev['text']} {r['text']}"
+            prev["end"] = r["end"] if r["end"] is not None else prev["end"]
+            continue
+        out.append(dict(r))
+    return out
+
+
 def parse_sarvam_output(data: dict) -> list[dict]:
     entries = (data.get("diarized_transcript") or {}).get("entries") or []
     if entries:
         rows = [{"speaker": f"SPEAKER_{str(e.get('speaker_id', '0')).zfill(2)}",
                  "start": e.get("start_time_seconds"), "end": e.get("end_time_seconds"),
                  "text": e.get("transcript")} for e in entries]
-        return _finish(rows, "stt:sarvam")
+        return _finish(normalise_chunks(rows), "stt:sarvam")
     ts = data.get("timestamps") or {}
     chunks = ts.get("chunks") or []
     if chunks:
         rows = [{"speaker": "SPEAKER_00", "start": st, "end": en, "text": ch}
                 for ch, st, en in zip(chunks, ts.get("start_time_seconds") or [], ts.get("end_time_seconds") or [])]
-        return _finish(rows, "stt:sarvam")
+        return _finish(normalise_chunks(rows), "stt:sarvam")
     if data.get("transcript"):
         return _finish([{"speaker": "SPEAKER_00", "start": 0, "text": data["transcript"]}], "stt:sarvam")
     raise TranscriptError("Sarvam output contains no transcript")

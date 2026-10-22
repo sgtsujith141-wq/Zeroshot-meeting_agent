@@ -65,7 +65,7 @@ export default function NewMeeting() {
           <legend className="px-1 font-semibold text-ask">Consent</legend>
           <p className="text-[14.5px]">Recording or transcribing people without their agreement is not allowed. Processing sends data to these services:</p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-[14.5px]">
-            <li>Audio and video go to <strong>Sarvam AI</strong> for transcription and speaker separation, when a Sarvam key is configured.</li>
+            <li>Audio and video go to <strong>Sarvam AI</strong> for transcription and speaker separation when a Sarvam key is configured; otherwise they are transcribed by a <strong>local Whisper</strong> model on this machine, which does not separate speakers.</li>
             <li>Transcript text goes to the configured language model: <strong>Google Gemini</strong> (a third party) or a <strong>local Ollama</strong> model on this machine. The Diagnostics page shows which one is active.</li>
             <li>Files and results are stored in this server’s local database and upload folder.</li>
           </ul>

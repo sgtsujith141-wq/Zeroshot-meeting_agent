@@ -27,7 +27,7 @@ from .llm import LLMError, LLMOutputError, LLMUnavailable, get_llm
 from .llm_schemas import MinutesOut
 from .pipelines import interpret
 from .prompts import MINUTES_SYSTEM, build_user_prompt
-from .speech import sarvam
+from .speech import sarvam, stt
 
 log = logging.getLogger("processing")
 _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="meeting-job")
@@ -87,11 +87,11 @@ def step_transcribe(session: Session, meeting: Meeting) -> None:
     session.add(meeting)
     session.commit()
     wav = media.normalise_audio(Path(meeting.file_path))
-    rows, meta = sarvam.transcribe(wav)
+    rows, meta = stt.transcribe(wav)
     store_segments(session, meeting, rows)
     meeting.stt_provider, meeting.stt_model = meta["provider"], meta["model"]
-    _log(meeting, "transcribe", "ok", f"{len(rows)} segments; diarized={meta['diarized']}; "
-                                      f"language={meta.get('language_code')}")
+    _log(meeting, "transcribe", "ok", f"{len(rows)} segments from {meta['provider']}/{meta['model']}; "
+                                      f"diarized={meta['diarized']}; language={meta.get('language_code')}")
 
 
 def step_interpret(session: Session, meeting: Meeting) -> None:

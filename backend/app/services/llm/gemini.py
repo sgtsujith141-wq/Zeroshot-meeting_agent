@@ -33,14 +33,27 @@ class GeminiClient(LLMClient):
             temperature=self.temperature,
             seed=self.seed,
         )
+        from google.genai import errors
         try:
             resp = self._client.models.generate_content(model=self.model, contents=user, config=config)
-        except Exception as exc:  # SDK raises typed APIError subclasses; keep message, never the key
-            raise LLMError(f"Gemini request failed: {type(exc).__name__}: {str(exc)[:300]}") from exc
+        except errors.ClientError as exc:  # 4xx: never retry blindly; say what to fix
+            code = getattr(exc, "code", None)
+            hint = {400: "bad request (schema or parameters)", 401: "invalid GEMINI_API_KEY",
+                    403: "GEMINI_API_KEY not permitted for this model", 404: f"model '{self.model}' not found",
+                    429: "quota or rate limit exceeded"}.get(code, "client error")
+            cls = LLMUnavailable if code in (401, 403, 404) else LLMError
+            raise cls(f"Gemini HTTP {code}: {hint}") from exc
+        except errors.ServerError as exc:
+            raise LLMError(f"Gemini server error HTTP {getattr(exc, 'code', '?')}; try again") from exc
+        except Exception as exc:  # network/timeouts; keep the type, never the key
+            raise LLMError(f"Gemini request failed: {type(exc).__name__}: {str(exc)[:200]}") from exc
         um = getattr(resp, "usage_metadata", None)
         usage = {"prompt_tokens": getattr(um, "prompt_token_count", None),
                  "output_tokens": getattr(um, "candidates_token_count", None)} if um else {}
-        return resp.text or "", usage
+        if not (resp.text or "").strip():
+            reason = getattr((getattr(resp, "candidates", None) or [None])[0], "finish_reason", None)
+            raise LLMError(f"Gemini returned no text (finish_reason={reason})")
+        return resp.text, usage
 
     def list_models(self) -> list[str]:
         return [m.name for m in self._client.models.list()]
