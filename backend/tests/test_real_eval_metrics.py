@@ -36,3 +36,26 @@ def test_action_precision_recall():
     s = action_scores(ref, sys_a)
     assert s["lenient"] == {"precision": 0.5, "recall": 0.5, "f1": 0.5}
     assert s["strict"]["precision"] == 0.5 and s["unmatched_system_actions"] == ["Update wiki"]
+
+
+def test_init_never_overwrites_and_missing_references_are_not_measured(tmp_path, monkeypatch):
+    import json as _json
+    import real_eval
+    folder = tmp_path / "meeting_x"
+    real_eval.cmd_init(folder, 7)
+    (folder / "reference_actions.json").write_text(_json.dumps([{"id": "A1", "title": "Ship it", "owner": "Asha",
+                                                                  "match_keywords": [["ship"]]}]))
+    real_eval.cmd_init(folder, 99)  # second init keeps the annotation and the meeting id
+    assert _json.loads((folder / "meeting.json").read_text())["meeting_id"] == 7
+    assert _json.loads((folder / "reference_actions.json").read_text())[0]["id"] == "A1"
+    assert _json.loads((folder / "reference_transcript.json").read_text())["segments"] == []  # never pre-filled
+    monkeypatch.setattr(real_eval, "system_outputs", lambda mid: {
+        "meeting_id": mid, "title": "t", "stt_provider": None, "stt_model": None, "segments": [],
+        "actions": [{"title": "Ship it", "owner": "Asha", "due_date": None, "depends_on": [], "state": "proposed",
+                     "evidence": ["s1"]}], "decisions": [], "summary": "s"})
+    res = real_eval.evaluate_folder(folder)
+    assert res["actions"]["strict"]["recall"] == 1.0
+    for k in ("wer", "speaker_attribution", "summary_ratings"):
+        assert str(res[k]).startswith("NOT MEASURED")
+    md = real_eval.to_markdown([res])
+    assert "Real recordings evaluated: 1 (required: 3)" in md and "NOT MEASURED" in md
