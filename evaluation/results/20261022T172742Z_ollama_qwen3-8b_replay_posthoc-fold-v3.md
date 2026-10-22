@@ -3,7 +3,7 @@
 > SYNTHETIC ENGINEERING FIXTURES — not the official three-real-meeting evaluation.
 
 - Provider / model: **ollama / qwen3:8b** (same for all pipelines)
-- temperature=0.0, seed=7, trials=1, prompt version=v2
+- temperature=0.0, seed=7, trials=1, prompt version=v1
 - Mode: **replay** (raw responses from `evaluation/results/20261022T165631Z_ollama_qwen3-8b.json`)
 - Started 2026-10-22T17:27:42.905285+00:00, wall time 0.0s, host Darwin x86_64
 

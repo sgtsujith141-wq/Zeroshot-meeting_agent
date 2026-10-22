@@ -187,8 +187,10 @@ def main() -> int:
     settings = get_settings()
 
     recorded_trials = None
+    prev_meta: dict = {}
     if args.replay:
         prev = json.loads(Path(args.replay).read_text())
+        prev_meta = prev["meta"]
         recorded_trials = prev["trials"]
         provider, model = prev["meta"]["provider"], prev["meta"]["model"]
         temperature, seed = prev["meta"]["temperature"], prev["meta"]["seed"]
@@ -212,7 +214,9 @@ def main() -> int:
         "seed": seed, "trials": trials, "mode": "replay" if args.replay else "live",
         "replayed_from": args.replay, "started_at": started.isoformat(),
         "host": f"{platform.system()} {platform.machine()}", "fixtures": args.fixtures,
-        "synthetic": True, "prompt_version": PROMPT_VERSION,
+        "synthetic": True,
+        # Replays re-score recorded responses: the prompt that produced them is the recorded one.
+        "prompt_version": (prev_meta.get("prompt_version", "v1") if args.replay else PROMPT_VERSION),
         "prompts_sha": __import__("hashlib").sha256((BASELINE_SYSTEM + CANDIDATE_SYSTEM).encode()).hexdigest()[:12],
     }, "trials": []}
 

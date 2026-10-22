@@ -12,7 +12,7 @@
     "host": "Darwin x86_64",
     "fixtures": "/Volumes/Volume/Projects/Zeroshot/evaluation/fixtures/PS53_commitment_test_fixtures.json",
     "synthetic": true,
-    "prompt_version": "v2",
+    "prompt_version": "v1",
     "prompts_sha": "4fbc13c868c0",
     "wall_seconds": 0.0
   },
