@@ -333,3 +333,11 @@ def test_upload_processes_by_default_when_field_omitted(client, llm):
     r = client.post(f"/api/meetings/{mid}/upload", files={"file": ("t.json", io.BytesIO(body), "application/json")})
     assert r.status_code == 200
     assert client.get(f"/api/meetings/{mid}").json()["processing_status"] == "ready_for_review"
+
+
+def test_memory_search_handles_kannada_script(client, llm):
+    mid = make_meeting(client)
+    llm.push("interpret_events", {"events": []})
+    upload_transcript(client, mid, [("Samiksha", "API ready ಆದಮೇಲೆ naanu testing start maadthini.")])
+    r = client.post("/api/memory/query", json={"question": "ಆದಮೇಲೆ testing", "use_llm": False}).json()
+    assert r["found"] and r["citations"][0]["seg_key"] == "s1"

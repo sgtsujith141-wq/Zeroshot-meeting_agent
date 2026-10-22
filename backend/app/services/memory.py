@@ -7,7 +7,7 @@ retrieved passages; otherwise the answer is "not found in stored meetings".
 
 from __future__ import annotations
 
-import re
+import unicodedata
 
 from sqlalchemy import text
 from sqlmodel import Session, select
@@ -55,8 +55,14 @@ def remove_meeting(session: Session, meeting_id: int) -> None:
     session.execute(text("DELETE FROM memory_fts WHERE meeting_id = :m"), {"m": meeting_id})
 
 
+def _words(q: str) -> list[str]:
+    # Letters, digits and combining marks (Indic vowel signs are category M; \w drops them).
+    t = unicodedata.normalize("NFC", q.lower())
+    return "".join(ch if unicodedata.category(ch)[0] in "LNM" else " " for ch in t).split()
+
+
 def _fts_query(q: str) -> str | None:
-    toks = [t for t in re.findall(r"\w+", q.lower(), flags=re.UNICODE) if t not in STOP and len(t) > 1]
+    toks = [t for t in _words(q) if t not in STOP and len(t) > 1]
     if not toks:
         return None
     return " OR ".join(f'"{t}"*' for t in dict.fromkeys(toks))  # quoted: no FTS syntax injection
