@@ -107,7 +107,7 @@ def get_meeting(meeting_id: int, _: str = Depends(require_organizer),
 
 
 @router.post("/{meeting_id}/upload")
-async def upload(meeting_id: int, file: UploadFile = File(...), auto_process: bool = Form(True),
+async def upload(meeting_id: int, file: UploadFile = File(...), auto_process: str | None = Form(None),
                  actor: str = Depends(require_organizer), session: Session = Depends(get_session)) -> dict:
     m = _meeting(session, meeting_id)
     if not m.consent_confirmed:
@@ -157,7 +157,8 @@ async def upload(meeting_id: int, file: UploadFile = File(...), auto_process: bo
     record(session, actor, "meeting", m.id, "upload", after={"kind": kind, "size": size, "name": name})
     session.add(m)
     session.commit()
-    if auto_process:
+    # Explicit parsing: an omitted multipart field must mean "process" (the default).
+    if auto_process is None or auto_process.strip().lower() in ("1", "true", "yes", "on"):
         processing.enqueue(session, m, steps)
     return meeting_summary(session, m)
 

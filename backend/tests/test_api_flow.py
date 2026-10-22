@@ -323,3 +323,13 @@ def test_audit_trail_records_approvals(client, llm):
     approve(client, change_set(client, 1))
     actions = {(a["object_type"], a["action"]) for a in client.get("/api/audit").json()}
     assert ("changeset", "approve") in actions and ("changeset", "apply") in actions and ("task", "create") in actions
+
+
+def test_upload_processes_by_default_when_field_omitted(client, llm):
+    # Regression: Form(True) arrived as False when the multipart field was absent.
+    mid = make_meeting(client)
+    llm.push("interpret_events", {"events": []})
+    body = json.dumps({"segments": [{"speaker": "Lead", "text": "Status only, nothing new."}]}).encode()
+    r = client.post(f"/api/meetings/{mid}/upload", files={"file": ("t.json", io.BytesIO(body), "application/json")})
+    assert r.status_code == 200
+    assert client.get(f"/api/meetings/{mid}").json()["processing_status"] == "ready_for_review"
