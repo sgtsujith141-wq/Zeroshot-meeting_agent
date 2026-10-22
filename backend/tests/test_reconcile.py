@@ -417,3 +417,32 @@ def test_hindi_completion_report_and_kannada_finished():
     from app.services.dates import find_temporal_phrases
     assert find_temporal_phrases("maine kal hi complete kar diya") == []
     assert find_temporal_phrases("main parso tak ready kar dunga") == ["parso"]
+
+
+# Post-hoc on holdout v1 (2026-10-23): guards against two model errors seen there.
+
+def test_explicit_completion_contradicted_by_speech_is_not_applied():
+    s = segs(("Lokesh", "The data migration is almost done, I will finish it by Friday."))
+    ledger = [LedgerTask("TASK-302", "Data migration", owner="Lokesh")]
+    r = run(s, [{"type": "REPORT_COMPLETE", "task_key": "TASK-302", "deadline_text": "by Friday",
+                 "segment_ids": ["s1"]}], ledger)
+    [item] = r.items
+    assert item["operation"] == "update" and item["deadline"]["date"] == "2026-10-23"
+    assert any(w["kind"] == "completion_contradicted_by_speech" for w in r.warnings)
+    done = run(segs(("Harish", "The vendor contract is signed and filed, that one is done.")),
+               [{"type": "REPORT_COMPLETE", "task_key": "TASK-1", "segment_ids": ["s1"]}],
+               [LedgerTask("TASK-1", "Sign the vendor contract", owner="Harish")])
+    assert done.items[0]["operation"] == "complete"
+
+
+@pytest.mark.parametrize("text,owner", [
+    ("We will all update our status pages by Monday.", None),         # group: not the speaker
+    ("Sure, will do.", "Asha"),                                       # English ellipsis: still personal
+    ("Almost aaythu, budget report naale kodthini.", "Asha"),          # Kannada pro-drop first person
+    ("Client presentation parso tak ready kar dunga.", "Asha"),       # Hindi pro-drop first person
+    ("We decided on Stripe, and I will send the summary.", "Asha"),   # explicit I wins
+])
+def test_self_owner_requires_personal_speech(text, owner):
+    r = run(segs(("Asha", text)), [{"type": "PROPOSE", "task_key": "x", "title": "Do the thing", "owner": "SELF",
+                                     "strength": "firm", "segment_ids": ["s1"]}])
+    assert r.items[0]["owner"] == owner

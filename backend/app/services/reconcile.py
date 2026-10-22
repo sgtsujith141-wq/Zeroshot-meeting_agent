@@ -110,7 +110,12 @@ NOT_DONE = re.compile(
     r"\b(almost|nearly|not|isn't|aren't|wasn't|yet|will|going to|gonna|still|half|partly|partially|"
     r"pending|in progress|should|must|need to|needs to|have to|has to|after|once|when|until|before|if|"
     r"unless|as soon as|hopefully|maybe|kya|nahi|illa|aagilla)\b", re.I)
-FIRST_PERSON = re.compile(r"\b(i|i'll|i will|i can|i'm|me|naanu|nanu|main|mein)\b", re.I)
+# First-person singular, incl. pronoun-dropping Kannada/Hindi verb endings
+# ("kodthini", "maadthini" = I will give/do; "kar dunga", "dungi" = I will do).
+FIRST_PERSON = re.compile(
+    r"\b(i|i'll|i will|i can|i'm|me|my|naanu|nanu|main|mein|maine)\b"
+    r"|\b\w+(thini|tini|teeni|ttini|tteeni|dini|unga|ungi|oonga|oongi)\b", re.I)
+GROUP_SPEECH = re.compile(r"\b(we|we'll|we will|us|all of us|everyone|everybody|naavu|naavella|hum|hum sab)\b", re.I)
 
 
 def injection_markers(segments: list[Segment]) -> dict[str, str]:
@@ -244,6 +249,14 @@ class Reconciler:
                                           "reason": "CHANGE_DEADLINE words not found in cited speech"})
                     return None
                 ev = ev.model_copy(update={"deadline_text": None})
+        if ev.owner and ev.owner.strip().lower() in ("self", "i", "me"):
+            spk = self._speaker_for(ev.model_copy(update={"segment_ids": valid}))
+            said = " ".join(self.seg_by_id[x].text for x in valid if self.seg_by_id[x].speaker == spk)
+            if GROUP_SPEECH.search(said) and not FIRST_PERSON.search(said):
+                # "We will all update..." is not the speaker volunteering personally.
+                self.warnings.append({"kind": "self_owner_on_group_speech", "segment_ids": valid,
+                                      "detail": f"event {n}: owner SELF but the speech is a group statement"})
+                ev = ev.model_copy(update={"owner": "we"})
         needs_task = ev.type not in (EventType.DECISION, EventType.OPEN_QUESTION)
         if ev.type in (EventType.CANCEL, EventType.REJECT) and not (ev.task_key or ev.title):
             # A cancellation with no stated target is never dropped silently: ask what it cancels.
@@ -279,6 +292,12 @@ class Reconciler:
                 if m and not NOT_DONE.search(clause):
                     return clause.strip()
         return None
+
+    def _completion_denied(self, seg_ids: list[str]) -> bool:
+        """Completion words appear only in negated/future clauses ("almost done")."""
+        clauses = [c for sid in seg_ids for c in re.split(r"[.;!?,]", self.seg_by_id[sid].text)]
+        negated = any(COMPLETION_CUE.search(c) and NOT_DONE.search(c) for c in clauses)
+        return negated and self._completion_cue(seg_ids) is None
 
     def _spoken_in(self, phrase: str, seg_ids: list[str]) -> bool:
         words = lambda t: set(re.findall(r"[^\W_]+", t.lower()))  # noqa: E731
@@ -576,6 +595,14 @@ class Reconciler:
             return
 
         if t == EventType.REPORT_COMPLETE:
+            if self._completion_denied(ev.segment_ids):
+                # The model says done, the words say not yet ("almost done, I will finish it by Friday").
+                self.warnings.append({"kind": "completion_contradicted_by_speech", "segment_ids": ev.segment_ids,
+                                      "detail": f"“{self._cited_text(ev.segment_ids)}” does not report completion"})
+                self._log(d, ev, "completion not applied: the speech says it is not finished")
+                if ev.deadline_text:
+                    self._set_deadline(d, ev.deadline_text, ev, "deadline")
+                return
             d.status, d.reported_complete = "completed", True
             self._log(d, ev, "reported complete (spoken report; verify before closing)")
             return
