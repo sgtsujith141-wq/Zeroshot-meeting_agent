@@ -32,7 +32,7 @@ export default function DiagnosticsPage() {
         <div className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel title="Language model" actions={<Button onClick={smoke} disabled={smoking}>{smoking ? 'Testing…' : 'Run live test'}</Button>}>
-              <dl className="grid grid-cols-[9rem_1fr] gap-y-1.5 text-[14.5px]">
+              <dl className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-y-1.5 break-words text-[14.5px]">
                 <dt className="text-slate">Active</dt><dd>{d.llm.active.provider ? `${d.llm.active.provider} / ${d.llm.active.model}` : <span className="text-cancel">none: {d.llm.active.error}</span>}</dd>
                 <dt className="text-slate">Gemini</dt><dd><Status ok={d.llm.gemini.api_key_present} yes="key present" no="no API key" /> {d.llm.gemini.model}</dd>
                 <dt className="text-slate">Local Ollama</dt><dd><Status ok={d.llm.ollama.reachable && d.llm.ollama.model_available} yes="reachable" no="unavailable" /> {d.llm.ollama.model}</dd>
@@ -42,12 +42,12 @@ export default function DiagnosticsPage() {
                   : <span className="text-cancel">failed: {d.llm.last_live_smoke_test.error}</span>) : 'not run since the server started'}</dd>
               </dl>
               {Object.keys(d.llm.app_calls_by_model).length > 0 && (
-                <table className="mt-3 w-full text-[13.5px]"><thead className="text-slate"><tr><th className="text-left font-medium">Model calls made by the app</th><th className="text-right font-medium">Calls</th><th className="text-right font-medium">Errors</th><th className="text-right font-medium">Median time</th></tr></thead>
-                  <tbody>{Object.entries(d.llm.app_calls_by_model).map(([k, v]) => <tr key={k}><td>{k}</td><td className="text-right">{v.calls}</td><td className="text-right">{v.errors}</td><td className="text-right">{v.median_latency_ms != null ? `${(v.median_latency_ms / 1000).toFixed(1)} s` : '—'}</td></tr>)}</tbody></table>
+                <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[420px] text-[13.5px]"><thead className="text-slate"><tr><th className="text-left font-medium">Model calls made by the app</th><th className="text-right font-medium">Calls</th><th className="text-right font-medium">Errors</th><th className="text-right font-medium">Median time</th></tr></thead>
+                  <tbody>{Object.entries(d.llm.app_calls_by_model).map(([k, v]) => <tr key={k}><td>{k}</td><td className="text-right">{v.calls}</td><td className="text-right">{v.errors}</td><td className="text-right">{v.median_latency_ms != null ? `${(v.median_latency_ms / 1000).toFixed(1)} s` : '—'}</td></tr>)}</tbody></table></div>
               )}
             </Panel>
             <Panel title="Speech and integrations">
-              <dl className="grid grid-cols-[9rem_1fr] gap-y-1.5 text-[14.5px]">
+              <dl className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-y-1.5 break-words text-[14.5px]">
                 <dt className="text-slate">Sarvam STT</dt><dd><Status ok={d.speech.api_key_present} yes="key present" no="no API key" /> {d.speech.model}, mode {d.speech.mode}</dd>
                 <dt className="text-slate">Verified</dt><dd>{d.speech.verified_by_processed_meeting ? <span className="text-create">a recording was transcribed on this server</span> : <span className="text-ask">not verified: no recording has been transcribed here</span>}</dd>
                 <dt className="text-slate">FFmpeg</dt><dd><Status ok={d.speech.ffmpeg && d.speech.ffprobe} yes="installed" no="missing" /></dd>

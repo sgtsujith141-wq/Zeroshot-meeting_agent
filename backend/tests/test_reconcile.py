@@ -306,3 +306,37 @@ def test_kannada_after_cue():
     by = {i["key"]: i for i in r.items}
     assert by["testing"]["owner"] == "Samiksha"
     assert [d["key"] for d in by["testing"]["depends_on"]] == ["api"]
+
+
+def test_completion_and_cancellation_of_approved_tasks_are_proposals():
+    # Found in the live run of synthetic meeting 3: a completion had state "completed",
+    # which apply skips, so approving would silently not mark the task done.
+    s = segs(("Rahul", "Rollback runbook ready hai, maine kal hi complete kar diya."),
+             ("Lead", "Cancel the onboarding guide entirely."))
+    ledger = [LedgerTask("TASK-4", "Prepare the rollback runbook", owner="Rahul"),
+              LedgerTask("TASK-9", "Onboarding guide", owner="Priya")]
+    r = run(s, [
+        {"type": "REPORT_COMPLETE", "task_key": "TASK-4", "segment_ids": ["s1"]},
+        {"type": "CANCEL", "task_key": "TASK-9", "cancel_scope": "task", "segment_ids": ["s2"]},
+    ], ledger)
+    by = {i["existing_task_id"]: i for i in r.items}
+    assert (by["TASK-4"]["state"], by["TASK-4"]["operation"]) == ("proposed", "complete")
+    assert (by["TASK-9"]["state"], by["TASK-9"]["operation"]) == ("proposed", "cancel")
+
+
+def test_deadline_words_must_occur_in_cited_speech():
+    # Found in live synthetic meeting 3: the model put the ledger date "2026-10-26" as the
+    # deadline of "naale finish maadthini". Copied/invented deadlines are not evidence.
+    s = segs(("Samiksha", "Testing almost mugidide, naale finish maadthini."))
+    ledger = [LedgerTask("TASK-2", "Run regression tests", owner="Samiksha", due_date="2026-10-26")]
+    r = run(s, [{"type": "CONFIRM", "task_key": "TASK-2", "owner": "Samiksha", "deadline_text": "2026-10-26",
+                 "segment_ids": ["s1"]},
+                {"type": "CHANGE_DEADLINE", "task_key": "TASK-2", "deadline_text": "by Friday",
+                 "segment_ids": ["s1"]}], ledger)
+    assert any(w["kind"] == "deadline_not_in_evidence" for w in r.warnings)
+    assert len(r.rejected_events) == 1  # the invented CHANGE_DEADLINE
+    assert not any(i["operation"] == "update" for i in r.items)
+    ok = run(segs(("Lead", "Rahul, please finish it by Friday.")), [
+        {"type": "PROPOSE", "task_key": "x", "title": "Finish it", "owner": "Rahul", "deadline_text": "by Friday",
+         "strength": "firm", "segment_ids": ["s1"]}])
+    assert ok.items[0]["deadline"]["date"] == "2026-10-23"

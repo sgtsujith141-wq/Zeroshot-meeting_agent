@@ -48,3 +48,17 @@ test('new meeting form enforces consent before upload', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Upload and process' })).toBeDisabled()
   await shot(page, '08-new-meeting')
 })
+
+test('phone width: no horizontal page overflow on the main views', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await signIn(page)
+  for (const path of ['/', '/review', '/review/2', '/tasks', '/follow-up', '/agenda', '/memory', '/diagnostics', '/meetings/1']) {
+    await page.goto(path)
+    await page.waitForLoadState('networkidle')
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow, `horizontal overflow on ${path}`).toBeLessThanOrEqual(1)
+  }
+  await page.goto('/review/2')
+  await page.waitForLoadState('networkidle')
+  await shot(page, '09-mobile-review')
+})

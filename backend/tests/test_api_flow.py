@@ -344,3 +344,20 @@ def test_memory_search_handles_kannada_script(client, llm):
     upload_transcript(client, mid, [("Samiksha", "API ready ಆದಮೇಲೆ naanu testing start maadthini.")])
     r = client.post("/api/memory/query", json={"question": "ಆದಮೇಲೆ testing", "use_llm": False}).json()
     assert r["found"] and r["citations"][0]["seg_key"] == "s1"
+
+
+def test_spoken_completion_marks_existing_task_done_only_after_approval(client, llm):
+    first_meeting(client, llm)
+    approve(client, change_set(client, 1))
+    code = next(t["code"] for t in client.get("/api/tasks").json() if t["title"] == "Complete authentication API")
+    mid = make_meeting(client, "Standup", "2026-10-22T10:00:00+05:30")
+    llm.push("interpret_events", {"events": [
+        {"type": "REPORT_COMPLETE", "task_key": code, "segment_ids": ["s1"]}]})
+    upload_transcript(client, mid, [("Rahul", f"The authentication API {code} is done and merged.")])
+    cs = change_set(client, mid)
+    [item] = cs["proposal"]["items"]
+    assert (item["state"], item["operation"]) == ("proposed", "complete")
+    assert client.get(f"/api/tasks/{code}").json()["status"] == "todo"  # not before approval
+    assert approve(client, cs).json()["result"]["completed"] == [code]
+    t = client.get(f"/api/tasks/{code}").json()
+    assert t["status"] == "done" and t["revision"] == 2

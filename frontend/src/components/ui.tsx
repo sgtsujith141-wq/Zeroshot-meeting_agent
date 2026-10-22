@@ -137,7 +137,7 @@ export function Quote({ segKey, seg, speakerName, meetingId }: { segKey: string;
 
 export function Panel({ title, children, actions, className = '' }: { title?: ReactNode; children: ReactNode; actions?: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-[10px] border border-rule bg-panel ${className}`}>
+    <section className={`min-w-0 rounded-[10px] border border-rule bg-panel ${className}`}>
       {title && (
         <div className="flex items-center justify-between gap-3 border-b border-rule px-4 py-2.5">
           <h2 className="text-[15px] font-semibold">{title}</h2>

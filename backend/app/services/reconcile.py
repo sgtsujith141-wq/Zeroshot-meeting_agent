@@ -215,6 +215,17 @@ class Reconciler:
             self.warnings.append({"kind": "dropped_invalid_segment_ids", "segment_ids": valid,
                                   "detail": f"event {n} cited nonexistent segments {invalid}"})
         valid.sort(key=lambda s: self.seg_index[s])
+        if ev.deadline_text and not self._spoken_in(ev.deadline_text, valid):
+            # The deadline must be words actually spoken in the cited segments; a date the
+            # model copied from the ledger or invented is not evidence.
+            self.warnings.append({"kind": "deadline_not_in_evidence", "segment_ids": valid,
+                                  "detail": f"event {n}: deadline “{ev.deadline_text}” does not occur in the cited "
+                                            "speech; ignored"})
+            if ev.type == EventType.CHANGE_DEADLINE:
+                self.rejected.append({"index": n, "event": ev.model_dump(mode="json"),
+                                      "reason": "CHANGE_DEADLINE words not found in cited speech"})
+                return None
+            ev = ev.model_copy(update={"deadline_text": None})
         needs_task = ev.type not in (EventType.DECISION, EventType.OPEN_QUESTION)
         if needs_task and not (ev.task_key or ev.title):
             self.rejected.append({"index": n, "event": ev.model_dump(mode="json"),
@@ -233,6 +244,12 @@ class Reconciler:
                                   "reason": "ADD_DEPENDENCY without a prerequisite"})
             return None
         return ev.model_copy(update={"segment_ids": valid})
+
+    def _spoken_in(self, phrase: str, seg_ids: list[str]) -> bool:
+        words = lambda t: set(re.findall(r"[^\W_]+", t.lower()))  # noqa: E731
+        want = {w for w in words(phrase) if len(w) > 1}
+        have = words(" ".join(self.seg_by_id[s].text for s in seg_ids))
+        return not want or len(want & have) / len(want) >= 0.6
 
     def _speaker_for(self, ev: CommitmentEventOut) -> str | None:
         segs = [self.seg_by_id[s] for s in ev.segment_ids]
@@ -651,7 +668,10 @@ class Reconciler:
 
     def _state(self, d: Draft) -> str:
         if d.status in ("cancelled", "rejected", "completed", "tentative"):
-            return d.status
+            # Cancelling or completing APPROVED work is itself a proposed change that
+            # the organiser approves (operation cancel/complete), not a final state.
+            if not (d.existing_task_id and d.status in ("cancelled", "completed")):
+                return d.status
         kinds = {i.kind for i in d.issues}
         if kinds & EXISTENCE_ISSUES:
             return "held"
