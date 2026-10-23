@@ -103,12 +103,12 @@ export default function NewMeeting() {
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
         <form onSubmit={submit} className="min-w-0 max-w-[720px] space-y-6">
           <ErrorBox error={error} />
-          <div role="radiogroup" aria-label="How to add the meeting" className="grid gap-2 sm:grid-cols-3">
+          <div role="radiogroup" aria-label="How to add the meeting" className="grid grid-cols-3 gap-2">
             {MODES.map(m => (
               <button key={m.key} type="button" role="radio" aria-checked={mode === m.key} onClick={() => choose(m.key)}
-                className={`flex items-start gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors ${mode === m.key ? 'border-accent bg-accent-soft' : 'border-rule bg-panel hover:border-rule-strong'}`}>
+                className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-2.5 text-left transition-colors sm:flex-row sm:gap-3 sm:px-3.5 sm:py-3 ${mode === m.key ? 'border-accent bg-accent-soft' : 'border-rule bg-panel hover:border-rule-strong'}`}>
                 <span className={mode === m.key ? 'text-accent' : 'text-faint'}>{m.icon}</span>
-                <span><span className="block text-[14px] font-semibold text-ink">{m.label}</span><span className="block text-[12.5px] text-slate">{m.detail}</span></span>
+                <span><span className="block text-[13px] font-semibold leading-tight text-ink sm:text-[14px]">{m.label}</span><span className="hidden text-[12.5px] text-slate sm:block">{m.detail}</span></span>
               </button>
             ))}
           </div>

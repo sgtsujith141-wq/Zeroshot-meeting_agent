@@ -274,8 +274,8 @@ export default function MeetingPage() {
         {!working && hasResults && reviewBtn}
         {!working && m.segments.length > 0 && <Button size="md" className="h-9" icon={<FileText size={15} />} onClick={() => { setFocus(null); setDrawer(true) }}>Transcript</Button>}
         {!working && m.segments.length > 0 && <Button size="md" className="h-9" icon={<Download size={15} />} loading={pdf === 'download'} onClick={() => report('download')}>Download meeting report</Button>}
-        {!working && m.segments.length > 0 && <Button size="md" kind="ghost" className="h-9" loading={pdf === 'preview'} onClick={() => report('preview')}>Preview report</Button>}
         <Menu label="More" items={[
+          ...(!working && m.segments.length > 0 ? [{ label: 'Preview report', onSelect: () => void report('preview') }] : []),
           { label: 'Re-run analysis', onSelect: () => setConfirm('rerun'), disabled: working || !m.segments.length },
           { label: 'Delete meeting', onSelect: () => setConfirm('delete'), danger: true, disabled: working },
         ]} />
@@ -405,7 +405,10 @@ export default function MeetingPage() {
               <p className="mt-1 text-[13.5px] text-slate">{pendingCs
                 ? `${plural(tasks.length, 'action item')}${toAnswer.length ? `, ${plural(toAnswer.length, 'question')} to answer first` : ', ready to approve'}. Nothing reaches the task board until you approve it.`
                 : m.change_set.state === 'APPLIED' ? 'These tasks are on the task board.' : 'These proposals were not approved.'}</p>
-              <div className="mt-3 [&>a]:w-full [&>a]:justify-center">{reviewBtn}</div>
+              {/* The header carries the primary button; here it is a quieter repeat. */}
+              <Link to={`/approvals/${mid}`} className="mt-3 inline-flex h-9 w-full items-center justify-center rounded-md border border-rule-strong bg-panel text-[13.5px] font-medium text-ink hover:bg-panel-2">
+                {pendingCs ? 'Open the review' : 'View approved tasks'}
+              </Link>
             </div>
           )}
           <dl className="space-y-2.5 text-[13.5px]">

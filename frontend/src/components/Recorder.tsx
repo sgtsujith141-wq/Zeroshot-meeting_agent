@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Mic, Pause, Play, RotateCcw, Square } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Loader2, Mic, Pause, Play, RotateCcw, Square } from 'lucide-react'
 import { Button } from './ui'
 
 /** Browser microphone recording. Nothing is requested before the person presses Record, the
@@ -44,6 +44,21 @@ function resample(a: number[], n: number) {
     const s = Math.floor((i * a.length) / n), e = Math.max(s + 1, Math.floor(((i + 1) * a.length) / n))
     return Math.max(...a.slice(s, e))
   })
+}
+
+/** A large round control with its label beside it; the whole thing is one button. */
+function RoundButton({ children, icon, onClick, tone, busy, live }: { children: string; icon: ReactNode; onClick: () => void; tone: 'solid' | 'outline'; busy?: boolean; live?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} disabled={busy}
+      className="group inline-flex items-center gap-3 rounded-full pr-4 text-[15px] font-semibold text-ink disabled:cursor-wait">
+      <span className={`relative flex h-14 w-14 items-center justify-center rounded-full transition-colors ${tone === 'solid'
+        ? 'bg-accent text-on-accent shadow-[0_8px_20px_-10px_rgb(171_69_46/0.7)] group-hover:bg-accent-hover' : 'border border-rule-strong bg-panel text-ink group-hover:bg-panel-2'}`}>
+        {live && <span aria-hidden className="anim-pulse absolute -inset-1.5 rounded-full border-2 border-mark/60" />}
+        {busy ? <Loader2 size={20} className="anim-spin" aria-hidden /> : icon}
+      </span>
+      {children}
+    </button>
+  )
 }
 
 export default function Recorder({ value, onChange }: { value: Recording | null; onChange: (r: Recording | null) => void }) {
@@ -181,19 +196,20 @@ export default function Recorder({ value, onChange }: { value: Recording | null;
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => { setPlaying(false); setProgress(0) }}
         onTimeUpdate={e => setProgress(e.currentTarget.currentTime / Math.max(0.1, value.seconds))} />}
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         {state === 'recording' ? (
-          <Button kind="primary" className="h-10 px-5 text-[14px]" icon={<Square size={14} fill="currentColor" />} onClick={stop}>Stop</Button>
+          <RoundButton onClick={stop} tone="solid" icon={<Square size={18} fill="currentColor" />} live>Stop</RoundButton>
         ) : state === 'recorded' && value ? (<>
-          <Button className="h-10 px-4 text-[14px]" icon={playing ? <Pause size={15} /> : <Play size={15} />} onClick={toggle}>{playing ? 'Pause' : 'Play'}</Button>
+          <RoundButton onClick={toggle} tone="outline" icon={playing ? <Pause size={18} /> : <Play size={18} className="translate-x-px" />}>{playing ? 'Pause' : 'Play'}</RoundButton>
           <Button kind="ghost" className="h-10 px-3 text-[14px]" icon={<RotateCcw size={15} />} onClick={again}>Re-record</Button>
-          <span className="text-[13px] text-slate">{clock(value.seconds)} recorded, {(value.blob.size / 1e6).toFixed(value.blob.size > 1e6 ? 1 : 2)} MB</span>
+          <span className="text-[13px] text-slate">{clock(value.seconds)} recorded, {(value.blob.size / 1e6).toFixed(value.blob.size > 1e6 ? 1 : 2)} MB, not uploaded yet</span>
         </>) : state !== 'unsupported' && (
-          <Button kind="primary" className="h-10 px-5 text-[14px]" icon={<Mic size={16} />} loading={state === 'asking'} onClick={start}>
+          <RoundButton onClick={start} tone="solid" icon={<Mic size={20} />} busy={state === 'asking'}>
             {state === 'asking' ? 'Waiting for permission' : state === 'idle' ? 'Record' : 'Record again'}
-          </Button>
+          </RoundButton>
         )}
       </div>
+      {state === 'idle' && <p className="mt-3 text-[13px] text-slate">Press Record and allow the microphone. Nothing leaves this browser until you choose <em className="font-medium not-italic text-ink">Transcribe recording</em>.</p>}
     </div>
   )
 }

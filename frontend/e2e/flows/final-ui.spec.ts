@@ -106,7 +106,8 @@ test.describe('with the demo data', () => {
     // Preview opens the same PDF in a new tab. Headless Chromium has no PDF viewer, so there the
     // tab hands the PDF over as a download; a desktop browser displays it.
     const popup = page.waitForEvent('popup')
-    await main(page).getByRole('button', { name: 'Preview report' }).click()
+    await main(page).getByRole('button', { name: 'More' }).click()
+    await page.getByRole('menuitem', { name: 'Preview report' }).click()
     const tab = await popup
     const shown = await tab.waitForEvent('download').then(d => d.path()).then(p => readFileSync(p!).subarray(0, 5).toString())
     expect(shown).toBe('%PDF-')

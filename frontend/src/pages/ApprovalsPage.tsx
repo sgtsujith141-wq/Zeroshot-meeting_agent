@@ -337,8 +337,8 @@ function Lines({ changes }: { changes: FieldChange[] }) {
       {changes.map((c, i) => (
         <li key={i} className="text-[13.5px]">
           <span className="text-slate">{fieldLabel(c.field)}: </span>
-          {c.from != null && <><span className="text-slate">{c.from}</span><span aria-hidden className="mx-1.5 text-faint">→</span><span className="sr-only"> changes to </span></>}
-          <span className="font-medium text-ink">{c.to}</span>
+          {c.from != null && <><span className="text-slate line-through decoration-rule-strong">{c.from}</span><span aria-hidden className="mx-1.5 text-mark">→</span><span className="sr-only"> changes to </span></>}
+          <span className={`font-medium text-ink ${c.from != null ? 'rounded bg-accent-soft px-1 py-px' : ''}`}>{c.to}</span>
         </li>))}
     </ul>
   )
