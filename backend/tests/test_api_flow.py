@@ -293,25 +293,31 @@ def test_calendar_ics_and_agenda(client, llm):
 
 def test_reminder_fires_under_simulated_clock(client, llm):
     """SIMULATED CLOCK: time is advanced artificially; this is not a real-time delivery demo."""
-    first_meeting(client, llm)
-    approve(client, change_set(client, 1))
-    rems = client.get("/api/reminders").json()
-    planned = [r for r in rems if r["delivery_state"] == "scheduled"]
-    assert planned, rems
     from app.services.clock import set_simulated_clock
     from app.services.reminders import deliver_due
     from app.db import get_engine
-    at = datetime.fromisoformat(planned[0]["scheduled_at"])
-    set_simulated_clock(lambda: at - timedelta(minutes=1))
-    with Session(get_engine()) as s:
-        assert deliver_due(s) == []
-    set_simulated_clock(lambda: at + timedelta(minutes=1))
-    with Session(get_engine()) as s:
-        assert deliver_due(s) == [planned[0]["id"]]
-        assert deliver_due(s) == []  # idempotent
-    assert client.get("/api/health").json()["clock"] == "simulated"
-    notes = client.get("/api/notifications").json()
-    assert len(notes) == 1 and "Complete authentication API" in notes[0]["message"]
+    # Plan from the meeting's own date: the default reminder is the 09:00 slot before the due
+    # date, which stops existing once the real date passes it.
+    set_simulated_clock(lambda: datetime.fromisoformat(MEETING_AT))
+    try:
+        first_meeting(client, llm)
+        approve(client, change_set(client, 1))
+        rems = client.get("/api/reminders").json()
+        planned = [r for r in rems if r["delivery_state"] == "scheduled"]
+        assert planned, rems
+        at = datetime.fromisoformat(planned[0]["scheduled_at"])
+        set_simulated_clock(lambda: at - timedelta(minutes=1))
+        with Session(get_engine()) as s:
+            assert deliver_due(s) == []
+        set_simulated_clock(lambda: at + timedelta(minutes=1))
+        with Session(get_engine()) as s:
+            assert deliver_due(s) == [planned[0]["id"]]
+            assert deliver_due(s) == []  # idempotent
+        assert client.get("/api/health").json()["clock"] == "simulated"
+        notes = client.get("/api/notifications").json()
+        assert len(notes) == 1 and "Complete authentication API" in notes[0]["message"]
+    finally:
+        set_simulated_clock(None)
 
 
 def test_data_persists_across_restart(client, llm, tmp_path):
