@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Check, Download, FileText, X as XIcon } from 'lucide-react'
-import { api, ApiError, fmtDate, fmtDateTime, fmtTime } from '../lib/api'
+import { api, ApiError, fmtDate, fmtDateTime, fmtTime, openReport } from '../lib/api'
 import type { ChangeSet, Clarification, MeetingDetail, MeetingSummary, Participant, Task } from '../types'
 import {
   Button, Dialog, Drawer, Empty, ErrorBox, Field, Loading, Menu, Notice, PageHeader, SegRef, Section, Status, SyntheticTag, Tabs,
@@ -219,6 +219,7 @@ export default function MeetingPage() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<'rerun' | 'delete' | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pdf, setPdf] = useState<'preview' | 'download' | null>(null)
   const audio = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
@@ -240,6 +241,10 @@ export default function MeetingPage() {
   const pendingCs = !!m.change_set && ['NEEDS_CLARIFICATION', 'READY_FOR_REVIEW'].includes(m.change_set.state)
   const hasResults = !!m.minutes?.summary || !!m.change_set
 
+  async function report(mode: 'preview' | 'download') {
+    setPdf(mode)
+    try { await openReport(mid, m!.title, mode) } catch (e) { toast('error', `The report could not be made: ${errText(e)}`) } finally { setPdf(null) }
+  }
   async function rerun() {
     setBusy(true)
     try { await api.post(`/api/meetings/${mid}/process`, { steps: ['interpret', 'minutes'] }); setConfirm(null); toast('info', 'Analysis started again. This page shows each step as it finishes.'); await reload() }
@@ -267,6 +272,8 @@ export default function MeetingPage() {
       actions={<>
         {!working && hasResults && reviewBtn}
         {!working && m.segments.length > 0 && <Button size="md" className="h-9" icon={<FileText size={15} />} onClick={() => { setFocus(null); setDrawer(true) }}>Transcript</Button>}
+        {!working && m.segments.length > 0 && <Button size="md" className="h-9" icon={<Download size={15} />} loading={pdf === 'download'} onClick={() => report('download')}>Download meeting report</Button>}
+        {!working && m.segments.length > 0 && <Button size="md" kind="ghost" className="h-9" loading={pdf === 'preview'} onClick={() => report('preview')}>Preview report</Button>}
         <Menu label="More" items={[
           { label: 'Re-run analysis', onSelect: () => setConfirm('rerun'), disabled: working || !m.segments.length },
           { label: 'Delete meeting', onSelect: () => setConfirm('delete'), danger: true, disabled: working },

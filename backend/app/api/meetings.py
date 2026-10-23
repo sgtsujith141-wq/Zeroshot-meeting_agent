@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from sqlmodel import Session, delete, select
 
 from ..auth import require_organizer, sign_media, verify_media
@@ -14,7 +15,7 @@ from ..models import (
     TranscriptSegment,
 )
 from ..schemas import MeetingCreate, ParticipantUpdate, ProcessRequest, SegmentUpdate
-from ..services import changesets, media, memory, processing
+from ..services import changesets, media, memory, processing, report
 from ..services.audit import record
 from ..services.clock import now_utc
 from ..services.identity import is_anonymous_label
@@ -227,6 +228,34 @@ def correct_segment(meeting_id: int, seg_key: str, body: SegmentUpdate, actor: s
     session.commit()
     return {"seg_key": seg.seg_key, "text": seg.text, "revision": seg.revision,
             "note": "re-run interpretation to re-extract commitments from the corrected text"}
+
+
+def _report_data(session: Session, meeting_id: int) -> dict:
+    try:
+        return report.gather(session, meeting_id)
+    except report.ReportError as exc:
+        raise HTTPException(404 if "not found" in str(exc) else 409, str(exc)) from exc
+
+
+@router.get("/{meeting_id}/report.pdf")
+def meeting_report_pdf(meeting_id: int, download: bool = Query(False), _: str = Depends(require_organizer),
+                       session: Session = Depends(get_session)) -> Response:
+    """A4 meeting report built from the stored records (see services/report.py)."""
+    data = _report_data(session, meeting_id)
+    try:
+        pdf, ms = report.render_pdf(report.to_html(data))
+    except report.ReportError as exc:
+        raise HTTPException(503, str(exc)) from exc
+    name = re.sub(r"[^A-Za-z0-9._-]+", "_", data["title"]).strip("_")[:80] or f"meeting-{meeting_id}"
+    return Response(pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'{"attachment" if download else "inline"}; filename="{name}-report.pdf"',
+        "X-Render-Ms": f"{ms:.0f}", "Cache-Control": "no-store"})
+
+
+@router.get("/{meeting_id}/report.html")
+def meeting_report_html(meeting_id: int, _: str = Depends(require_organizer), session: Session = Depends(get_session)) -> HTMLResponse:
+    """The same report as print-ready HTML (what the PDF is rendered from)."""
+    return HTMLResponse(report.to_html(_report_data(session, meeting_id)), headers={"Cache-Control": "no-store"})
 
 
 @router.get("/{meeting_id}/media-url")

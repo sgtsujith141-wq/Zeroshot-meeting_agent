@@ -15,7 +15,7 @@ export class ApiError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status }
 }
 
-async function request<T>(method: string, path: string, body?: unknown, raw = false): Promise<T> {
+async function request<T>(method: string, path: string, body?: unknown, raw: boolean | 'blob' = false): Promise<T> {
   const headers: Record<string, string> = {}
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
@@ -39,6 +39,7 @@ async function request<T>(method: string, path: string, body?: unknown, raw = fa
     } catch { /* not JSON */ }
     throw new ApiError(res.status, msg)
   }
+  if (raw === 'blob') return (await res.blob()) as T
   if (raw) return (await res.text()) as T
   return res.json() as Promise<T>
 }
@@ -51,6 +52,20 @@ export const api = {
   put: <T>(p: string, b: unknown) => request<T>('PUT', p, b),
   del: <T>(p: string) => request<T>('DELETE', p),
   upload: <T>(p: string, form: FormData) => request<T>('POST', p, form),
+  blob: (p: string) => request<Blob>('GET', p, undefined, 'blob'),
+}
+
+/** The meeting report as a PDF: opened in a new tab (preview) or saved (download). The request
+ *  carries the organiser token, so the file is fetched first and handed to the browser. */
+export async function openReport(meetingId: number, title: string, mode: 'preview' | 'download') {
+  const tab = mode === 'preview' ? window.open('', '_blank') : null
+  try {
+    const pdf = await api.blob(`/api/meetings/${meetingId}/report.pdf`)
+    const url = URL.createObjectURL(pdf)
+    if (tab) tab.location.href = url
+    else Object.assign(document.createElement('a'), { href: url, download: `${title.replace(/[^\w.-]+/g, '_')}-report.pdf` }).click()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch (e) { tab?.close(); throw e }
 }
 
 export async function download(path: string, filename: string) {
