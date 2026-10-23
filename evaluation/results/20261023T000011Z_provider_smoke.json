@@ -1,0 +1,44 @@
+{
+  "at": "2026-10-22T23:59:13+00:00",
+  "gemini": {
+    "status": "SKIP",
+    "reason": "GEMINI_API_KEY is not set"
+  },
+  "ollama": {
+    "status": "PASS",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "latency_s": 36.4,
+    "events": 4,
+    "schema_attempts": 1,
+    "owners_found": {
+      "login": "samiksha",
+      "doc": "priya"
+    },
+    "expected": {
+      "login": "samiksha",
+      "doc": "priya"
+    }
+  },
+  "sarvam_stt": {
+    "status": "SKIP",
+    "reason": "SARVAM_API_KEY is not set"
+  },
+  "whisper_local_stt": {
+    "status": "PASS",
+    "provider": "whisper-local",
+    "model": "faster-whisper-small",
+    "mode": "transcribe",
+    "language_code": "en",
+    "language_probability": 0.476,
+    "diarized": false,
+    "audio_seconds": 24.5,
+    "latency_s": 21.2,
+    "segments": 6,
+    "speakers": [
+      "SPEAKER_00"
+    ],
+    "timestamps_present": true,
+    "first_segment": "Okay team, quicksync on the mobile app launch."
+  }
+}

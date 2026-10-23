@@ -59,14 +59,18 @@ def llm_check(provider: str) -> dict:
         return {"status": "FAIL", "reason": str(exc)[:300]}
 
 
-def stt_check(audio: Path) -> dict:
+def stt_check(audio: Path, provider: str) -> dict:
     from app.services import media
-    from app.services.speech import stt
+    from app.services.speech import sarvam, stt, whisper_local
+    if provider == "sarvam" and not get_settings().sarvam_api_key:
+        return {"status": "SKIP", "reason": "SARVAM_API_KEY is not set"}
+    if provider == "whisper" and not whisper_local.available():
+        return {"status": "SKIP", "reason": "local Whisper not installed (uv sync --group local-stt)"}
     try:
         info = media.probe(audio)
         wav = media.normalise_audio(audio)
         t0 = time.monotonic()
-        rows, meta = stt.transcribe(wav)
+        rows, meta = (sarvam.transcribe if provider == "sarvam" else whisper_local.transcribe)(wav)
         speakers = sorted({r["speaker_label"] for r in rows})
         return {"status": "PASS" if rows else "FAIL", **meta, "audio_seconds": round(info["duration_seconds"], 1),
                 "latency_s": round(time.monotonic() - t0, 1), "segments": len(rows), "speakers": speakers,
@@ -85,7 +89,8 @@ def main() -> int:
     report = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
               "gemini": llm_check("gemini"), "ollama": llm_check("ollama")}
     if args.audio:
-        report["speech_to_text"] = stt_check(args.audio)
+        report["sarvam_stt"] = stt_check(args.audio, "sarvam")
+        report["whisper_local_stt"] = stt_check(args.audio, "whisper")
     for k, v in report.items():
         if isinstance(v, dict):
             print(f"{k:15s} {v['status']:5s} {json.dumps({x: y for x, y in v.items() if x != 'status'})}")
