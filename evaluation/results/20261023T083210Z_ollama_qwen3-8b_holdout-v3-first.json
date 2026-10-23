@@ -1,0 +1,2808 @@
+{
+  "meta": {
+    "run_id": "20261023T083210Z_ollama_qwen3-8b_holdout-v3-first",
+    "provider": "ollama",
+    "model": "qwen3:8b",
+    "temperature": 0.0,
+    "seed": 7,
+    "trials": 1,
+    "mode": "live",
+    "replayed_from": null,
+    "started_at": "2026-10-23T08:32:10.358488+00:00",
+    "host": "Darwin x86_64",
+    "fixtures": "evaluation/fixtures/holdout_v3.json",
+    "synthetic": true,
+    "prompt_version": "v2",
+    "prompts_sha": "4fbc13c868c0",
+    "wall_seconds": 378.8
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "cases": [
+        {
+          "id": "W01_self_commit_tomorrow",
+          "scenario": "Named person commits with a relative deadline",
+          "baseline": {
+            "items": [
+              {
+                "title": "Finish the vendor contract review",
+                "owner": "Farhan",
+                "due_date": "2026-11-26",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Finish the vendor contract review",
+                  "owner": "Farhan",
+                  "deadline_text": "tomorrow",
+                  "due_date": "2026-11-26",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 39876,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Finish the vendor contract review\", \"status\": \"proposed\", \"segment_ids\": [\"s1\", \"s2\"], \"owner\": \"Farhan\", \"deadline_text\": \"tomorrow\", \"due_date\": \"2026-11-26\", \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 754,
+                "output_tokens": 84,
+                "eval_seconds": 17.18
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Finish the vendor contract review",
+                "owner": "Farhan",
+                "due_date": "2026-11-26",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Finish the vendor contract review",
+                "owner": "Farhan",
+                "due_date": "2026-11-26",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "vendor-contract-review",
+                  "title": "Finish the vendor contract review",
+                  "owner": "Farhan",
+                  "deadline_text": null,
+                  "strength": "question",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "vendor-contract-review",
+                  "title": null,
+                  "owner": "Farhan",
+                  "deadline_text": "tomorrow",
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 22634,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"PROPOSE\", \"segment_ids\": [\"s1\"], \"task_key\": \"vendor-contract-review\", \"title\": \"Finish the vendor contract review\", \"owner\": \"Farhan\", \"strength\": \"question\"}, {\"type\": \"CONFIRM\", \"segment_ids\": [\"s2\"], \"task_key\": \"vendor-contract-review\", \"owner\": \"Farhan\", \"deadline_text\": \"tomorrow\"}]}",
+              "usage": {
+                "prompt_tokens": 1141,
+                "output_tokens": 94,
+                "eval_seconds": 19.02
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "vendor-contract-review",
+                  "title": "Finish the vendor contract review",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Farhan",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "tomorrow",
+                    "date": "2026-11-26",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "high",
+                    "basis": "derived: due 1 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (question)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "Farhan asked to take it (not yet accepted)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner unassigned \u2192 Farhan",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: deadline none \u2192 2026-11-26",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "before": null,
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "309feba21632d4ad"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "W02_someone_should",
+          "scenario": "Suggestion with no owner is not a task",
+          "baseline": {
+            "items": [
+              {
+                "title": "Check the API rate limits",
+                "owner": null,
+                "due_date": null,
+                "state": "tentative",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_rate_limit": true
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Check the API rate limits",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "tentative",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 16564,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Check the API rate limits\", \"status\": \"tentative\", \"segment_ids\": [\"s1\"], \"owner\": null, \"deadline_text\": null, \"due_date\": null, \"depends_on\": null, \"priority\": null, \"clarification_question\": null}]}",
+              "usage": {
+                "prompt_tokens": 733,
+                "output_tokens": 66,
+                "eval_seconds": 13.86
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Check the API rate limits",
+                "owner": null,
+                "due_date": null,
+                "state": "tentative",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_rate_limit": true
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Check the API rate limits",
+                "owner": null,
+                "due_date": null,
+                "state": "tentative",
+                "existing_task_id": null,
+                "operation": "suggest",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "api-rate-limits-check",
+                  "title": "Check the API rate limits",
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": "tentative",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 11825,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"api-rate-limits-check\",\"title\":\"Check the API rate limits\",\"owner\":null,\"strength\":\"tentative\"}]}",
+              "usage": {
+                "prompt_tokens": 1120,
+                "output_tokens": 44,
+                "eval_seconds": 8.93
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "api-rate-limits-check",
+                  "title": "Check the API rate limits",
+                  "existing_task_id": null,
+                  "operation": "suggest",
+                  "state": "tentative",
+                  "owner": null,
+                  "owner_status": "missing",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (tentative)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "before": null,
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "a71d07daac1c644a"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "no_active_rate_limit": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "W03_actually_reassign",
+          "scenario": "Correction reassigns an approved task",
+          "baseline": {
+            "items": [
+              {
+                "title": "Load testing",
+                "owner": "Omar",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "TASK-503"
+                ],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Load testing",
+                "owner": "Devika",
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": "TASK-503",
+                "operation": "cancel",
+                "blocked_by": [],
+                "evidence": []
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "updates_existing_task": false,
+                "no_duplicate_task": false
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "task_id": "TASK-503",
+                    "title": "Load testing",
+                    "owner": "Omar"
+                  },
+                  "predicted": {
+                    "title": "Load testing",
+                    "owner": "Omar",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "TASK-503"
+                    ],
+                    "evidence": [
+                      "s1",
+                      "s2",
+                      "s3"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "not linked to TASK-503 (duplicate/new task instead)"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Load testing",
+                  "owner": "Omar",
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": "TASK-503",
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [
+                "TASK-503"
+              ],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 26876,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Load testing\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s1\", \"s2\", \"s3\"],\n      \"owner\": \"Omar\",\n      \"deadline_text\": null,\n      \"due_date\": null,\n      \"depends_on\": \"TASK-503\",\n      \"priority\": null,\n      \"clarification_question\": null\n    }\n  ],\n  \"cancelled_existing_task_ids\": [\"TASK-503\"]\n}",
+              "usage": {
+                "prompt_tokens": 801,
+                "output_tokens": 110,
+                "eval_seconds": 22.44
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Load testing",
+                "owner": "Omar",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "TASK-503"
+                ],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Load testing",
+                "owner": "Devika",
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": "TASK-503",
+                "operation": "cancel",
+                "blocked_by": [],
+                "evidence": []
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "updates_existing_task": false,
+                "no_duplicate_task": false
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "task_id": "TASK-503",
+                    "title": "Load testing",
+                    "owner": "Omar"
+                  },
+                  "predicted": {
+                    "title": "Load testing",
+                    "owner": "Omar",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "TASK-503"
+                    ],
+                    "evidence": [
+                      "s1",
+                      "s2",
+                      "s3"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "not linked to TASK-503 (duplicate/new task instead)"
+                }
+              ]
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Load testing",
+                "owner": "Omar",
+                "due_date": null,
+                "state": "held",
+                "existing_task_id": null,
+                "operation": "hold",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2",
+                  "s3"
+                ]
+              }
+            ],
+            "clarifications": [
+              "Is \u201cLoad testing\u201d the existing task TASK-503 \u201cLoad testing\u201d (update it) or a new task?"
+            ],
+            "clarification_detail": [
+              {
+                "id": "q1",
+                "kind": "possible_existing_match",
+                "rank": 1,
+                "question": "Is \u201cLoad testing\u201d the existing task TASK-503 \u201cLoad testing\u201d (update it) or a new task?",
+                "item_keys": [
+                  "load-testing"
+                ],
+                "segment_ids": [
+                  "s1"
+                ],
+                "data": {
+                  "candidates": [
+                    "TASK-503"
+                  ]
+                },
+                "blocking": true,
+                "deferred": false
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "load-testing",
+                  "title": "Load testing",
+                  "owner": "Devika",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "REASSIGN",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "load-testing",
+                  "title": null,
+                  "owner": "Omar",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s3"
+                  ],
+                  "task_key": "load-testing",
+                  "title": null,
+                  "owner": "SELF",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 22942,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"load-testing\",\"title\":\"Load testing\",\"owner\":\"Devika\",\"strength\":\"firm\"},{\"type\":\"REASSIGN\",\"segment_ids\":[\"s2\"],\"task_key\":\"load-testing\",\"owner\":\"Omar\",\"strength\":\"firm\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s3\"],\"task_key\":\"load-testing\",\"owner\":\"SELF\"}]}",
+              "usage": {
+                "prompt_tokens": 1188,
+                "output_tokens": 86,
+                "eval_seconds": 18.3
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "load-testing",
+                  "title": "Load testing",
+                  "existing_task_id": null,
+                  "operation": "hold",
+                  "state": "held",
+                  "owner": "Omar",
+                  "owner_status": "self_mapped",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2",
+                    "s3"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Devika",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "REASSIGN",
+                      "summary": "reassigned: owner Devika \u2192 Omar",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Omar",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "before": null,
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q1",
+                  "kind": "possible_existing_match",
+                  "rank": 1,
+                  "question": "Is \u201cLoad testing\u201d the existing task TASK-503 \u201cLoad testing\u201d (update it) or a new task?",
+                  "item_keys": [
+                    "load-testing"
+                  ],
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "data": {
+                    "candidates": [
+                      "TASK-503"
+                    ]
+                  },
+                  "blocking": true,
+                  "deferred": false
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "bfe90cae64554c1f"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": true,
+              "checks": {
+                "updates_existing_task": false,
+                "no_duplicate_task": true
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "task_id": "TASK-503",
+                    "title": "Load testing",
+                    "owner": "Omar"
+                  },
+                  "problem": "missing (false negative)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "W04_cancel_old_plan",
+          "scenario": "Ambiguous cancellation of a plan, not clearly the task",
+          "baseline": {
+            "items": [
+              {
+                "title": "Data migration dry run",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": "TASK-504",
+                "operation": "cancel",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "existing_task_not_changed_or_cancelled": false,
+                "clarification_raised": false
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Data migration dry run",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "cancelled",
+                  "existing_task_id": "TASK-504",
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 14118,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\": \"Data migration dry run\", \"status\": \"cancelled\", \"segment_ids\": [\"s1\", \"s2\"], \"existing_task_id\": \"TASK-504\"}]}",
+              "usage": {
+                "prompt_tokens": 786,
+                "output_tokens": 45,
+                "eval_seconds": 9.27
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Data migration dry run",
+                "owner": null,
+                "due_date": null,
+                "state": "cancelled",
+                "existing_task_id": "TASK-504",
+                "operation": "cancel",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "existing_task_not_changed_or_cancelled": false,
+                "clarification_raised": false
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Data migration dry run",
+                "owner": "Lina",
+                "due_date": null,
+                "state": "held",
+                "existing_task_id": "TASK-504",
+                "operation": "hold",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              }
+            ],
+            "clarifications": [
+              "\u201cAbout the data migration, cancel the old plan.\u201d \u2014 cancel the whole task TASK-504 \u201cData migration dry run\u201d, or only a plan/part of it while the task continues?"
+            ],
+            "clarification_detail": [
+              {
+                "id": "q1",
+                "kind": "ambiguous_cancellation_existing",
+                "rank": 2,
+                "question": "\u201cAbout the data migration, cancel the old plan.\u201d \u2014 cancel the whole task TASK-504 \u201cData migration dry run\u201d, or only a plan/part of it while the task continues?",
+                "item_keys": [
+                  "TASK-504"
+                ],
+                "segment_ids": [
+                  "s1"
+                ],
+                "data": {
+                  "task_id": "TASK-504"
+                },
+                "blocking": true,
+                "deferred": false
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "CANCEL",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "data-migration-dry-run",
+                  "title": null,
+                  "owner": null,
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": "task",
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": "Chair cancels the old plan"
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 15930,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"CANCEL\", \"segment_ids\": [\"s1\"], \"task_key\": \"data-migration-dry-run\", \"cancel_scope\": \"task\", \"rationale\": \"Chair cancels the old plan\"}]}",
+              "usage": {
+                "prompt_tokens": 1173,
+                "output_tokens": 51,
+                "eval_seconds": 11.6
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "TASK-504",
+                  "title": "Data migration dry run",
+                  "existing_task_id": "TASK-504",
+                  "operation": "hold",
+                  "state": "held",
+                  "owner": "Lina",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "MATCH",
+                      "segment_ids": [
+                        "s1"
+                      ],
+                      "summary": "\u201cdata migration dry run\u201d matched existing TASK-504 by title (single candidate)"
+                    },
+                    {
+                      "type": "CANCEL",
+                      "summary": "cancellation scope unclear; existing task left unchanged",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "before": {
+                    "title": "Data migration dry run",
+                    "owner": "Lina",
+                    "due_date": null,
+                    "status": "approved",
+                    "depends_on": []
+                  },
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q1",
+                  "kind": "ambiguous_cancellation_existing",
+                  "rank": 2,
+                  "question": "\u201cAbout the data migration, cancel the old plan.\u201d \u2014 cancel the whole task TASK-504 \u201cData migration dry run\u201d, or only a plan/part of it while the task continues?",
+                  "item_keys": [
+                    "TASK-504"
+                  ],
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "data": {
+                    "task_id": "TASK-504"
+                  },
+                  "blocking": true,
+                  "deferred": false
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "18ff781ab9a009c8"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 1,
+              "clean_case": false,
+              "checks": {
+                "existing_task_not_changed_or_cancelled": true,
+                "clarification_raised": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "W05_done_and_merged",
+          "scenario": "Completion of an approved task",
+          "baseline": {
+            "items": [
+              {
+                "title": "Search API",
+                "owner": null,
+                "due_date": null,
+                "state": "completed",
+                "existing_task_id": "TASK-505",
+                "operation": "complete",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "op_complete_TASK-505": true
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Search API",
+                  "owner": null,
+                  "deadline_text": null,
+                  "due_date": null,
+                  "status": "completed",
+                  "existing_task_id": "TASK-505",
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 16307,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Search API\",\n      \"status\": \"completed\",\n      \"segment_ids\": [\"s1\"],\n      \"existing_task_id\": \"TASK-505\"\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 766,
+                "output_tokens": 52,
+                "eval_seconds": 12.06
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Search API",
+                "owner": null,
+                "due_date": null,
+                "state": "completed",
+                "existing_task_id": "TASK-505",
+                "operation": "complete",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "op_complete_TASK-505": true
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Search API",
+                "owner": "Kiran",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": "TASK-505",
+                "operation": "complete",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "REPORT_COMPLETE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "search-api",
+                  "title": "Search API",
+                  "owner": "Kiran",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 14557,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"REPORT_COMPLETE\", \"segment_ids\": [\"s1\"], \"task_key\": \"search-api\", \"title\": \"Search API\", \"owner\": \"Kiran\"}]}",
+              "usage": {
+                "prompt_tokens": 1153,
+                "output_tokens": 43,
+                "eval_seconds": 10.13
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "TASK-505",
+                  "title": "Search API",
+                  "existing_task_id": "TASK-505",
+                  "operation": "complete",
+                  "state": "proposed",
+                  "owner": "Kiran",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": null,
+                    "date": null,
+                    "kind": "none",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "MATCH",
+                      "segment_ids": [
+                        "s1"
+                      ],
+                      "summary": "\u201cSearch API\u201d matched existing TASK-505 by title (single candidate)"
+                    },
+                    {
+                      "type": "REPORT_COMPLETE",
+                      "summary": "reported complete (spoken report; verify before closing)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "before": {
+                    "title": "Search API",
+                    "owner": "Kiran",
+                    "due_date": null,
+                    "status": "approved",
+                    "depends_on": []
+                  },
+                  "reported_complete": true
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "071939a57a11f375"
+            },
+            "score": {
+              "expected": 0,
+              "predicted_active": 0,
+              "lenient_tp": 0,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {
+                "op_complete_TASK-505": true
+              },
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "W06_dependency_after",
+          "scenario": "Second task starts only after the first",
+          "baseline": {
+            "items": [
+              {
+                "title": "Build the export endpoint",
+                "owner": "Kiran",
+                "due_date": "2026-11-26",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Test the export endpoint",
+                "owner": "Rhea",
+                "due_date": "2026-12-05",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "Build the export endpoint"
+                ],
+                "evidence": [
+                  "s3",
+                  "s4"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 2,
+              "owner_errors": 0,
+              "due_errors": 2,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 1,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Build the export endpoint",
+                    "owner": "Kiran",
+                    "due_date": "2026-11-27"
+                  },
+                  "predicted": {
+                    "title": "Build the export endpoint",
+                    "owner": "Kiran",
+                    "due_date": "2026-11-26",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1",
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due '2026-11-26' != '2026-11-27'"
+                },
+                {
+                  "expected": {
+                    "title": "Test the export endpoint",
+                    "owner": "Rhea",
+                    "due_date": "2026-11-30",
+                    "blocked_by": "Build the export endpoint"
+                  },
+                  "predicted": {
+                    "title": "Test the export endpoint",
+                    "owner": "Rhea",
+                    "due_date": "2026-12-05",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "Build the export endpoint"
+                    ],
+                    "evidence": [
+                      "s3",
+                      "s4"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due '2026-12-05' != '2026-11-30'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Build the export endpoint",
+                  "owner": "Kiran",
+                  "deadline_text": "by Friday",
+                  "due_date": "2026-11-26",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                },
+                {
+                  "title": "Test the export endpoint",
+                  "owner": "Rhea",
+                  "deadline_text": "next Monday",
+                  "due_date": "2026-12-05",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": "Build the export endpoint",
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s3",
+                    "s4"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 51314,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Build the export endpoint\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s1\", \"s2\"],\n      \"owner\": \"Kiran\",\n      \"deadline_text\": \"by Friday\",\n      \"due_date\": \"2026-11-26\",\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": null\n    },\n    {\n      \"title\": \"Test the export endpoint\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s3\", \"s4\"],\n      \"owner\": \"Rhea\",\n      \"deadline_text\": \"next Monday\",\n      \"due_date\": \"2026-12-05\",\n      \"depends_on\": \"Build the export endpoint\",\n      \"priority\": null,\n      \"clarification_question\": null\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 792,
+                "output_tokens": 195,
+                "eval_seconds": 45.9
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Build the export endpoint",
+                "owner": "Kiran",
+                "due_date": "2026-11-27",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              },
+              {
+                "title": "Test the export endpoint",
+                "owner": "Rhea",
+                "due_date": null,
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "Build the export endpoint"
+                ],
+                "evidence": [
+                  "s3",
+                  "s4"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 1,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 1,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Test the export endpoint",
+                    "owner": "Rhea",
+                    "due_date": "2026-11-30",
+                    "blocked_by": "Build the export endpoint"
+                  },
+                  "predicted": {
+                    "title": "Test the export endpoint",
+                    "owner": "Rhea",
+                    "due_date": null,
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "Build the export endpoint"
+                    ],
+                    "evidence": [
+                      "s3",
+                      "s4"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due None != '2026-11-30'"
+                }
+              ]
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Build the export endpoint",
+                "owner": "Kiran",
+                "due_date": "2026-11-27",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              },
+              {
+                "title": "Testing can start after the export endpoint is complete",
+                "owner": "R3ha",
+                "due_date": null,
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [
+                  "Build the export endpoint"
+                ],
+                "evidence": [
+                  "s3",
+                  "s4"
+                ]
+              }
+            ],
+            "clarifications": [
+              "Deadline \u201cnext Monday\u201d for \u201cTesting can start after the export endpoint is complete\u201d is unclear ('next Monday' could mean 2026-11-30 or 2026-12-07). Candidates: 2026-11-30, 2026-12-07."
+            ],
+            "clarification_detail": [
+              {
+                "id": "q1",
+                "kind": "ambiguous_deadline",
+                "rank": 4,
+                "question": "Deadline \u201cnext Monday\u201d for \u201cTesting can start after the export endpoint is complete\u201d is unclear ('next Monday' could mean 2026-11-30 or 2026-12-07). Candidates: 2026-11-30, 2026-12-07.",
+                "item_keys": [
+                  "export-testing"
+                ],
+                "segment_ids": [
+                  "s3"
+                ],
+                "data": {
+                  "candidates": [
+                    "2026-11-30",
+                    "2026-12-07"
+                  ]
+                },
+                "blocking": true,
+                "deferred": false
+              }
+            ],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "export-endpoint",
+                  "title": "Build the export endpoint",
+                  "owner": "Kiran",
+                  "deadline_text": "by Friday",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "export-endpoint",
+                  "title": null,
+                  "owner": "Kiran",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s3"
+                  ],
+                  "task_key": "export-testing",
+                  "title": "Testing can start after the export endpoint is complete",
+                  "owner": "Rhea",
+                  "deadline_text": "next Monday",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s4"
+                  ],
+                  "task_key": "export-testing",
+                  "title": null,
+                  "owner": "R3ha",
+                  "deadline_text": null,
+                  "strength": null,
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 41340,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"export-endpoint\",\"title\":\"Build the export endpoint\",\"owner\":\"Kiran\",\"deadline_text\":\"by Friday\",\"strength\":\"firm\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s2\"],\"task_key\":\"export-endpoint\",\"owner\":\"Kiran\"},{\"type\":\"PROPOSE\",\"segment_ids\":[\"s3\"],\"task_key\":\"export-testing\",\"title\":\"Testing can start after the export endpoint is complete\",\"owner\":\"Rhea\",\"deadline_text\":\"next Monday\",\"strength\":\"firm\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s4\"],\"task_key\":\"export-testing\",\"owner\":\"R3ha\"}]}",
+              "usage": {
+                "prompt_tokens": 1179,
+                "output_tokens": 137,
+                "eval_seconds": 34.34
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "export-endpoint",
+                  "title": "Build the export endpoint",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Kiran",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "by Friday",
+                    "date": "2026-11-27",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "high",
+                    "basis": "derived: due 2 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Kiran",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-11-27",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Kiran",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "before": null,
+                  "reported_complete": false
+                },
+                {
+                  "key": "export-testing",
+                  "title": "Testing can start after the export endpoint is complete",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "needs_clarification",
+                  "owner": "R3ha",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "next Monday",
+                    "date": null,
+                    "kind": "unknown",
+                    "ambiguous": true,
+                    "candidates": [
+                      "2026-11-30",
+                      "2026-12-07"
+                    ],
+                    "time_text": null,
+                    "note": "'next Monday' could mean 2026-11-30 or 2026-12-07"
+                  },
+                  "priority": {
+                    "value": null,
+                    "basis": "unspecified"
+                  },
+                  "depends_on": [
+                    {
+                      "key": "export-endpoint",
+                      "title": "Build the export endpoint",
+                      "existing_task_id": null
+                    }
+                  ],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s3",
+                    "s4"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Rhea",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 next Monday",
+                      "segment_ids": [
+                        "s3"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Rhea \u2192 R3ha",
+                      "segment_ids": [
+                        "s4"
+                      ]
+                    },
+                    {
+                      "type": "INFERRED_DEPENDENCY",
+                      "segment_ids": [
+                        "s3"
+                      ],
+                      "summary": "waits for export-endpoint: inferred from the words \u201cafter the export endpoint is complete\u201d (rule-based, check it)"
+                    }
+                  ],
+                  "clarification_ids": [
+                    "q1"
+                  ],
+                  "before": null,
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [
+                {
+                  "id": "q1",
+                  "kind": "ambiguous_deadline",
+                  "rank": 4,
+                  "question": "Deadline \u201cnext Monday\u201d for \u201cTesting can start after the export endpoint is complete\u201d is unclear ('next Monday' could mean 2026-11-30 or 2026-12-07). Candidates: 2026-11-30, 2026-12-07.",
+                  "item_keys": [
+                    "export-testing"
+                  ],
+                  "segment_ids": [
+                    "s3"
+                  ],
+                  "data": {
+                    "candidates": [
+                      "2026-11-30",
+                      "2026-12-07"
+                    ]
+                  },
+                  "blocking": true,
+                  "deferred": false
+                }
+              ],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "400213dd7f39d417"
+            },
+            "score": {
+              "expected": 2,
+              "predicted_active": 2,
+              "lenient_tp": 2,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 1,
+              "state_errors": 0,
+              "dependency_total": 1,
+              "dependency_correct": 1,
+              "clarifications": 1,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Test the export endpoint",
+                    "owner": "Rhea",
+                    "due_date": "2026-11-30",
+                    "blocked_by": "Build the export endpoint"
+                  },
+                  "predicted": {
+                    "title": "Testing can start after the export endpoint is complete",
+                    "owner": "R3ha",
+                    "due_date": null,
+                    "state": "needs_clarification",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [
+                      "Build the export endpoint"
+                    ],
+                    "evidence": [
+                      "s3",
+                      "s4"
+                    ]
+                  },
+                  "problem": "owner 'R3ha' != 'Rhea'; due None != '2026-11-30'"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": "W07_hindi_owner_deadline",
+          "scenario": "Hindi-English commitment with a relative deadline",
+          "baseline": {
+            "items": [
+              {
+                "title": "Complete invoice reconciliation",
+                "owner": "Ankit",
+                "due_date": "2026-11-30",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 0,
+              "due_errors": 1,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Invoice reconciliation",
+                    "owner": "Ankit",
+                    "due_date": "2026-11-26"
+                  },
+                  "predicted": {
+                    "title": "Complete invoice reconciliation",
+                    "owner": "Ankit",
+                    "due_date": "2026-11-30",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1",
+                      "s2"
+                    ],
+                    "clarification_question": null
+                  },
+                  "problem": "due '2026-11-30' != '2026-11-26'"
+                }
+              ]
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Complete invoice reconciliation",
+                  "owner": "Ankit",
+                  "deadline_text": "kal tak",
+                  "due_date": "2026-11-30",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1",
+                    "s2"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 27860,
+              "attempts": 1,
+              "raw_text": "{\n  \"action_items\": [\n    {\n      \"title\": \"Complete invoice reconciliation\",\n      \"status\": \"proposed\",\n      \"segment_ids\": [\"s1\", \"s2\"],\n      \"owner\": \"Ankit\",\n      \"deadline_text\": \"kal tak\",\n      \"due_date\": \"2026-11-30\",\n      \"depends_on\": null,\n      \"priority\": null,\n      \"clarification_question\": null\n    }\n  ]\n}",
+              "usage": {
+                "prompt_tokens": 758,
+                "output_tokens": 100,
+                "eval_seconds": 24.02
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Complete invoice reconciliation",
+                "owner": "Ankit",
+                "due_date": "2026-11-26",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Complete invoice reconciliation",
+                "owner": "Ankit",
+                "due_date": "2026-11-26",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1",
+                  "s2"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "invoice-reconciliation",
+                  "title": "Complete invoice reconciliation",
+                  "owner": "Ankit",
+                  "deadline_text": "kal tak",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                },
+                {
+                  "type": "CONFIRM",
+                  "segment_ids": [
+                    "s2"
+                  ],
+                  "task_key": "invoice-reconciliation",
+                  "title": null,
+                  "owner": "SELF",
+                  "deadline_text": null,
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 22450,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\":\"PROPOSE\",\"segment_ids\":[\"s1\"],\"task_key\":\"invoice-reconciliation\",\"title\":\"Complete invoice reconciliation\",\"owner\":\"Ankit\",\"deadline_text\":\"kal tak\",\"strength\":\"firm\"},{\"type\":\"CONFIRM\",\"segment_ids\":[\"s2\"],\"task_key\":\"invoice-reconciliation\",\"owner\":\"SELF\",\"strength\":\"firm\"}]}",
+              "usage": {
+                "prompt_tokens": 1145,
+                "output_tokens": 72,
+                "eval_seconds": 17.97
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "invoice-reconciliation",
+                  "title": "Complete invoice reconciliation",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Ankit",
+                  "owner_status": "self_mapped",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "kal tak",
+                    "date": "2026-11-26",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "high",
+                    "basis": "derived: due 1 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1",
+                    "s2"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Ankit",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-11-26",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "CONFIRM",
+                      "summary": "confirmed: owner Ankit",
+                      "segment_ids": [
+                        "s2"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "before": null,
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "496a7026f84e0ba6"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": true,
+              "checks": {},
+              "mismatches": []
+            }
+          }
+        },
+        {
+          "id": "W08_kannada_no_owner",
+          "scenario": "Kannada-English request with no owner",
+          "baseline": {
+            "items": [
+              {
+                "title": "Draft the dashboard",
+                "owner": null,
+                "due_date": "2026-11-27",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "clarification_raised": false
+              },
+              "mismatches": []
+            },
+            "raw": {
+              "action_items": [
+                {
+                  "title": "Draft the dashboard",
+                  "owner": null,
+                  "deadline_text": "Friday",
+                  "due_date": "2026-11-27",
+                  "status": "proposed",
+                  "existing_task_id": null,
+                  "depends_on": null,
+                  "priority": null,
+                  "clarification_question": null,
+                  "segment_ids": [
+                    "s1"
+                  ]
+                }
+              ],
+              "cancelled_existing_task_ids": [],
+              "decisions": [],
+              "open_questions": []
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "baseline_extract",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 16944,
+              "attempts": 1,
+              "raw_text": "{\"action_items\": [{\"title\":\"Draft the dashboard\",\"status\":\"proposed\",\"segment_ids\":[\"s1\"],\"owner\":null,\"deadline_text\":\"Friday\",\"due_date\":\"2026-11-27\",\"depends_on\":null,\"priority\":null,\"clarification_question\":null}]}",
+              "usage": {
+                "prompt_tokens": 737,
+                "output_tokens": 62,
+                "eval_seconds": 13.46
+              },
+              "error": null
+            }
+          },
+          "baseline_det": {
+            "items": [
+              {
+                "title": "Draft the dashboard",
+                "owner": null,
+                "due_date": "2026-11-27",
+                "state": "needs_clarification",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ],
+                "clarification_question": null
+              }
+            ],
+            "clarifications": [],
+            "warnings": [],
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 1,
+              "false_positives": 0,
+              "false_negatives": 0,
+              "owner_errors": 0,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "clarification_raised": false
+              },
+              "mismatches": []
+            }
+          },
+          "candidate": {
+            "items": [
+              {
+                "title": "Dashboard draft",
+                "owner": "Chair",
+                "due_date": "2026-11-27",
+                "state": "proposed",
+                "existing_task_id": null,
+                "operation": "create",
+                "blocked_by": [],
+                "evidence": [
+                  "s1"
+                ]
+              }
+            ],
+            "clarifications": [],
+            "clarification_detail": [],
+            "warnings": [],
+            "rejected_events": [],
+            "raw": {
+              "events": [
+                {
+                  "type": "PROPOSE",
+                  "segment_ids": [
+                    "s1"
+                  ],
+                  "task_key": "dashboard-draft",
+                  "title": "Dashboard draft",
+                  "owner": "Chair",
+                  "deadline_text": "Friday olage",
+                  "strength": "firm",
+                  "cancel_scope": null,
+                  "depends_on_key": null,
+                  "priority": null,
+                  "text": null,
+                  "rationale": null
+                }
+              ]
+            },
+            "call": {
+              "provider": "ollama",
+              "model": "qwen3:8b",
+              "purpose": "interpret_events",
+              "temperature": 0.0,
+              "seed": 7,
+              "latency_ms": 17139,
+              "attempts": 1,
+              "raw_text": "{\"events\": [{\"type\": \"PROPOSE\", \"segment_ids\": [\"s1\"], \"task_key\": \"dashboard-draft\", \"title\": \"Dashboard draft\", \"owner\": \"Chair\", \"deadline_text\": \"Friday olage\", \"strength\": \"firm\"}]}",
+              "usage": {
+                "prompt_tokens": 1124,
+                "output_tokens": 58,
+                "eval_seconds": 13.36
+              },
+              "error": null
+            },
+            "reconciled": {
+              "items": [
+                {
+                  "key": "dashboard-draft",
+                  "title": "Dashboard draft",
+                  "existing_task_id": null,
+                  "operation": "create",
+                  "state": "proposed",
+                  "owner": "Chair",
+                  "owner_status": "named",
+                  "owner_note": null,
+                  "owner_candidate": null,
+                  "deadline": {
+                    "raw": "Friday olage",
+                    "date": "2026-11-27",
+                    "kind": "derived",
+                    "ambiguous": false,
+                    "candidates": [],
+                    "time_text": null,
+                    "note": null
+                  },
+                  "priority": {
+                    "value": "high",
+                    "basis": "derived: due 2 day(s) after the meeting"
+                  },
+                  "depends_on": [],
+                  "blocked_reason": null,
+                  "evidence_segment_ids": [
+                    "s1"
+                  ],
+                  "history": [
+                    {
+                      "type": "PROPOSE",
+                      "summary": "proposed (firm)",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "assigned: owner unassigned \u2192 Chair",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    },
+                    {
+                      "type": "PROPOSE",
+                      "summary": "deadline: deadline none \u2192 2026-11-27",
+                      "segment_ids": [
+                        "s1"
+                      ]
+                    }
+                  ],
+                  "clarification_ids": [],
+                  "before": null,
+                  "reported_complete": false
+                }
+              ],
+              "clarifications": [],
+              "decisions": [],
+              "open_questions": [],
+              "rejected_events": [],
+              "warnings": [],
+              "uncovered_segment_ids": [],
+              "fingerprint": "8cf0100aebd83921"
+            },
+            "score": {
+              "expected": 1,
+              "predicted_active": 1,
+              "lenient_tp": 1,
+              "strict_tp": 0,
+              "false_positives": 0,
+              "false_negatives": 1,
+              "owner_errors": 1,
+              "due_errors": 0,
+              "state_errors": 0,
+              "dependency_total": 0,
+              "dependency_correct": 0,
+              "clarifications": 0,
+              "clean_case": false,
+              "checks": {
+                "clarification_raised": false
+              },
+              "mismatches": [
+                {
+                  "expected": {
+                    "title": "Dashboard draft",
+                    "owner": null,
+                    "due_date": "2026-11-27"
+                  },
+                  "predicted": {
+                    "title": "Dashboard draft",
+                    "owner": "Chair",
+                    "due_date": "2026-11-27",
+                    "state": "proposed",
+                    "existing_task_id": null,
+                    "operation": "create",
+                    "blocked_by": [],
+                    "evidence": [
+                      "s1"
+                    ]
+                  },
+                  "problem": "owner 'Chair' != None"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "aggregate": {
+    "baseline": {
+      "cases": 8,
+      "expected_items": 6,
+      "predicted_active_items": 6,
+      "strict": {
+        "precision": 0.333,
+        "recall": 0.333,
+        "f1": 0.333,
+        "tp": 2
+      },
+      "lenient": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 6
+      },
+      "owner_errors": 0,
+      "due_errors": 3,
+      "state_errors": 0,
+      "false_positives": 0,
+      "dependencies": "1/1",
+      "safety_checks_passed": "2/7",
+      "clarifications_on_clean_cases": 0,
+      "cases_fully_correct": 3
+    },
+    "baseline_det": {
+      "cases": 8,
+      "expected_items": 6,
+      "predicted_active_items": 6,
+      "strict": {
+        "precision": 0.667,
+        "recall": 0.667,
+        "f1": 0.667,
+        "tp": 4
+      },
+      "lenient": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 6
+      },
+      "owner_errors": 0,
+      "due_errors": 1,
+      "state_errors": 0,
+      "false_positives": 0,
+      "dependencies": "1/1",
+      "safety_checks_passed": "2/7",
+      "clarifications_on_clean_cases": 0,
+      "cases_fully_correct": 4
+    },
+    "candidate": {
+      "cases": 8,
+      "expected_items": 6,
+      "predicted_active_items": 5,
+      "strict": {
+        "precision": 0.6,
+        "recall": 0.5,
+        "f1": 0.545,
+        "tp": 3
+      },
+      "lenient": {
+        "precision": 1.0,
+        "recall": 0.833,
+        "f1": 0.909,
+        "tp": 5
+      },
+      "owner_errors": 2,
+      "due_errors": 1,
+      "state_errors": 0,
+      "false_positives": 0,
+      "dependencies": "1/1",
+      "safety_checks_passed": "5/7",
+      "clarifications_on_clean_cases": 2,
+      "cases_fully_correct": 5
+    }
+  }
+}

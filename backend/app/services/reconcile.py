@@ -13,6 +13,7 @@ speaker or answers a question is cheap and reproducible.
 
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import re
@@ -420,9 +421,42 @@ class Reconciler:
         d.history.append({"type": ev.type.value, "summary": summary, "segment_ids": ev.segment_ids})
         d.add_evidence(ev.segment_ids)
 
+    def _known_names(self) -> set[str]:
+        names = {n for s in self.segments for n in (self.ctx.directory.name_for(s.speaker),) if n}
+        return names | set(self.ctx.directory.people()) | {t.owner for t in self.ctx.ledger if t.owner}
+
+    def _grounded(self, res: OwnerResolution, ev: CommitmentEventOut, speaker: str | None) -> OwnerResolution:
+        """A named owner must come from the meeting, and a request is not its speaker's commitment.
+
+        - The name must be mentioned in the transcript or already be a known person (speaker,
+          mapped participant or task owner). The model sometimes garbles a name ("R3ha" for Rhea);
+          then nobody is assigned and the organiser is asked, with the closest real name as a hint.
+        - On PROPOSE, the speaker becomes the owner only if their own words commit them
+          (first person: "I'll", "main kar dunga", "naanu maadtini"). "Someone do X" said by the
+          chair does not make the chair the owner.
+        """
+        if res.status != "named" or not res.name:
+            return res
+        name = res.name
+        text = " ".join(s.text for s in self.segments)
+        words = [w for w in re.findall(r"\w+", name) if len(w) >= 3] or [name]
+        mentioned = any(re.search(rf"(?<!\w){re.escape(w)}(?!\w)", text, re.I) for w in words)
+        known = {n.lower() for n in self._known_names()}
+        if not mentioned and name.lower() not in known:
+            pool = sorted(self._known_names() | set(re.findall(r"\b[A-Z][a-z]{2,}\b", text)))
+            close = difflib.get_close_matches(name, pool, n=1, cutoff=0.6)
+            hint = f"; did it mean {close[0]}?" if close else ""
+            return OwnerResolution(None, "missing", note=f"the model named “{name}”, who is not mentioned in the meeting{hint}")
+        if ev.type == EventType.PROPOSE and speaker and self.ctx.directory.name_for(speaker) == name:
+            own = [self.seg_by_id[sid].text for sid in ev.segment_ids if self.seg_by_id[sid].speaker == speaker]
+            if own and not any(FIRST_PERSON.search(t) for t in own) \
+                    and not any(re.search(rf"(?<!\w){re.escape(w)}(?!\w)", t, re.I) for t in own for w in words):
+                return OwnerResolution(None, "missing", note=f"{name} asked for it; the words do not say who will do it")
+        return res
+
     def _set_owner(self, d: Draft, owner_raw: str, speaker: str | None, ev: CommitmentEventOut,
                    verb: str) -> None:
-        res = resolve_owner(owner_raw, speaker, self.ctx.directory)
+        res = self._grounded(resolve_owner(owner_raw, speaker, self.ctx.directory), ev, speaker)
         before = d.owner.name or (d.owner.unmapped_label and f"[{d.owner.unmapped_label}]") or "unassigned"
         after = res.name or (res.unmapped_label and f"[{res.unmapped_label}]") or "unassigned"
         if (ev.strength == "question" and res.name) and ev.type != EventType.CONFIRM:

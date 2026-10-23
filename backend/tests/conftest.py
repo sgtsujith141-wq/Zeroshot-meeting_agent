@@ -54,6 +54,7 @@ def client(tmp_path, monkeypatch, llm):
     monkeypatch.setenv("ORGANIZER_TOKEN", "test-token")
     monkeypatch.setenv("REMINDER_POLL_SECONDS", "0")
     monkeypatch.setenv("WHISPER_PREWARM", "0")
+    monkeypatch.setenv("LLM_CONCURRENT_MINUTES", "0")  # deterministic call order; one test turns it on
     monkeypatch.setenv("SMTP_HOST", "")
     from app.config import get_settings
     get_settings.cache_clear()
