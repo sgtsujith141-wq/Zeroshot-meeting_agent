@@ -1,35 +1,139 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Check, FileText, X as XIcon } from 'lucide-react'
 import { api, ApiError, fmtDate, fmtDateTime } from '../lib/api'
-import type { ChangeSet, MeetingDetail, Participant, Task } from '../types'
+import type { ChangeSet, Clarification, MeetingDetail, MeetingSummary, Participant, Task } from '../types'
 import {
-  Button, Dialog, Empty, ErrorBox, Field, Loading, Menu, Notice, PageHeader, SegRef, Section, Status, Tabs,
+  Button, Dialog, Drawer, Empty, ErrorBox, Field, Loading, Menu, Notice, PageHeader, SegRef, Section, Status, SyntheticTag, Tabs,
   errText, inputCls, plural, useLoad, useToast,
 } from '../components/ui'
 import Transcript, { type Focus } from '../components/Transcript'
-import { BUSY, meetingStatus } from '../lib/status'
-import { plan } from '../lib/changes'
+import { BUSY, isSynthetic, meetingStatus } from '../lib/status'
+import { Q_LABEL, plan, type Planned } from '../lib/changes'
 
 const STEP: Record<string, string> = { queue: 'Queued', transcribe: 'Speech to text', interpret: 'Interpretation', minutes: 'Minutes', changeset: 'Proposed changes', recover: 'Recovery' }
-type Tab = 'transcript' | 'summary' | 'actions' | 'speakers' | 'processing'
 
-function useWide() {
-  const q = '(min-width: 1024px)'
-  const [wide, setWide] = useState(() => window.matchMedia(q).matches)
-  useEffect(() => { const m = window.matchMedia(q); const h = () => setWide(m.matches); m.addEventListener('change', h); return () => m.removeEventListener('change', h) }, [])
-  return wide
+// ---- processing ----------------------------------------------------------------------------------
+
+/** The four stages people see, each tied to a real backend status and log step. */
+const STAGES = [
+  { label: 'Preparing meeting', status: 'queued', steps: ['queue'] },
+  { label: 'Processing transcript', status: 'transcribing', steps: ['transcribe'] },
+  { label: 'Identifying decisions and tasks', status: 'interpreting', steps: ['interpret'] },
+  { label: 'Preparing results', status: 'writing_minutes', steps: ['minutes', 'changeset'] },
+]
+const STAGE_OF: Record<string, number> = { queue: 0, start: 0, transcribe: 1, interpret: 2, minutes: 3, changeset: 3 }
+
+const secs = (a: string, b: number) => Math.max(0, Math.round((b - Date.parse(a)) / 1000))
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
+function useNow(on: boolean) {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => { if (!on) return; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [on])
+  return now
 }
+
+function ProcessingView({ m, onRetry }: { m: MeetingDetail; onRetry: () => void }) {
+  const working = BUSY.includes(m.processing_status)
+  const now = useNow(working)
+  // Only this run's entries: everything from the latest "queue" entry on.
+  const q = m.processing_log.map(l => l.step).lastIndexOf('queue')
+  const run = q >= 0 ? m.processing_log.slice(q) : m.processing_log
+  const failedAt = !working ? run.find(l => l.status !== 'ok') : undefined
+  const ok = run.filter(l => l.status === 'ok')
+  const active = working ? STAGES.findIndex(s => s.status === m.processing_status)
+    : failedAt?.step === 'recover' ? Math.min(3, Math.max(0, ...ok.map(l => STAGE_OF[l.step] ?? 0)) + 1) : STAGE_OF[failedAt?.step ?? 'start'] ?? 0
+  const startedAt = run[0]?.at
+  const transcriptFile = !(m.source_type === 'audio' || m.source_type === 'video')
+  // A stage starts when the previous step was logged; its duration is the gap between entries.
+  const stageTimes = STAGES.map((s, i) => {
+    const end = [...ok].reverse().find(l => s.steps.includes(l.step))
+    const prev = [...ok].reverse().find(l => (STAGE_OF[l.step] ?? -1) < i)
+    return { end: end?.at, start: prev?.at }
+  })
+  const sample = useLoad(() => api.get<MeetingSummary[]>('/api/meetings'), [m.id])
+  const earlier = (sample.data ?? []).filter(x => x.id !== m.id && isSynthetic(x) && x.processing_status === 'ready_for_review' && x.change_set && x.created_at < m.created_at)
+  const pick = earlier.find(x => x.title === m.title) ?? earlier.find(x => x.change_set?.state === 'APPLIED') ?? earlier[0]
+
+  return (
+    <div className="anim-rise mx-auto max-w-[620px] py-4">
+      <div className="rounded-xl border border-rule bg-panel px-6 py-6 sm:px-8">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-[17px] font-semibold text-ink">{working ? 'Analyzing your meeting' : 'Analysis stopped'}</h2>
+          {startedAt && working && <span className="tnum text-[13px] text-slate"><span className="sr-only">Elapsed </span>{clock(secs(startedAt, now))}</span>}
+        </div>
+        <p className="mt-1 text-[13.5px] text-slate">{working ? 'This page updates by itself as each step finishes. With a local model this usually takes a few minutes.' : m.processing_error}</p>
+
+        <ol className="mt-6" aria-label="Analysis steps">
+          {STAGES.map((s, i) => {
+            const state = i < active ? 'done' : i === active ? (working ? 'active' : 'failed') : 'todo'
+            const t = stageTimes[i]
+            const detail = state === 'done' ? (i === 1 && transcriptFile ? `Transcript imported, ${plural(m.segments.length, 'line')}` : t.end && t.start ? `Done in ${clock(secs(t.start, Date.parse(t.end)))}` : 'Done')
+              : state === 'active' ? (t.start ? `Running for ${clock(secs(t.start, now))}` : 'Running')
+              : state === 'failed' ? 'Stopped here' : ''
+            return (
+              <li key={s.label} data-state={state} className="relative flex gap-4 pb-6 last:pb-0">
+                {i < STAGES.length - 1 && <span aria-hidden className={`absolute left-[11px] top-7 h-[calc(100%-1.5rem)] w-px ${state === 'done' ? 'bg-accent' : 'bg-rule-strong'}`} />}
+                <span aria-hidden className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                  state === 'done' ? 'border-accent bg-accent text-on-accent' : state === 'active' ? 'border-accent bg-accent-soft' : state === 'failed' ? 'border-cancel bg-cancel-soft text-cancel' : 'border-rule-strong bg-panel'}`}>
+                  {state === 'done' ? <Check size={13} strokeWidth={2.6} /> : state === 'active' ? <span className="anim-pulse h-2 w-2 rounded-full bg-accent" /> : state === 'failed' ? <XIcon size={13} strokeWidth={2.6} /> : null}
+                </span>
+                <div className="min-w-0 pt-0.5">
+                  <div className={`text-[14.5px] ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>{s.label}<span className="sr-only">: {state === 'todo' ? 'not started' : state}</span></div>
+                  {detail && <div className={`tnum text-[13px] ${state === 'failed' ? 'text-cancel' : 'text-slate'}`}>{detail}</div>}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+        {!working && <div className="mt-6 flex flex-wrap gap-2">
+          {m.segments.length > 0 && <Button kind="primary" onClick={onRetry}>Try again</Button>}
+          <Link to="/meetings/new" className="inline-flex h-8 items-center rounded-md border border-rule-strong px-3 text-[13.5px] font-medium hover:bg-panel-2">Upload a different file</Link>
+        </div>}
+      </div>
+      {working && pick && (
+        <p className="mt-4 px-1 text-[13px] text-slate">
+          Taking too long for the time you have? <Link to={`/meetings/${pick.id}`} className="font-medium text-sky hover:underline">Open a sample processed earlier</Link>: “{pick.title}”,
+          a separate synthetic meeting analysed on {fmtDate(pick.created_at)}. It is not the result of this upload, which keeps running here.
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ---- results --------------------------------------------------------------------------------------
+
+type Segs = Record<string, MeetingDetail['segments'][number]>
+type Names = Record<string, string | null>
+type More = 'speakers' | 'share' | 'technical'
+
+function Refs({ ids, segs, names, show }: { ids: string[]; segs: Segs; names: Names; show: (k: string) => void }) {
+  if (!ids.length) return null
+  return <span className="inline-flex flex-wrap gap-x-2.5 gap-y-0.5">{ids.map(k => <SegRef key={k} segKey={k} seg={segs[k]} name={names[segs[k]?.speaker_label]} onClick={() => show(k)} />)}</span>
+}
+
+function Block({ title, count, children, actions }: { title: string; count?: number; children: ReactNode; actions?: ReactNode }) {
+  return <Section title={title} count={count} actions={actions}><div className="rounded-lg border border-rule bg-panel">{children}</div></Section>
+}
+const Quiet = ({ children }: { children: ReactNode }) => <p className="px-4 py-3.5 text-[13.5px] text-faint">{children}</p>
 
 export default function MeetingPage() {
   const { id } = useParams()
   const mid = Number(id)
   const nav = useNavigate()
   const toast = useToast()
-  const wide = useWide()
   const { data: m, error, loading, reload } = useLoad(() => api.get<MeetingDetail>(`/api/meetings/${mid}`), [mid],
-    d => (d && BUSY.includes(d.processing_status) ? 3000 : undefined))
-  const [tab, setTab] = useState<Tab>('summary')
+    d => (d && BUSY.includes(d.processing_status) ? 2000 : undefined))
+  const working = !!m && BUSY.includes(m.processing_status)
+  const csKey = m && !working && m.change_set ? `${m.change_set.id}:${m.change_set.state}` : null
+  const actions = useLoad(async () => {
+    if (!csKey) return null
+    const [cs, board] = await Promise.all([api.get<ChangeSet>(`/api/meetings/${mid}/changeset`), api.get<Task[]>('/api/tasks')])
+    return { cs, planned: plan(cs, board) }
+  }, [mid, csKey])
+  const [more, setMore] = useState<More>('speakers')
   const [focus, setFocus] = useState<Focus | null>(null)
+  const [drawer, setDrawer] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [confirm, setConfirm] = useState<'rerun' | 'delete' | null>(null)
   const [busy, setBusy] = useState(false)
@@ -41,23 +145,22 @@ export default function MeetingPage() {
   }, [mid, m?.source_type])
   useEffect(() => { // honour #s12 links from other pages
     const k = location.hash.slice(1)
-    if (k && m?.segments.length) { if (!wide) setTab('transcript'); setFocus({ key: k, n: Date.now() }) }
-  }, [m?.segments.length]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (wide && tab === 'transcript') setTab('summary') }, [wide, tab])
+    if (k && m?.segments.length && !working) { setFocus({ key: k, n: Date.now() }); setDrawer(true) }
+  }, [m?.segments.length, working]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading && !m) return <Loading />
   if (!m) return <><PageHeader title="Meeting" crumbs={[{ label: 'Meetings', to: '/meetings' }]} /><ErrorBox error={error} onRetry={reload} /></>
-  const names = Object.fromEntries(m.participants.map(p => [p.speaker_label, p.display_name]))
-  const segs = Object.fromEntries(m.segments.map(s => [s.seg_key, s]))
-  const working = BUSY.includes(m.processing_status)
+  const names: Names = Object.fromEntries(m.participants.map(p => [p.speaker_label, p.display_name]))
+  const segs: Segs = Object.fromEntries(m.segments.map(s => [s.seg_key, s]))
   const st = meetingStatus({ ...m, change_set: m.change_set })
-  const show = (k: string) => { if (!wide) setTab('transcript'); setFocus({ key: k, n: Date.now() }) }
+  const show = (k: string) => { setFocus({ key: k, n: Date.now() }); setDrawer(true) }
   const isAudio = m.source_type === 'audio' || m.source_type === 'video'
-  const pendingCs = m.change_set && ['NEEDS_CLARIFICATION', 'READY_FOR_REVIEW'].includes(m.change_set.state)
+  const pendingCs = !!m.change_set && ['NEEDS_CLARIFICATION', 'READY_FOR_REVIEW'].includes(m.change_set.state)
+  const hasResults = !!m.minutes?.summary || !!m.change_set
 
   async function rerun() {
     setBusy(true)
-    try { await api.post(`/api/meetings/${mid}/process`, { steps: ['interpret', 'minutes'] }); setConfirm(null); toast('info', 'Analysis queued. This page refreshes while it runs.'); await reload() }
+    try { await api.post(`/api/meetings/${mid}/process`, { steps: ['interpret', 'minutes'] }); setConfirm(null); toast('info', 'Analysis started again. This page shows each step as it finishes.'); await reload() }
     catch (e) { setConfirm(null); toast('error', errText(e)) } finally { setBusy(false) }
   }
   async function remove() {
@@ -66,144 +169,214 @@ export default function MeetingPage() {
     catch (e) { setConfirm(null); toast('error', errText(e)) } finally { setBusy(false) }
   }
 
-  const transcript = (
-    <div className="min-w-0">
-      {audioUrl && <audio ref={audio} controls preload="metadata" src={audioUrl} className="mb-2 h-9 w-full" aria-label="Meeting recording" />}
-      <Transcript segments={m.segments} names={names} focus={focus} audio={audio} hasAudio={!!audioUrl} maxHeight={wide ? 'calc(100vh - 13rem)' : undefined} />
-      <p className="mt-2 text-[12.5px] text-faint">Timestamps are per segment, not per word.</p>
-    </div>
+  const reviewBtn = m.change_set && (
+    <Link to={`/approvals/${mid}`} className={`inline-flex h-9 items-center rounded-md px-3.5 text-[13.5px] font-medium ${pendingCs ? 'bg-accent text-on-accent hover:bg-accent-hover' : 'border border-rule-strong bg-panel hover:bg-panel-2'}`}>
+      {pendingCs ? 'Review and approve tasks' : 'View approved tasks'}
+    </Link>
   )
-  const tabs: { key: Tab; label: string }[] = [
-    ...(!wide ? [{ key: 'transcript' as Tab, label: `Transcript (${m.segments.length})` }] : []),
-    { key: 'summary', label: 'Summary' }, { key: 'actions', label: 'Actions' }, { key: 'speakers', label: `Speakers (${m.participants.length})` }, { key: 'processing', label: 'Processing' },
-  ]
+  const header = (
+    <PageHeader title={m.title} crumbs={[{ label: 'Meetings', to: '/meetings' }]}
+      meta={<>
+        {isSynthetic(m) && <SyntheticTag />}
+        <Status tone={st.tone} busy={st.busy}>{st.label}</Status>
+        <span>{fmtDate(m.scheduled_at)}</span>
+        <span>{isAudio ? `Recording${m.stt_provider ? `, transcribed by ${m.stt_provider}` : ''}` : m.source_type ? 'Imported transcript' : 'Nothing uploaded'}</span>
+      </>}
+      actions={<>
+        {!working && hasResults && reviewBtn}
+        {!working && m.segments.length > 0 && <Button size="md" className="h-9" icon={<FileText size={15} />} onClick={() => { setFocus(null); setDrawer(true) }}>Transcript</Button>}
+        <Menu label="More" items={[
+          { label: 'Re-run analysis', onSelect: () => setConfirm('rerun'), disabled: working || !m.segments.length },
+          { label: 'Delete meeting', onSelect: () => setConfirm('delete'), danger: true, disabled: working },
+        ]} />
+      </>} />
+  )
+
+  const dialogs = <>
+    <Dialog open={confirm === 'rerun'} onClose={() => setConfirm(null)} title="Re-run the analysis?"
+      footer={<><Button onClick={() => setConfirm(null)}>Cancel</Button><Button kind="primary" loading={busy} onClick={rerun}>Re-run analysis</Button></>}>
+      <p className="text-slate">This calls the configured language model again (several minutes with a local model) and works out the proposed tasks again. Approved meetings cannot be re-analysed.</p>
+    </Dialog>
+    <Dialog open={confirm === 'delete'} onClose={() => setConfirm(null)} title="Delete this meeting?"
+      footer={<><Button onClick={() => setConfirm(null)}>Keep it</Button><Button kind="danger" loading={busy} onClick={remove}>Delete meeting</Button></>}>
+      <p className="text-slate">This removes the transcript, the uploaded recording, the summary and any unapproved tasks for “{m.title}”. It cannot be undone. A meeting whose tasks were approved cannot be deleted.</p>
+    </Dialog>
+  </>
+
+  if (working || (m.processing_status === 'failed' && !hasResults)) {
+    return <>{header}<ProcessingView m={m} onRetry={() => setConfirm('rerun')} />{dialogs}</>
+  }
+
+  const planned = actions.data?.planned ?? []
+  const cs = actions.data?.cs
+  const live = !!cs && ['NEEDS_CLARIFICATION', 'READY_FOR_REVIEW'].includes(cs.state)
+  const excluded = new Set(cs?.proposal.items.filter(i => i.excluded).map(i => i.key) ?? [])
+  const toAnswer: Clarification[] = live ? cs!.proposal.clarifications
+    .filter(c => !c.deferred && !c.answer && !(c.item_keys.length > 0 && c.item_keys.every(k => excluded.has(k)))).sort((a, b) => a.rank - b.rank) : []
+  const tasks = planned.filter(p => p.group !== 'none')
+  const notTasks = planned.filter(p => p.group === 'none')
 
   return (
     <>
-      <PageHeader title={m.title} crumbs={[{ label: 'Meetings', to: '/meetings' }]}
-        meta={<>
-          <Status tone={st.tone} busy={st.busy}>{st.label}</Status>
-          <span>{fmtDate(m.scheduled_at)}, {m.timezone}</span>
-          <span>{isAudio ? `Recording${m.stt_provider ? `, transcribed by ${m.stt_provider}` : ''}` : m.source_type ? 'Imported transcript' : 'Nothing uploaded'}</span>
-          <span>{m.consent_confirmed ? 'Consent confirmed by the organiser' : 'Consent not confirmed'}</span>
-        </>}
-        actions={<>
-          {m.change_set && <Link to={`/approvals/${mid}`} className={`inline-flex h-8 items-center rounded-md px-3 text-[13.5px] font-medium ${pendingCs ? 'bg-accent text-on-accent hover:bg-accent-hover' : 'border border-rule-strong hover:bg-panel-2'}`}>{pendingCs ? 'Review proposed changes' : 'View approval'}</Link>}
-          <Menu label="More" items={[
-            { label: 'Re-run analysis', onSelect: () => setConfirm('rerun'), disabled: working || !m.segments.length },
-            { label: 'Delete meeting', onSelect: () => setConfirm('delete'), danger: true, disabled: working },
-          ]} />
-        </>} />
-
-      {(working || m.processing_error) && (
-        <div className="mb-5">
-          <Notice tone={working ? 'sky' : 'cancel'} role="status" title={working ? 'Processing' : 'Processing failed'}>
-            {working ? 'Running the configured speech and language services. This page refreshes by itself.' : m.processing_error}
-            <ol className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[12.5px]">
-              {m.processing_log.slice(-6).map((l, i) => <li key={i} className={l.status === 'ok' ? 'text-done' : 'text-cancel'}>{STEP[l.step] ?? l.step}: {l.status === 'ok' ? 'done' : l.status}</li>)}
-            </ol>
-          </Notice>
-        </div>
+      {header}
+      {m.processing_status === 'failed' && (
+        <div className="mb-5"><Notice tone="cancel" role="status" title="The latest analysis failed"
+          actions={m.segments.length > 0 && <Button size="sm" onClick={() => setConfirm('rerun')}>Try again</Button>}>
+          {m.processing_error} The results below are from the previous successful analysis.</Notice></div>
+      )}
+      {m.processing_status === 'created' && !m.source_type && (
+        <div className="mb-5"><Notice tone="neutral" title="Nothing uploaded yet">This meeting has no recording or transcript. <Link to="/meetings/new" className="text-sky hover:underline">Add a meeting with a file</Link> instead.</Notice></div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-        {wide && <div className="lg:sticky lg:top-6 lg:self-start"><h2 className="mb-2 text-[15px] font-semibold">Transcript <span className="font-normal text-faint tnum">{m.segments.length}</span></h2>{transcript}</div>}
-        <div className="min-w-0">
-          <Tabs label="Meeting sections" tabs={tabs} value={tab} onChange={setTab} />
-          {tab === 'transcript' && transcript}
-          {tab === 'summary' && <SummaryTab m={m} names={names} segs={segs} show={show} />}
-          {tab === 'actions' && <ActionsTab mid={mid} hasChangeSet={!!m.change_set} />}
-          {tab === 'speakers' && <SpeakersTab m={m} onSaved={reload} />}
-          {tab === 'processing' && <ProcessingTab m={m} show={show} />}
+      <div className="anim-rise grid gap-x-10 gap-y-9 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="min-w-0 space-y-9">
+          <Section title="Meeting summary">
+            {m.minutes?.summary ? <p className="max-w-[72ch] text-[15px] leading-relaxed text-ink">{m.minutes.summary}</p>
+              : <p className="text-faint">The summary appears after the meeting is analysed.</p>}
+          </Section>
+
+          {!!m.minutes?.discussion?.length && (
+            <Block title="Key discussions" count={m.minutes.discussion.length}>
+              <ul className="divide-y divide-rule">{m.minutes.discussion.map((t, i) => (
+                <li key={i} className="px-4 py-3">
+                  <div className="font-medium text-ink">{t.topic}</div>
+                  <p className="mt-0.5 max-w-[75ch] text-slate">{t.summary}</p>
+                  <div className="mt-1"><Refs ids={t.segment_ids} segs={segs} names={names} show={show} /></div>
+                </li>))}
+              </ul>
+            </Block>
+          )}
+
+          <Block title="Decisions made" count={m.decisions.length}>
+            {!m.decisions.length ? <Quiet>No decisions were recorded in this meeting.</Quiet> : (
+              <ul className="divide-y divide-rule">{m.decisions.map(d => (
+                <li key={d.id} className="px-4 py-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><span className="font-medium text-ink">{d.text}</span>
+                    <Status tone={d.approval_status === 'approved' ? 'done' : d.approval_status === 'rejected' ? 'neutral' : 'ask'}>{d.approval_status === 'approved' ? 'Approved' : d.approval_status === 'rejected' ? 'Not recorded' : 'Awaiting approval'}</Status></div>
+                  <p className="mt-0.5 text-[13.5px] text-slate">{d.rationale ? `Why: ${d.rationale}` : 'No reason was given.'}</p>
+                  <div className="mt-1"><Refs ids={d.evidence_segment_ids} segs={segs} names={names} show={show} /></div>
+                </li>))}
+              </ul>
+            )}
+          </Block>
+
+          <Section title="Action items" count={tasks.length}>
+            <ErrorBox error={actions.error} onRetry={actions.reload} />
+            {!m.change_set ? <div className="rounded-lg border border-rule bg-panel"><Quiet>No action items yet. They are worked out when the meeting is analysed.</Quiet></div>
+              : actions.loading && !actions.data ? <Loading rows={3} /> : (
+                <ActionTable rows={tasks} segs={segs} names={names} show={show} />
+              )}
+            {notTasks.length > 0 && (
+              <details className="mt-2 text-[13.5px]">
+                <summary className="cursor-pointer text-slate hover:text-ink">{plural(notTasks.length, 'other mention')}, not becoming tasks</summary>
+                <ul className="mt-1.5 space-y-1 pl-4">{notTasks.map(p => <li key={p.item.key} className="text-slate"><span className="text-ink">{p.item.title}</span>: {p.notes[0] ?? p.status.label}</li>)}</ul>
+              </details>
+            )}
+          </Section>
+
+          <Block title="Questions to clarify" count={toAnswer.length + m.open_questions.length}
+            actions={toAnswer.length > 0 && <Link to={`/approvals/${mid}`} className="text-sky hover:underline">Answer them</Link>}>
+            {!toAnswer.length && !m.open_questions.length ? <Quiet>Nothing to clarify. Every task has an owner and a clear deadline.</Quiet> : (
+              <ul className="divide-y divide-rule">
+                {toAnswer.map(c => (
+                  <li key={c.id} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5"><Status tone="ask">{Q_LABEL[c.kind] ?? 'Question'}</Status><Refs ids={c.segment_ids.slice(0, 2)} segs={segs} names={names} show={show} /></div>
+                    <p className="mt-0.5 text-ink">{c.question}</p>
+                  </li>))}
+                {m.open_questions.map(q => (
+                  <li key={`q${q.id}`} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5"><Status tone="neutral">Raised in the meeting</Status><Refs ids={q.evidence_segment_ids} segs={segs} names={names} show={show} /></div>
+                    <p className="mt-0.5 text-ink">{q.text}</p>
+                  </li>))}
+              </ul>
+            )}
+          </Block>
+
+          <section aria-label="More about this meeting" className="border-t border-rule pt-6">
+            <Tabs label="More about this meeting" value={more} onChange={setMore} tabs={[
+              { key: 'speakers', label: `Speakers (${m.participants.length})` }, { key: 'share', label: 'Share summary' }, { key: 'technical', label: 'Technical details' }]} />
+            {more === 'speakers' && <SpeakersTab m={m} onSaved={() => { void reload(); void actions.reload() }} />}
+            {more === 'share' && <SummaryShare meetingId={m.id} />}
+            {more === 'technical' && <TechnicalDetails m={m} show={show} />}
+          </section>
         </div>
+
+        <aside className="space-y-6 xl:sticky xl:top-8 xl:self-start">
+          {m.change_set && (
+            <div className="rounded-lg border border-rule bg-panel p-4">
+              <h2 className="text-[14px] font-semibold text-ink">{pendingCs ? 'Next: review and approve' : m.change_set.state === 'APPLIED' ? 'Approved' : 'Review'}</h2>
+              <p className="mt-1 text-[13.5px] text-slate">{pendingCs
+                ? `${plural(tasks.length, 'action item')}${toAnswer.length ? `, ${plural(toAnswer.length, 'question')} to answer first` : ', ready to approve'}. Nothing reaches the task board until you approve it.`
+                : m.change_set.state === 'APPLIED' ? 'These tasks are on the task board.' : 'These proposals were not approved.'}</p>
+              <div className="mt-3 [&>a]:w-full [&>a]:justify-center">{reviewBtn}</div>
+            </div>
+          )}
+          <dl className="space-y-2.5 text-[13.5px]">
+            {[
+              ['Date', `${fmtDate(m.scheduled_at)}, ${m.timezone}`],
+              ['Source', isAudio ? `Recording${m.stt_provider ? `, transcribed by ${m.stt_provider}` : ''}` : m.source_type ? 'Imported transcript' : 'Nothing uploaded'],
+              ['Speakers', m.participants.map(p => p.display_name || p.speaker_label).join(', ') || 'None yet'],
+              ['Consent', m.consent_confirmed ? 'Confirmed by the organiser' : 'Not confirmed'],
+            ].map(([k, v]) => <div key={k}><dt className="text-faint">{k}</dt><dd className="text-ink">{v}</dd></div>)}
+          </dl>
+          <p className="text-[12.5px] text-faint">Every summary item, decision and task links to the transcript lines it came from. Select a speaker and time to see the line.</p>
+        </aside>
       </div>
 
-      <Dialog open={confirm === 'rerun'} onClose={() => setConfirm(null)} title="Re-run the analysis?"
-        footer={<><Button onClick={() => setConfirm(null)}>Cancel</Button><Button kind="primary" loading={busy} onClick={rerun}>Re-run analysis</Button></>}>
-        <p className="text-slate">This calls the configured language model again (several minutes with a local model) and recomputes the proposed changes. Approved meetings cannot be re-analysed.</p>
-      </Dialog>
-      <Dialog open={confirm === 'delete'} onClose={() => setConfirm(null)} title="Delete this meeting?"
-        footer={<><Button onClick={() => setConfirm(null)}>Keep it</Button><Button kind="danger" loading={busy} onClick={remove}>Delete meeting</Button></>}>
-        <p className="text-slate">This removes the transcript, the uploaded recording, the minutes and any unapproved proposals for “{m.title}”. It cannot be undone. A meeting whose changes created approved tasks cannot be deleted.</p>
-      </Dialog>
+      <Drawer open={drawer} onClose={() => setDrawer(false)} title="Transcript" sub={m.title} width={640}>
+        {audioUrl && <audio ref={audio} controls preload="metadata" src={audioUrl} className="mb-2 h-9 w-full" aria-label="Meeting recording" />}
+        <Transcript segments={m.segments} names={names} focus={focus} audio={audio} hasAudio={!!audioUrl} />
+        <p className="mt-2 text-[12.5px] text-faint">Timestamps are per segment, not per word.</p>
+      </Drawer>
+      {dialogs}
     </>
   )
 }
 
-// ---- tabs ----------------------------------------------------------------------------------------
-
-type Segs = Record<string, MeetingDetail['segments'][number]>
-function SummaryTab({ m, names, segs, show }: { m: MeetingDetail; names: Record<string, string | null>; segs: Segs; show: (k: string) => void }) {
-  const reclassified = (m.minutes as { reclassified_as_actions?: unknown[] }).reclassified_as_actions?.length ?? 0
+function ActionTable({ rows, segs, names, show }: { rows: Planned[]; segs: Segs; names: Names; show: (k: string) => void }) {
+  if (!rows.length) return <div className="rounded-lg border border-rule bg-panel"><Quiet>No action items were found in this meeting.</Quiet></div>
+  const dep = (p: Planned) => p.item.depends_on.map(d => d.existing_task_id ? `${d.existing_task_id} ${d.title}` : d.title).join(', ')
+  const prio = (v: string | null) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : '—')
+  const due = (p: Planned) => p.item.deadline.date ? fmtDate(p.item.deadline.date) : <span className="text-faint">{p.item.deadline.raw ? `“${p.item.deadline.raw}”` : 'No date'}</span>
+  const state = (p: Planned) => p.group === 'apply' && p.status.label === 'Will apply' ? p.action : p.status.label
   return (
-    <div className="space-y-7">
-      <Section title="Minutes">
-        {!m.minutes?.summary ? <p className="text-faint">Minutes appear after the meeting is processed.</p> : (
-          <div className="space-y-3">
-            <p className="text-ink">{m.minutes.summary}</p>
-            {!!m.minutes.discussion?.length && (
-              <ul className="space-y-2">{m.minutes.discussion.map((t, i) => (
-                <li key={i}><span className="font-medium text-ink">{t.topic}.</span> <span className="text-slate">{t.summary}</span>{' '}
-                  <span className="inline-flex flex-wrap gap-x-2">{t.segment_ids.map(k => <SegRef key={k} segKey={k} seg={segs[k]} name={names[segs[k]?.speaker_label]} onClick={() => show(k)} />)}</span></li>))}
-              </ul>
-            )}
-            <p className="text-[12.5px] text-faint">Written by {m.minutes.generated_by}. {m.minutes.dropped_unsupported_items ? `${plural(m.minutes.dropped_unsupported_items, 'item')} without valid transcript evidence were discarded.` : 'Every item cites transcript evidence.'}{reclassified ? ` ${plural(reclassified, 'task assignment')} moved from decisions to actions.` : ''}</p>
-          </div>
-        )}
-      </Section>
-      <Section title="Decisions" count={m.decisions.length}>
-        {!m.decisions.length ? <p className="text-faint">No decisions recorded.</p> : (
-          <ul className="divide-y divide-rule border-y border-rule">{m.decisions.map(d => (
-            <li key={d.id} className="py-2.5">
-              <div className="flex items-baseline justify-between gap-3"><span className="text-ink">{d.text}</span>
-                <Status tone={d.approval_status === 'approved' ? 'done' : d.approval_status === 'rejected' ? 'neutral' : 'ask'}>{d.approval_status === 'approved' ? 'Approved' : d.approval_status === 'rejected' ? 'Not recorded' : 'Awaiting approval'}</Status></div>
-              <div className="mt-0.5 flex flex-wrap gap-x-3 text-[13px] text-slate"><span>{d.rationale ? `Reason given: ${d.rationale}` : 'No reason was given.'}</span>
-                {d.evidence_segment_ids.map(k => <SegRef key={k} segKey={k} seg={segs[k]} name={names[segs[k]?.speaker_label]} onClick={() => show(k)} />)}</div>
-            </li>))}
-          </ul>
-        )}
-      </Section>
-      <Section title="Unresolved questions" count={m.open_questions.length}>
-        {!m.open_questions.length ? <p className="text-faint">None recorded.</p> : (
-          <ul className="divide-y divide-rule border-y border-rule">{m.open_questions.map(q => (
-            <li key={q.id} className="py-2.5"><span className="text-ink">{q.text}</span>{' '}
-              <span className="inline-flex flex-wrap gap-x-2">{q.evidence_segment_ids.map(k => <SegRef key={k} segKey={k} seg={segs[k]} name={names[segs[k]?.speaker_label]} onClick={() => show(k)} />)}</span></li>))}
-          </ul>
-        )}
-      </Section>
-      <SummaryShare meetingId={m.id} />
+    <div className="rounded-lg border border-rule bg-panel">
+      {/* Phones: one block per action item instead of a table that scrolls sideways. */}
+      <ul className="divide-y divide-rule md:hidden">{rows.map(p => (
+        <li key={p.item.key} className="px-4 py-3">
+          <div className="font-medium text-ink">{p.item.existing_task_id && <span className="tnum mr-1.5 font-normal text-faint">{p.item.existing_task_id}</span>}{p.item.title}</div>
+          <dl className="mt-1 grid grid-cols-[6.5rem_minmax(0,1fr)] gap-y-0.5 text-[13.5px]">
+            <dt className="text-faint">Owner</dt><dd className="text-ink">{p.item.owner ?? <span className="text-faint">Unassigned</span>}</dd>
+            <dt className="text-faint">Due</dt><dd className="tnum text-ink">{due(p)}</dd>
+            <dt className="text-faint">Priority</dt><dd className="text-ink">{prio(p.item.priority.value)}</dd>
+            <dt className="text-faint">Dependency</dt><dd className="text-slate">{dep(p) || '—'}</dd>
+          </dl>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3"><Status tone={p.status.tone}>{state(p)}</Status><Refs ids={p.item.evidence_segment_ids.slice(0, 1)} segs={segs} names={names} show={show} /></div>
+        </li>))}
+      </ul>
+      <table className="hidden w-full text-left text-[14px] md:table">
+        <thead className="text-[12.5px] text-faint">
+          <tr className="border-b border-rule"><th className="py-2 pl-4 pr-3 font-medium">Task</th><th className="py-2 pr-3 font-medium">Owner</th><th className="py-2 pr-3 font-medium">Due</th><th className="py-2 pr-3 font-medium">Priority</th><th className="py-2 pr-4 font-medium">Dependency</th></tr>
+        </thead>
+        <tbody>{rows.map(p => (
+          <tr key={p.item.key} className="border-b border-rule align-top last:border-b-0">
+            <td className="py-3 pl-4 pr-3">
+              <div className="font-medium text-ink">{p.item.existing_task_id && <span className="tnum mr-1.5 font-normal text-faint">{p.item.existing_task_id}</span>}{p.item.title}</div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5"><Status tone={p.status.tone}>{state(p)}</Status>
+                <Refs ids={p.item.evidence_segment_ids.slice(0, 1)} segs={segs} names={names} show={show} /></div>
+            </td>
+            <td className="py-3 pr-3 text-ink">{p.item.owner ?? <span className="text-faint">Unassigned</span>}</td>
+            <td className="tnum py-3 pr-3 text-ink">{due(p)}</td>
+            <td className="py-3 pr-3 text-ink">{prio(p.item.priority.value)}</td>
+            <td className="py-3 pr-4 text-slate">{dep(p) || '—'}</td>
+          </tr>))}
+        </tbody>
+      </table>
     </div>
   )
 }
 
-function ActionsTab({ mid, hasChangeSet }: { mid: number; hasChangeSet: boolean }) {
-  const { data, error, loading } = useLoad(async () => {
-    if (!hasChangeSet) return null
-    const [cs, board] = await Promise.all([api.get<ChangeSet>(`/api/meetings/${mid}/changeset`), api.get<Task[]>('/api/tasks')])
-    return plan(cs, board)
-  }, [mid, hasChangeSet])
-  if (!hasChangeSet) return <Empty>No actions yet. They are extracted when the meeting is processed.</Empty>
-  if (loading && !data) return <Loading rows={3} />
-  return (
-    <>
-      <ErrorBox error={error} />
-      <p className="mb-2 text-[13.5px] text-slate">Actions extracted from this meeting. Approve or adjust them on the <Link to={`/approvals/${mid}`} className="text-sky hover:underline">approval page</Link>.</p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-[14px]">
-          <thead className="text-[12.5px] text-faint"><tr className="border-b border-rule"><th className="py-2 pr-4 font-medium">Action</th><th className="py-2 pr-4 font-medium">Owner</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">Due</th><th className="py-2 font-medium">Status</th></tr></thead>
-          <tbody>{(data ?? []).map(p => (
-            <tr key={p.item.key} className="border-b border-rule">
-              <td className="py-2 pr-4"><span className="text-ink">{p.item.title}</span><div className="text-[12.5px] text-faint">{p.item.existing_task_id ?? p.action}</div></td>
-              <td className="py-2 pr-4 text-slate">{p.item.owner ?? 'Unassigned'}</td>
-              <td className="tnum hidden py-2 pr-4 text-slate sm:table-cell">{p.item.deadline.date ? fmtDate(p.item.deadline.date) : '—'}</td>
-              <td className="py-2"><Status tone={p.status.tone}>{p.status.label}</Status></td>
-            </tr>))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  )
-}
+// ---- secondary sections ------------------------------------------------------------------------------
 
 function SpeakerRow({ p, meetingId, onSaved }: { p: Participant; meetingId: number; onSaved: () => void }) {
   const toast = useToast()
@@ -241,7 +414,7 @@ function SpeakersTab({ m, onSaved }: { m: MeetingDetail; onSaved: () => void }) 
   )
 }
 
-function ProcessingTab({ m, show }: { m: MeetingDetail; show: (k: string) => void }) {
+function TechnicalDetails({ m, show }: { m: MeetingDetail; show: (k: string) => void }) {
   const [events, setEvents] = useState(false)
   return (
     <div className="space-y-7">
