@@ -15,7 +15,7 @@ test.afterEach(async () => { await sb.stop() })
 test('brand link and the Overview "All …" links', async ({ page }) => {
   await signIn(page, sb, '/tasks')
   await page.getByRole('complementary').getByRole('link', { name: 'Meeting Actions' }).click()
-  await expect(h1(page, 'Your workspace')).toBeVisible()
+  await expect(h1(page, 'Meeting Actions')).toBeVisible()
   for (const [link, heading] of [['All approvals', 'Approvals'], ['All tasks', 'Tasks'], ['All meetings', 'Meetings']]) {
     await page.goto(sb.url + '/')
     await main(page).getByRole('link', { name: link }).click()
@@ -148,7 +148,7 @@ test('empty database: the Overview and Tasks empty states lead somewhere', async
   const empty = await startSandbox('empty', 'links-empty')
   try {
     await signIn(page, empty)
-    await main(page).getByRole('link', { name: 'New meeting' }).last().click() // the empty state's own link
+    await main(page).getByRole('link', { name: 'Record or upload a meeting' }).last().click() // the empty state's own link
     await expect(h1(page, 'New meeting')).toBeVisible()
     await page.goto(empty.url + '/tasks')
     await main(page).getByRole('link', { name: 'Go to Approvals' }).click()

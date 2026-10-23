@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { SKIP_INTRO } from './support/fixtures'
 
 // Scripted organiser walkthrough over REAL processed meetings for demo recordings. It approves
 // changes, so each step only runs when DEMO_FLOW names it. The clicks are scripted; the data and
@@ -7,11 +8,13 @@ const TOKEN = process.env.E2E_TOKEN ?? ''
 const SHOTS = process.env.SHOT_DIR
 const STEP = process.env.DEMO_FLOW ?? ''
 
+test.beforeEach(async ({ page }) => { await page.addInitScript(SKIP_INTRO) })
+
 async function signIn(page: Page) {
   await page.goto('/')
   await page.getByLabel('Organiser token').fill(TOKEN)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Your workspace', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Meeting Actions', exact: true })).toBeVisible()
 }
 const shot = async (page: Page, name: string) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }) }
 const main = (page: Page) => page.getByRole('main')
@@ -98,7 +101,8 @@ test('audio: upload a recording through the UI and get a transcript', async ({ p
   await signIn(page)
   await page.goto('/meetings/new')
   await main(page).getByLabel('Meeting title').fill(process.env.AUDIO_TITLE ?? 'Audio upload check (synthetic TTS)')
-  await main(page).getByLabel('Recording or transcript').setInputFiles(process.env.AUDIO_FILE!)
+  await main(page).getByRole('radio', { name: /Upload recording/ }).click()
+  await main(page).getByLabel('Recording file').setInputFiles(process.env.AUDIO_FILE!)
   await main(page).getByLabel(/I confirm that every participant agreed/).check()
   await main(page).getByRole('button', { name: 'Analyze meeting' }).click()
   await expect(main(page).getByText(/^Processing: /).first()).toBeVisible()

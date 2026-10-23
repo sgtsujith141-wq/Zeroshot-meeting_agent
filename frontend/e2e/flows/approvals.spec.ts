@@ -1,7 +1,7 @@
 // Approvals: every answer type, the change table vs what the backend applies, stale and
 // concurrent states, duplicate approval, reject, decisions. Each test gets its own sandbox.
 import type { Page } from '@playwright/test'
-import { test, expect, signIn, clickAnd } from '../support/fixtures'
+import { test, expect, signIn, clickAnd, SKIP_INTRO } from '../support/fixtures'
 import { apiFor, startSandbox, type Sandbox } from '../support/sandbox'
 
 type Item = { key: string; title: string; owner: string | null; owner_status: string; excluded?: boolean; existing_task_id: string | null; operation: string; state: string
@@ -324,6 +324,7 @@ test('an edit from another tab makes this tab\'s approval refuse instead of appl
   await signIn(page, sb, '/approvals/4')
   await answerM4(page)
   const other = await browser.newPage()
+  await other.addInitScript(SKIP_INTRO) // a page made here does not get the fixture's intro skipping
   await signIn(other, sb, '/approvals/4')
   await exclude(other, 'login-screen', 'Finish the login screen')
   expect((await clickAnd(page, approveBtn(page))).status()).toBe(409)

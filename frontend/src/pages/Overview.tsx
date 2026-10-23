@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Plus } from 'lucide-react'
+import { ChevronRight, Mic } from 'lucide-react'
 import { api, fmtDate } from '../lib/api'
 import type { MeetingSummary, Task } from '../types'
 import { Empty, ErrorBox, ListBox, Loading, Section, Status, SyntheticTag, type Tone, plural, useLoad } from '../components/ui'
@@ -51,17 +51,17 @@ export default function Overview() {
     .sort((a, b) => (a.due_date ?? '9999') < (b.due_date ?? '9999') ? -1 : (a.due_date ?? '9999') > (b.due_date ?? '9999') ? 1 : a.id - b.id)
   const recent = (data?.meetings ?? []).slice(0, 5)
   const newBtn = (
-    <Link to="/meetings/new" className="inline-flex h-9 items-center gap-1.5 rounded-md bg-accent px-3.5 text-[13.5px] font-medium text-on-accent hover:bg-accent-hover">
-      <Plus size={15} aria-hidden />New meeting
+    <Link to="/meetings/new" className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-[14px] font-medium text-on-accent hover:bg-accent-hover">
+      <Mic size={16} aria-hidden />Record or upload a meeting
     </Link>
   )
 
   return (
     <>
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <header className="mb-9 flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-6">
         <div>
-          <h1 className="display text-[34px] leading-[1.1] text-ink">Your workspace</h1>
-          <p className="mt-1.5 text-[14.5px] text-slate">Everything your team agreed to, in one place.</p>
+          <h1 className="display text-[42px] leading-[1.05] text-ink">Meeting Actions</h1>
+          <p className="mt-2 text-[15px] text-slate">From meetings to work that gets done.</p>
         </div>
         {newBtn}
       </header>
@@ -72,7 +72,7 @@ export default function Overview() {
         </Empty>
       ) : data && (
         <div className="space-y-9">
-          <Section title="Needs your review" count={pending.length + stuck.length} actions={<Link to="/approvals" className="text-sky hover:underline">All approvals</Link>}>
+          <Section title="Meetings awaiting review" count={pending.length + stuck.length} actions={<Link to="/approvals" className="text-sky hover:underline">All approvals</Link>}>
             <ListBox empty="Nothing needs you right now. New meetings appear here once their tasks are ready to check.">{[
               ...pending.map(c => {
                 const m = byId.get(c.meeting_id)
@@ -97,7 +97,7 @@ export default function Overview() {
               })}</ListBox>
             </Section>
 
-            <Section title="Recent meetings" actions={<Link to="/meetings" className="text-sky hover:underline">All meetings</Link>}>
+            <Section title="Recently processed meetings" actions={<Link to="/meetings" className="text-sky hover:underline">All meetings</Link>}>
               <ListBox empty="No meetings yet.">{recent.map(m =>
                 <Row key={m.id} to={`/meetings/${m.id}`} title={<MeetingName m={m} />} detail={fmtDate(m.scheduled_at)} status={meetingStatus(m)} />)}
               </ListBox>

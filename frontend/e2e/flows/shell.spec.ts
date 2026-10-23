@@ -24,7 +24,7 @@ test.describe('with the demo data', () => {
     await expect(page.getByText('You were signed out')).toHaveCount(0)
     expect(await page.evaluate(k => sessionStorage.getItem(k), TOKEN_KEY)).toBeNull()
     await signIn(page, sb)
-    await expect(h1(page, 'Your workspace')).toBeVisible()
+    await expect(h1(page, 'Meeting Actions')).toBeVisible()
   })
 
   test('a deep link without a session shows sign-in and requests no protected data; the API refuses without a token', async ({ page, watch }) => {
@@ -52,7 +52,7 @@ test.describe('with the demo data', () => {
     await expect(nav(page).getByRole('link', { name: new RegExp(`^Approvals\\s*${waiting} waiting$`) })).toBeVisible()
     // Approvals is the only destination with a count.
     await expect(nav(page).getByRole('link', { name: 'Tasks', exact: true })).toBeVisible()
-    for (const [link, heading] of [['Overview', 'Your workspace'], ['Meetings', 'Meetings'], ['Approvals', 'Approvals'], ['Tasks', 'Tasks'], ['Ask AI', 'Ask AI'], ['Follow-ups', 'Follow-ups']]) {
+    for (const [link, heading] of [['Overview', 'Meeting Actions'], ['Meetings', 'Meetings'], ['Approvals', 'Approvals'], ['Tasks', 'Tasks'], ['Ask AI', 'Ask AI'], ['Follow-ups', 'Follow-ups']]) {
       await nav(page).getByRole('link', { name: new RegExp(`^${link}`) }).click()
       await expect(h1(page, heading)).toBeVisible()
       await expect(nav(page).getByRole('link', { name: new RegExp(`^${link}`) })).toHaveAttribute('aria-current', 'page')
@@ -98,7 +98,7 @@ test.describe('with the demo data', () => {
 
   test('unknown routes land on Overview; earlier addresses redirect to their new pages', async ({ page }) => {
     await signIn(page, sb, '/no-such-page')
-    await expect(h1(page, 'Your workspace')).toBeVisible()
+    await expect(h1(page, 'Meeting Actions')).toBeVisible()
     for (const [from, to, heading] of [['/review', /\/approvals$/, 'Approvals'], ['/review/4', /\/approvals\/4$/, 'Audio upload check (synthetic TTS)'],
       ['/memory', /\/ask$/, 'Ask AI'], ['/follow-up', /\/follow-ups\?tab=reminders$/, 'Follow-ups'], ['/agenda', /\/follow-ups$/, 'Follow-ups']] as [string, RegExp, string][]) {
       await page.goto(sb.url + from)

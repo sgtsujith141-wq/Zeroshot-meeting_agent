@@ -18,28 +18,28 @@ test.afterEach(async () => { await sb.stop() })
 
 type M = { id: number; processing_status: string; source_type: string | null }
 // Expectations come from the sandbox's own API, so they hold whatever the copied demo data holds.
-// "Needs your review" lists change sets waiting for approval plus meetings that failed or have no file.
+// "Meetings awaiting review" lists change sets waiting for approval plus meetings that failed or have no file.
 const stuckCount = (ms: M[]) => ms.filter(m => m.processing_status === 'failed' || m.processing_status === 'created' || !m.source_type).length
 
 test('Overview: every queue matches the API and each row opens the place to act', async ({ page }) => {
   await signIn(page, sb)
   const meetings = await apiFor(sb).get<M[]>('/api/meetings')
   const section = (name: string) => main(page).getByRole('region', { name: new RegExp(`^${name}`) })
-  await expect(section('Needs your review').getByRole('listitem')).toHaveCount(2 + stuckCount(meetings))
+  await expect(section('Meetings awaiting review').getByRole('listitem')).toHaveCount(2 + stuckCount(meetings))
   await expect(section('Upcoming tasks').getByRole('listitem')).toHaveCount(3)
   await expect(section('Upcoming tasks')).not.toContainText('Blocked')
-  await expect(section('Recent meetings').getByRole('listitem')).toHaveCount(Math.min(5, meetings.length))
-  await section('Needs your review').getByRole('link', { name: /Audio upload check/ }).click()
+  await expect(section('Recently processed meetings').getByRole('listitem')).toHaveCount(Math.min(5, meetings.length))
+  await section('Meetings awaiting review').getByRole('link', { name: /Audio upload check/ }).click()
   await expect(page).toHaveURL(/\/approvals\/4$/)
   await page.goto(sb.url + '/')
   await section('Upcoming tasks').getByRole('link', { name: /TASK-4/ }).click()
   await expect(page).toHaveURL(/\/tasks\?task=TASK-4$/)
   await expect(page.getByRole('dialog', { name: 'Prepare the rollback runbook' })).toBeVisible()
   await page.goto(sb.url + '/')
-  await section('Recent meetings').getByRole('link', { name: /Payments release planning/ }).click()
+  await section('Recently processed meetings').getByRole('link', { name: /Payments release planning/ }).click()
   await expect(page).toHaveURL(/\/meetings\/1$/)
   await page.goto(sb.url + '/')
-  await main(page).getByRole('link', { name: 'New meeting' }).click()
+  await main(page).getByRole('link', { name: 'Record or upload a meeting' }).click()
   await expect(h1(page, 'New meeting')).toBeVisible()
 })
 
@@ -53,7 +53,7 @@ test('Overview: a blocked task says what it waits for, and a meeting needing a f
   await blocked.getByRole('link').click()
   await expect(page.getByRole('dialog', { name: 'Prepare the rollback runbook' })).toBeVisible()
   await page.goto(sb.url + '/')
-  const empty = main(page).getByRole('region', { name: /^Needs your review/ }).getByRole('link', { name: /Empty meeting/ })
+  const empty = main(page).getByRole('region', { name: /^Meetings awaiting review/ }).getByRole('link', { name: /Empty meeting/ })
   await expect(empty).toContainText('No recording or transcript uploaded yet.')
   await empty.click()
   await expect(h1(page, 'Empty meeting')).toBeVisible()
@@ -197,10 +197,11 @@ test('results: the primary action opens the approval; on a phone the transcript 
 
 test('upload form: disabled until title, file and consent; the file can be removed or dropped in', async ({ page }) => {
   await signIn(page, sb, '/meetings/new')
+  await main(page).getByRole('radio', { name: /Upload transcript/ }).click()
   const up = main(page).getByRole('button', { name: 'Analyze meeting' })
   await expect(up).toBeDisabled()
   await main(page).getByLabel('Meeting title').fill('Audit upload')
-  await main(page).getByLabel('Recording or transcript').setInputFiles(path.join(DEMO, 'synthetic_meeting_1_planning.json'))
+  await main(page).getByLabel('Transcript file').setInputFiles(path.join(DEMO, 'synthetic_meeting_1_planning.json'))
   await expect(up).toBeDisabled()
   await main(page).getByLabel(/I confirm that every participant agreed/).check()
   await expect(up).toBeEnabled()
@@ -222,7 +223,9 @@ for (const [name, file, status, msg] of [
     const before = (await apiFor(sb).get<unknown[]>('/api/meetings')).length
     await signIn(page, sb, '/meetings/new')
     await main(page).getByLabel('Meeting title').fill('Refused upload')
-    await main(page).getByLabel('Recording or transcript').setInputFiles(file)
+    const transcript = file.name.endsWith('.json')
+    await main(page).getByRole('radio', { name: transcript ? /Upload transcript/ : /Upload recording/ }).click()
+    await main(page).getByLabel(transcript ? 'Transcript file' : 'Recording file').setInputFiles(file)
     await main(page).getByLabel(/I confirm that every participant agreed/).check()
     await clickAnd(page, main(page).getByRole('button', { name: 'Analyze meeting' }), /^DELETE \/api\/meetings\/\d+$/)
     await expect(main(page).getByRole('alert')).toContainText(msg)
@@ -239,7 +242,8 @@ test('upload form: the title, date, time and time zone typed are what the server
   await main(page).getByLabel('Date and time').fill('2026-11-03T15:30')
   await main(page).getByText('More options').click() // the time zone is a secondary field
   await main(page).getByLabel('Meeting time zone').selectOption('Europe/London')
-  await main(page).getByLabel('Recording or transcript').setInputFiles({ name: 'empty.txt', mimeType: 'text/plain', buffer: Buffer.from('') })
+  await main(page).getByRole('radio', { name: /Upload transcript/ }).click()
+  await main(page).getByLabel('Transcript file').setInputFiles({ name: 'empty.txt', mimeType: 'text/plain', buffer: Buffer.from('') })
   await main(page).getByLabel(/I confirm that every participant agreed/).check()
   const req = page.waitForRequest(r => r.method() === 'POST' && new URL(r.url()).pathname === '/api/meetings')
   await main(page).getByRole('button', { name: 'Analyze meeting' }).click()

@@ -1,15 +1,18 @@
 // Read-only smoke tests against a running server: E2E_BASE_URL (default http://127.0.0.1:8000)
 // with E2E_TOKEN. They never write data, so they are safe against the demo server.
 import { expect, test, type Page } from '@playwright/test'
+import { SKIP_INTRO } from './support/fixtures'
 
 const TOKEN = process.env.E2E_TOKEN ?? ''
 const SHOTS = process.env.SHOT_DIR
+
+test.beforeEach(async ({ page }) => { await page.addInitScript(SKIP_INTRO) })
 
 async function signIn(page: Page) {
   await page.goto('/')
   await page.getByLabel('Organiser token').fill(TOKEN)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Your workspace', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Meeting Actions', exact: true })).toBeVisible()
 }
 const shot = async (page: Page, name: string) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }) }
 
@@ -45,9 +48,9 @@ test('every main view loads from the live API without errors', async ({ page }) 
 
 test('new meeting form enforces consent before upload', async ({ page }) => {
   await signIn(page)
-  await page.getByRole('main').getByRole('link', { name: 'New meeting' }).click()
+  await page.getByRole('main').getByRole('link', { name: 'Record or upload a meeting' }).click()
   await expect(page.getByText('Recording or transcribing people without their agreement is not allowed')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Analyze meeting' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Transcribe recording' })).toBeDisabled()
   await shot(page, '07-new-meeting')
 })
 

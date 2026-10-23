@@ -56,10 +56,10 @@ export default function PresentIntro({ onEnter }: { onEnter: () => void }) {
   const lost = (i: number) => !brand && scene === 2 && i % 2 === 1
   return (
     <main aria-label="Presentation introduction" data-scene={brand ? 'brand' : scene}
-      className="fixed inset-0 z-[70] overflow-hidden bg-[#F7F8FC] text-[#19243A]" style={{ colorScheme: 'light' }}>
+      className="fixed inset-0 z-[70] overflow-hidden bg-[#F5F2EB] text-[#19262A]" style={{ colorScheme: 'light' }}>
       <svg aria-hidden viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         {paths.map((d, i) => (
-          <path key={i} d={d} pathLength={1000} fill="none" stroke="#315BE8" strokeWidth={1.4} strokeLinecap="round"
+          <path key={i} d={d} pathLength={1000} fill="none" stroke="#C8583D" strokeWidth={1.4} strokeLinecap="round"
             style={{
               strokeDasharray: 1000, strokeDashoffset: reduce ? (brand ? 0 : 450) : drawn,
               opacity: lost(i) ? 0.12 : brand ? 0.62 : 0.42,
@@ -70,15 +70,15 @@ export default function PresentIntro({ onEnter }: { onEnter: () => void }) {
           const y = 596 + i * 34
           return (
             <g key={i} style={{ opacity: brand ? 1 : 0, transition: `opacity .6s ease ${1500 + i * 120}ms` }}>
-              <circle cx={1282} cy={y} r={8} fill="#FFFFFF" stroke="#315BE8" strokeWidth={1.4} />
-              <path d={`M ${1278} ${y} l 3 3 l 5.5 -6`} fill="none" stroke="#315BE8" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx={1282} cy={y} r={8} fill="#FFFFFF" stroke="#C8583D" strokeWidth={1.4} />
+              <path d={`M ${1278} ${y} l 3 3 l 5.5 -6`} fill="none" stroke="#C8583D" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
             </g>
           )
         })}
       </svg>
 
       <button type="button" onClick={onEnter}
-        className="absolute right-5 top-5 z-10 rounded-md px-3 py-1.5 text-[13.5px] font-medium text-[#5F6C82] hover:bg-white hover:text-[#19243A]">
+        className="absolute right-5 top-5 z-10 rounded-md px-3 py-1.5 text-[13.5px] font-medium text-[#5A676E] hover:bg-white hover:text-[#19262A]">
         Skip intro
       </button>
 
@@ -93,24 +93,24 @@ export default function PresentIntro({ onEnter }: { onEnter: () => void }) {
           <div className="anim-rise">
             <div className="flex items-center gap-3">
               <svg width="40" height="40" viewBox="0 0 32 32" aria-hidden>
-                <rect width="32" height="32" rx="8" fill="#315BE8" />
+                <rect width="32" height="32" rx="8" fill="#C8583D" />
                 <path d="M9 11h14M9 16h8M9 21h5" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
                 <path d="m18.5 21 2.4 2.4L25.5 18.8" stroke="#fff" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <h1 className="text-[clamp(36px,4.4vw,60px)] font-semibold tracking-[-0.025em]">Meeting Actions</h1>
             </div>
-            <p className="display mt-3 text-[clamp(24px,2.6vw,36px)] italic text-[#5F6C82]">From conversation to completed work.</p>
+            <p className="display mt-3 text-[clamp(24px,2.6vw,36px)] italic text-[#5A676E]">From conversation to completed work.</p>
             <button type="button" onClick={onEnter} autoFocus
-              className="mt-10 inline-flex h-11 items-center rounded-lg bg-[#315BE8] px-6 text-[15px] font-medium text-white shadow-[0_8px_24px_-10px_rgb(49_91_232/0.6)] transition-colors hover:bg-[#2449C7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315BE8]">
+              className="mt-10 inline-flex h-11 items-center rounded-lg bg-[#AB452E] px-6 text-[15px] font-medium text-white shadow-[0_8px_24px_-10px_rgb(171_69_46/0.55)] transition-colors hover:bg-[#933823] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C8583D]">
               Enter workspace
             </button>
           </div>
         )}
       </div>
 
-      <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4 text-[12.5px] text-[#5F6C82]">
+      <div className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4 text-[12.5px] text-[#5A676E]">
         <div className="flex gap-1.5" aria-hidden>
-          {[0, 1, 2, 3].map(i => <span key={i} className={`h-[3px] w-7 rounded-full transition-colors ${i <= scene ? 'bg-[#315BE8]' : 'bg-[#D4DBE7]'}`} />)}
+          {[0, 1, 2, 3].map(i => <span key={i} className={`h-[3px] w-7 rounded-full transition-colors ${i <= scene ? 'bg-[#C8583D]' : 'bg-[#D2D0C7]'}`} />)}
         </div>
         {!brand && <span>Space to continue · Esc to skip</span>}
       </div>

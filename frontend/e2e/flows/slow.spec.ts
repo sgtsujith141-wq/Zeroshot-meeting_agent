@@ -15,7 +15,8 @@ test('upload → processing → re-run → suggestion made a task → approved �
   try {
     await signIn(page, sb, '/meetings/new')
     await main(page).getByLabel('Meeting title').fill('Planning upload check')
-    await main(page).getByLabel('Recording or transcript').setInputFiles(path.join(DEMO, 'synthetic_meeting_1_planning.json'))
+    await main(page).getByRole('radio', { name: /Upload transcript/ }).click()
+    await main(page).getByLabel('Transcript file').setInputFiles(path.join(DEMO, 'synthetic_meeting_1_planning.json'))
     await main(page).getByLabel(/I confirm that every participant agreed/).check()
     await main(page).getByRole('button', { name: 'Analyze meeting' }).click()
     await expect(page).toHaveURL(/\/meetings\/\d+$/)

@@ -53,13 +53,16 @@ test('no violations inside the approval drawer, the transcript drawer, the task 
   expect(found).toEqual([])
 })
 
-test('no violations in the presentation intro, on a line and on the closing screen', async ({ page }) => {
-  await page.goto(sb.url + '/?present=1')
-  await expect(page.getByText('AI can already write the minutes.')).toBeVisible()
-  const found: string[] = await audit(page, 'intro line')
-  for (let i = 0; i < 4; i++) await page.keyboard.press('Space')
-  await expect(page.getByRole('button', { name: 'Enter workspace' })).toBeVisible()
-  await page.waitForTimeout(700) // let the closing screen finish fading in before checking contrast
-  found.push(...await audit(page, 'intro closing screen'))
-  expect(found).toEqual([])
+test.describe('intro', () => {
+  test.use({ keepIntro: true })
+  test('no violations in the presentation intro, on a line and on the closing screen', async ({ page }) => {
+    await page.goto(sb.url + '/?present=1')
+    await expect(page.getByText('AI can already write the minutes.')).toBeVisible()
+    const found: string[] = await audit(page, 'intro line')
+    for (let i = 0; i < 4; i++) await page.keyboard.press('Space')
+    await expect(page.getByRole('button', { name: 'Enter workspace' })).toBeVisible()
+    await page.waitForTimeout(700) // let the closing screen finish fading in before checking contrast
+    found.push(...await audit(page, 'intro closing screen'))
+    expect(found).toEqual([])
+  })
 })

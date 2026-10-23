@@ -35,7 +35,7 @@ export function watchPage(page: Page): Watch & { unexpected: () => string[] } {
 
 // The presentation intro plays on every page load. Tests that are not about it skip it the way
 // a person would, by pressing its "Skip intro" button as soon as it appears.
-const SKIP_INTRO = () => {
+export const SKIP_INTRO = () => {
   const skip = () => {
     const b = [...document.querySelectorAll('button')].find(x => x.textContent?.trim() === 'Skip intro')
     if (b) b.click()

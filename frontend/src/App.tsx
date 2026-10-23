@@ -27,10 +27,11 @@ function saveTheme(t: 'dark' | 'light') {
 
 function Mark({ size = 24 }: { size?: number }) {
   return (
+    // Three lines of conversation; the last one ends in a tick: talk turned into done work.
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">
-      <rect width="32" height="32" rx="7" fill="var(--accent)" />
-      <path d="M9 11h14M9 16h8M9 21h5" stroke="var(--on-accent)" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="m18.5 21 2.4 2.4L25.5 18.8" stroke="var(--on-accent)" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect width="32" height="32" rx="6" fill="#C8583D" />
+      <path d="M8 11h16M8 16h10M8 21h6" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="m18.5 21 2.4 2.4L25.5 18.8" stroke="#FFFFFF" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -51,7 +52,7 @@ function SignIn({ onDone, notice }: { onDone: () => void; notice: string | null 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-[380px]">
-        <div className="mb-6 flex items-center gap-2.5"><Mark size={28} /><span className="text-[16px] font-semibold">Meeting actions</span></div>
+        <div className="mb-6 flex items-center gap-2.5"><Mark size={28} /><span className="display text-[22px] leading-none">Meeting Actions</span></div>
         <h1 className="text-[20px] font-semibold">Sign in</h1>
         <p className="mt-1 text-[14px] text-slate">Use the organiser token from this server’s <code className="rounded bg-panel-3 px-1 text-[13px]">.env</code> file.</p>
         {notice && <div className="mt-4"><Notice tone="ask" role="status" title="You were signed out">{notice}</Notice></div>}
@@ -95,11 +96,12 @@ function NavItems({ waiting, onNavigate }: { waiting: number | null; onNavigate?
     <nav aria-label="Main" className="space-y-0.5">
       {NAV.map(n => (
         <NavLink key={n.to} to={n.to} end={n.end} onClick={onNavigate}
-          className={({ isActive }) => `group flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] transition-colors ${isActive ? 'bg-accent-soft font-medium text-accent' : 'text-slate hover:bg-panel-2 hover:text-ink'}`}>
+          className={({ isActive }) => `group relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-[13.5px] transition-colors ${isActive ? 'bg-deep-active font-medium text-white' : 'text-deep-text hover:bg-deep-active hover:text-white'}`}>
           {({ isActive }) => <>
-            <span className={isActive ? 'text-accent' : 'text-faint group-hover:text-ink'}>{n.icon}</span>
+            {isActive && <span aria-hidden className="absolute inset-y-2 left-0 w-[3px] rounded-r bg-mark" />}
+            <span className={isActive ? 'text-mark' : 'text-deep-text group-hover:text-white'}>{n.icon}</span>
             <span className="flex-1">{n.label}</span>
-            {n.waiting && !!waiting && <span className="tnum rounded-full bg-panel-3 px-1.5 text-[11.5px] font-medium leading-[18px] text-slate">{waiting}<span className="sr-only"> waiting</span></span>}
+            {n.waiting && !!waiting && <span className="tnum rounded bg-white/10 px-1.5 text-[11.5px] font-medium leading-[18px] text-white">{waiting}<span className="sr-only"> waiting</span></span>}
           </>}
         </NavLink>
       ))}
@@ -120,23 +122,23 @@ function Shell() {
     { label: 'Sign out', icon: <LogOut size={15} />, onSelect: signOut },
   ]
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[200px_minmax(0,1fr)]">
+    <div className="min-h-screen lg:grid lg:grid-cols-[208px_minmax(0,1fr)]">
       {/* The sidebar's surface runs the full height of the page, however long it is. */}
-      <div aria-hidden className="pointer-events-none fixed inset-y-0 left-0 hidden w-[200px] border-r border-rule bg-panel lg:block" />
-      <aside className="relative hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:px-3 lg:py-4">
-        <Link to="/" className="mb-6 flex items-center gap-2 px-2"><Mark /><span className="text-[14.5px] font-semibold tracking-[-0.01em]">Meeting Actions</span></Link>
+      <div aria-hidden className="pointer-events-none fixed inset-y-0 left-0 hidden w-[208px] bg-deep lg:block" />
+      <aside className="relative hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:px-3 lg:py-5 [&_button[aria-haspopup]]:text-deep-text [&_button[aria-haspopup]:hover]:bg-deep-active [&_button[aria-haspopup]:hover]:text-white">
+        <Link to="/" className="mb-7 flex items-center gap-2.5 px-2 text-white"><Mark size={26} /><span className="display text-[20px] leading-none tracking-[-0.01em]">Meeting Actions</span></Link>
         <div className="flex-1"><NavItems waiting={waiting} /></div>
         <Menu label="More" align="left" up items={more} icon={<MoreHorizontal size={15} />} kind="ghost" />
       </aside>
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-panel px-4 py-2 lg:hidden">
-        <Link to="/" className="flex items-center gap-2"><Mark size={22} /><span className="text-[15px] font-semibold">Meeting Actions</span></Link>
+      <div className="sticky top-0 z-30 flex items-center justify-between bg-deep px-4 py-2 lg:hidden">
+        <Link to="/" className="flex items-center gap-2 text-white"><Mark size={22} /><span className="display text-[19px] leading-none">Meeting Actions</span></Link>
         <Button kind="secondary" size="sm" aria-expanded={open} aria-label="Menu" onClick={() => setOpen(!open)} icon={open ? <X size={15} /> : <MenuIcon size={15} />} />
       </div>
       {open && (
-        <div className="fixed inset-x-0 top-[49px] z-30 border-b border-rule bg-panel px-3 pb-3 pt-2 lg:hidden">
+        <div className="fixed inset-x-0 top-[48px] z-30 bg-deep px-3 pb-3 pt-2 shadow-pop lg:hidden">
           <NavItems waiting={waiting} onNavigate={() => setOpen(false)} />
-          <div className="mt-2 space-y-px border-t border-rule pt-2">
-            {more.map(m => <button key={m.label} type="button" onClick={() => { setOpen(false); m.onSelect() }} className="flex h-8 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[13.5px] text-slate hover:bg-panel-2 hover:text-ink"><span className="text-faint">{m.icon}</span>{m.label}</button>)}
+          <div className="mt-2 space-y-px border-t border-white/10 pt-2">
+            {more.map(m => <button key={m.label} type="button" onClick={() => { setOpen(false); m.onSelect() }} className="flex h-9 w-full items-center gap-2.5 rounded-md px-2.5 text-left text-[13.5px] text-deep-text hover:bg-deep-active hover:text-white"><span>{m.icon}</span>{m.label}</button>)}
           </div>
         </div>
       )}

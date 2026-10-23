@@ -6,53 +6,62 @@
 @import "@fontsource/instrument-serif/400-italic.css";
 @import "@fontsource/source-serif-4/400.css";
 
-/* Sapphire & Ivory. Light is the default; [data-theme="dark"] is the coordinated alternative.
-   The specified palette is used as given for surfaces, accents, borders and status dots. Text
-   uses slightly deeper shades of the same hues where the specified value falls below the WCAG AA
-   4.5:1 ratio on the ivory canvas (secondary, success, warning, error). */
+/* Limestone & Vermilion. Light is the default; [data-theme="dark"] is the coordinated alternative.
+   The specified palette is used for the canvas, surfaces, text, dark surface, borders and the
+   decorative vermilion (--mark). Interactive vermilion (buttons, links, accent text) and the
+   secondary text use slightly deeper shades of the same hues, so every text pairing meets WCAG AA
+   (white on #C8583D is only 4.27:1). */
 :root {
   color-scheme: light;
-  --bg: #F7F8FC;
+  --bg: #F5F2EB;
   --surface: #FFFFFF;
-  --surface-2: #F1F4FA;
-  --surface-3: #E9EDF5;
-  --line: #E5EAF3;
-  --line-strong: #D4DBE7;
-  --text: #19243A;
-  --muted: #5F6C82;
-  --faint: #5F6C82;
-  --accent: #315BE8;
-  --accent-hover: #2449C7;
-  --accent-soft: #EDF2FF;
+  --surface-2: #F8F6F1;
+  --surface-3: #EFECE4;
+  --line: #E3E2DC;
+  --line-strong: #D2D0C7;
+  --text: #19262A;
+  --muted: #5A676E;
+  --faint: #5A676E;
+  --accent: #AB452E;
+  --accent-hover: #933823;
+  --accent-soft: #F3E6DD;
+  --mark: #C8583D;
   --on-accent: #FFFFFF;
-  --success: #1F7A5E;  --success-dot: #258568;  --success-soft: #E8F4EF;
-  --warning: #94601A;  --warning-dot: #B77A29;  --warning-soft: #FBF3E6;
-  --error: #B3424A;    --error-dot: #C34D52;    --error-soft: #FBEDEE;
-  --shadow: 0 1px 2px rgb(25 36 58 / 0.05), 0 12px 32px -16px rgb(25 36 58 / 0.18);
-  --ring: rgb(49 91 232 / 0.55);
-  --flash: rgb(49 91 232 / 0.12);
+  --deep: #172D30;
+  --deep-text: #C9D3D2;
+  --deep-active: #24393C;
+  --success: #28755E;  --success-dot: #28755E;  --success-soft: #E4EFE9;
+  --warning: #8F5B16;  --warning-dot: #B77A29;  --warning-soft: #F8EEDC;
+  --error: #A8343C;    --error-dot: #C24A52;    --error-soft: #F8E5E6;
+  --shadow: 0 1px 2px rgb(25 38 42 / 0.05), 0 14px 34px -18px rgb(25 38 42 / 0.22);
+  --ring: rgb(200 88 61 / 0.6);
+  --flash: rgb(200 88 61 / 0.14);
 }
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0E1320;
-  --surface: #141A29;
-  --surface-2: #1B2234;
-  --surface-3: #222B40;
-  --line: #232C40;
-  --line-strong: #2F3A52;
-  --text: #E7EBF3;
-  --muted: #9AA6BC;
-  --faint: #93A0B6;
-  --accent: #7C9CFF;
-  --accent-hover: #9AB3FF;
-  --accent-soft: rgb(124 156 255 / 0.13);
-  --on-accent: #0B1226;
-  --success: #5FC29E;  --success-dot: #5FC29E;  --success-soft: rgb(95 194 158 / 0.12);
-  --warning: #E0A85A;  --warning-dot: #E0A85A;  --warning-soft: rgb(224 168 90 / 0.12);
-  --error: #EE8A8E;    --error-dot: #EE8A8E;    --error-soft: rgb(238 138 142 / 0.12);
+  --bg: #0F1C1E;
+  --surface: #152628;
+  --surface-2: #1A2E30;
+  --surface-3: #213638;
+  --line: #263B3D;
+  --line-strong: #33494B;
+  --text: #E9EDEA;
+  --muted: #A6B4B3;
+  --faint: #9DADAC;
+  --accent: #F08A6C;
+  --accent-hover: #F6A68D;
+  --accent-soft: rgb(240 138 108 / 0.13);
+  --mark: #E07A5F;
+  --on-accent: #1A1310;
+  --deep: #0A1416;
+  --deep-text: #B9C6C5;
+  --deep-active: #18292B;
+  --success: #6CC4A1;  --success-dot: #6CC4A1;  --success-soft: rgb(108 196 161 / 0.12);
+  --warning: #E2AD62;  --warning-dot: #E2AD62;  --warning-soft: rgb(226 173 98 / 0.12);
+  --error: #F08C92;    --error-dot: #F08C92;    --error-soft: rgb(240 140 146 / 0.12);
   --shadow: 0 16px 40px -20px rgb(0 0 0 / 0.7);
-  --ring: rgb(124 156 255 / 0.7);
-  --flash: rgb(124 156 255 / 0.16);
+  --ring: rgb(240 138 108 / 0.7);
+  --flash: rgb(240 138 108 / 0.16);
 }
 
 @theme inline {
@@ -72,7 +81,11 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
-  /* Links and informational text use the sapphire accent. */
+  --color-mark: var(--mark);
+  --color-deep: var(--deep);
+  --color-deep-text: var(--deep-text);
+  --color-deep-active: var(--deep-active);
+  /* Links and informational text use the vermilion accent. */
   --color-sky: var(--accent);
   --color-sky-soft: var(--accent-soft);
   --color-violet: var(--accent);
