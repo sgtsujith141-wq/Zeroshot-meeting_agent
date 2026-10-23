@@ -17,7 +17,7 @@ Sarvam keys, no SMTP, synthetic transcripts only.
 | # | Requirement | Status | Evidence / gap |
 |---|---|---|---|
 | 1 | Ingest transcripts | **PASS** | JSON / Sarvam JSON / VTT / SRT / text parsers. Live ingestion of 3 synthetic meetings via API and UI. `test_full_flow_transcript_to_approved_tasks`. |
-| 1b | Ingest audio/video recordings | **PARTIAL** | Verified 2026-10-23 through the real UI upload: a synthetic TTS recording went through ffprobe/FFmpeg, then **local faster-whisper-small**, then interpretation, minutes and the change set (meeting 4; Playwright walkthrough). **Sarvam batch STT is UNVERIFIED** (no `SARVAM_API_KEY`); the adapter is checked against the installed SDK only. No real recording processed. |
+| 1b | Ingest audio/video recordings | **PARTIAL** | Browser recording (Record audio) and audio/video upload verified end to end with **local faster-whisper-small**: Chromium capture device playing synthetic speech (`e2e/flows/live-audio.spec.ts`, `e2e/judge/live.spec.ts`), Safari/Firefox/Chrome file formats, video with sound (`test_transcribe_first.py`). Transcript shown before analysis. **A person speaking into the demo laptop's microphone is NOT verified by the developers** (macOS denied the tools microphone access; operator check in `docs/LIVE_AUDIO_DEMO.md`). **Sarvam batch STT is UNVERIFIED** (no `SARVAM_API_KEY`). No real recording processed. |
 | 2 | Identify speakers; correct/rename | **PARTIAL** | Rename/map speakers in the UI re-folds proposals with no model call (walkthrough: SPEAKER_03 → Meera). **Diarization is UNVERIFIED**: Sarvam not run. Local Whisper has no diarization, so every segment is SPEAKER_00, and with no speaker separation "I will" cannot be attributed. |
 | 3 | English + ≥1 Indian language / code-mixed | **PARTIAL** | Code-mixed *text*: starter T06; holdout v1 H03/H04, v2 V01/V02/V05/V10; synthetic meeting 3 live. Code-mixed *speech*: only a synthetic TTS clip through local Whisper (WER 0.245; Kannada written phonetically in Devanagari, and the earlier default inverted a Kannada line's meaning). **Real code-mixed speech NOT MEASURED.** |
 | 4 | Minutes, discussion, decisions **and reasons**, unresolved questions | **PARTIAL** | Generated live with evidence validation. Fixed 2026-10-23: assignment-like "decisions" are moved to actions (live: 2 moved in meeting 4). Remaining gap: the 8B model often misses stated reasons. |
@@ -52,7 +52,7 @@ Sarvam keys, no SMTP, synthetic transcripts only.
 
 | Item | Status |
 |---|---|
-| Backend tests (offline) | **PASS**: 107 passing on 2026-10-23 (`cd backend && .venv/bin/pytest`), including SDK-surface checks for Sarvam/Gemini and one real local Whisper transcription (skipped where unavailable) |
+| Backend tests (offline) | **PASS**: 133 passing on 2026-10-23 (`cd backend && .venv/bin/pytest`), including SDK-surface checks for Sarvam/Gemini, real local Whisper transcriptions and a real PDF render (skipped where unavailable) |
 | UI smoke tests | **PASS**: 4 Playwright tests against the live server on the real token (incl. phone-width overflow); scripted walkthroughs on live data: meeting 1 approval, meeting 2 cross-meeting update, audio upload through the UI |
 | CI | **PASS** on the latest pushed commits (GitHub Actions: offline backend tests + frontend build). Some earlier runs stalled on `apt-get install ffmpeg`; the step now has a timeout. |
 | Secrets | `.env` git-ignored; `.env.example` placeholders only. Staged diffs scanned before each commit. |

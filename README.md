@@ -61,9 +61,24 @@ http://localhost:5173 (`/api` is proxied to :8000).
 The reminder worker runs inside the backend process, polling every
 `REMINDER_POLL_SECONDS`. It only works while the backend runs.
 
+## Demo workspace
+
+A separate, resettable database of four clearly labelled synthetic meetings for presenting.
+It never touches the working database (`backend/data`).
+
+```bash
+backend/.venv/bin/python scripts/demo_workspace.py reset    # rebuild from demo/workspace.sql
+backend/.venv/bin/python scripts/demo_workspace.py serve    # http://127.0.0.1:8000
+backend/.venv/bin/python scripts/demo_workspace.py verify   # read-only checks of the demo story
+```
+
+Live recording route, preflight and fallbacks: [`docs/LIVE_AUDIO_DEMO.md`](docs/LIVE_AUDIO_DEMO.md).
+Round 2 reports: [`docs/ROUND2_FINAL_REPORT.md`](docs/ROUND2_FINAL_REPORT.md) (and `.pdf`).
+
 ## Using it (about 3-minute demo path)
 
-0. **Intro.** A short intro plays when the page loads; Esc or *Skip intro* leaves it.
+0. **Intro.** A short intro plays on the first load of a browser session (and at `/?present=1`);
+   a refresh does not replay it. Esc or *Skip intro* leaves it.
 1. **Overview** lists meetings awaiting review, upcoming tasks and recently processed meetings.
 2. **New meeting.** Choose *Record audio* (the browser's microphone), *Upload recording*
    (needs `SARVAM_API_KEY` or the optional local Whisper) or *Upload transcript*
@@ -99,8 +114,9 @@ The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 ```bash
 cd backend && .venv/bin/pytest -q          # offline tests: fold, dates, identity, API flows, providers, metrics
 cd frontend && npx playwright test e2e/flows --grep-invert "upload → processing|ask with the model|model is down|diagnostics live test"
-                                           # 101 browser tests incl. live recording and accessibility, on disposable sandboxes (about 6 min)
-cd frontend && npx playwright test e2e/flows/slow.spec.ts   # 4 live-model flows (Ollama; about 7 min)
+                                           # 105 browser tests incl. live recording and accessibility, on disposable sandboxes (about 7 min)
+cd frontend && npx playwright test e2e/flows/slow.spec.ts   # 4 live-model flows (Ollama; about 5 min)
+cd frontend && npx playwright test e2e/judge                # judge rehearsal: 5 scenarios on demo data + 2 with live Whisper and Ollama
 cd frontend && E2E_TOKEN=<token> npx playwright test e2e/smoke.spec.ts   # read-only checks of a running server
 cd frontend && SCREENS=1 VW=390 npx playwright test e2e/screens.spec.ts  # viewport screenshots + overflow/clipping checks
 backend/.venv/bin/python evaluation/run_eval.py --provider ollama --model qwen3:8b   # fixture experiment

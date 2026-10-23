@@ -7,9 +7,16 @@ GPU acceleration for the models). Where something has not been verified, it says
 
 ## 1. Start
 
+For the presentation, use the **demo workspace**: four clearly labelled synthetic meetings,
+separate from the working database (`backend/data` is never touched).
+
 ```bash
-cd backend && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+backend/.venv/bin/python scripts/demo_workspace.py reset    # fresh copy; the previous one is kept as a backup
+backend/.venv/bin/python scripts/demo_workspace.py serve    # http://127.0.0.1:8000
+backend/.venv/bin/python scripts/demo_workspace.py verify   # 12 read-only checks of the story
 ```
+
+To use the working database instead: `cd backend && .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000`.
 
 The server reads `.env` (organiser token, model settings) and loads the local Whisper model
 in the background at start (about 4 s), so the first recording does not wait for it.
@@ -17,7 +24,8 @@ Ollama must be running with `qwen3:8b` for the analysis step (`ollama serve`; ch
 `ollama list`).
 
 Open **http://127.0.0.1:8000** in the presentation browser and sign in with the
-`ORGANIZER_TOKEN` from `.env`. The intro plays on every load; press Esc or *Skip intro*.
+`ORGANIZER_TOKEN` from `.env`. The intro plays once per browser session; a refresh does not
+replay it; open `/?present=1` to play it again. Esc or *Skip intro* leaves it.
 
 ## 2. Preflight (five minutes before)
 
@@ -65,7 +73,7 @@ result of the live recording.
 | Browser recording pipeline (Chromium `getUserMedia` → `MediaRecorder` → upload → Whisper), 12 s of speech | transcript visible **6.5–6.6 s** after *Transcribe recording* (3 runs; includes the model load, which the real server does at start) | `e2e/flows/live-audio.spec.ts`, fake capture device playing a macOS TTS WAV |
 | Server transcription, 14.7 s clip, model already loaded | **4.6–5.0 s** (`faster-whisper-small`); `base` took 1.7 s | direct benchmark |
 | Upload + transcription of Safari (AAC `.m4a`), Firefox (Opus `.ogg`) and Chrome (Opus `.webm`) style files, 14.7 s | **4.8 s** each, all three transcribed correctly | sandbox server |
-| Full analysis after transcription (interpret + minutes, Ollama `qwen3:8b`), 4-line transcript | **139.2 s** (interpretation 74.6 s, minutes 64.0 s); found the decision “Stripe will remain the payment provider”, proposed “Finish the refund API” (Rahul, Thu 29 Oct) and held “Run regression tests” (Priya) for a question | sandbox server |
+| Full analysis after transcription (interpret + minutes, Ollama `qwen3:8b`), 4-line transcript | **78.6 s** since Round 2 (the minutes are written alongside the interpretation; it was 139.2 s one after the other), same result: the decision “Stripe will remain the payment provider”, “Finish the refund API” (Rahul, Thu 29 Oct) proposed and “Run regression tests” (Priya) held for a question. Judge rehearsal: 70.8 s | sandbox server |
 | PDF report (3 pages) | **0.36–0.65 s** to render | headless Chromium |
 
 ## 5. What is and is not verified
