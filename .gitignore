@@ -82,3 +82,7 @@ ZeroShot_PS53_Claude_Starter_Kit.zip
 
 # Generated synthetic TTS clips (scripts/make_tts_sample.sh)
 demo/audio/
+
+# Demo workspace built from demo/workspace.sql (scripts/demo_workspace.py)
+backend/demo-workspace/
+backend/demo-workspace.bak-*/

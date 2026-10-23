@@ -168,6 +168,22 @@ test('workspace: summary prepare, copy-approve (nothing sent), and email without
   await expect(page.getByText('Email sent', { exact: true })).toHaveCount(0)
 })
 
+test('summary: when the clipboard refuses, nothing is marked approved and the page says nothing was copied', async ({ page, watch }) => {
+  // The browser rejects the copy (as it does without permission or focus).
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: () => Promise.reject(new DOMException('Write permission denied.', 'NotAllowedError')) } })
+  })
+  await signIn(page, sb, '/meetings/2')
+  await tab(page, 'Share summary').click()
+  await clickAnd(page, main(page).getByRole('button', { name: 'Prepare summary' }))
+  await main(page).getByRole('button', { name: 'Copy and mark approved' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Nothing was copied, so the summary was not marked approved' })).toBeVisible()
+  const s = await apiFor(sb).get<{ state: string }[]>('/api/meetings/2/summaries')
+  expect(s[0].state).toBe('prepared') // no approval was recorded
+  expect(watch.requests.filter(r => /\/approve$/.test(r))).toEqual([])
+  await expect(main(page).getByText('Prepared, not approved')).toBeVisible()
+})
+
 test('workspace: the recording plays from a clicked timestamp', async ({ page }) => {
   await signIn(page, sb, '/meetings/4')
   await main(page).getByRole('button', { name: 'Transcript', exact: true }).click()

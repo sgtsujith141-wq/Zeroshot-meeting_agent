@@ -174,9 +174,15 @@ function RedirectReview() {
   return <Navigate to={`/approvals/${meetingId}`} replace />
 }
 
-/** The presentation intro plays on every full page load, including a refresh. */
+/** The presentation intro plays once per browser session (the first page load), and again
+ *  whenever the address has ?present=1. A refresh does not replay it, so a presenter can
+ *  reload a page mid-demo. */
+const INTRO_SEEN = 'ps53.introSeen'
 function wantsIntro() {
-  return true
+  try {
+    if (new URLSearchParams(location.search).get('present') === '1') return true
+    return sessionStorage.getItem(INTRO_SEEN) !== '1'
+  } catch { return false }
 }
 
 export default function App() {
@@ -195,6 +201,7 @@ export default function App() {
     return () => window.removeEventListener('ps53:unauthorized', h)
   }, [])
   const enter = () => {
+    try { sessionStorage.setItem(INTRO_SEEN, '1') } catch { /* private mode */ }
     const u = new URL(location.href)
     u.searchParams.delete('present')
     history.replaceState(null, '', u.pathname + u.search + u.hash)

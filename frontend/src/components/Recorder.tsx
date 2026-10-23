@@ -87,6 +87,7 @@ export default function Recorder({ value, onChange }: { value: Recording | null;
       const name = (e as DOMException).name
       if (name === 'NotAllowedError' || name === 'SecurityError') setState('denied')
       else if (name === 'NotFoundError' || name === 'OverconstrainedError') setState('nodevice')
+      else if (name === 'NotSupportedError' || name === 'TypeError') setState('unsupported') // e.g. not a secure origin
       else { setState('error'); setError(`The microphone could not be opened (${name || String(e)}).`) }
       return
     }
@@ -173,7 +174,7 @@ export default function Recorder({ value, onChange }: { value: Recording | null;
 
       {state === 'denied' && <p role="alert" className="mt-3 text-[13.5px] text-cancel">Microphone access was denied. Allow the microphone for this site in the browser's address bar, then press Record again, or upload a recording instead.</p>}
       {state === 'nodevice' && <p role="alert" className="mt-3 text-[13.5px] text-cancel">No microphone was found. Connect one and press Record again, or upload a recording instead.</p>}
-      {state === 'unsupported' && <p role="alert" className="mt-3 text-[13.5px] text-cancel">This browser cannot record audio here. Use current Chrome or Edge, or upload a recording instead.</p>}
+      {state === 'unsupported' && <p role="alert" className="mt-3 text-[13.5px] text-cancel">This browser cannot record audio on this page. Open the app at http://127.0.0.1 or over https in a current browser (Safari, Firefox, Chrome or Edge), or upload a recording instead.</p>}
       {error && <p role="alert" className="mt-3 text-[13.5px] text-cancel">{error}</p>}
 
       {value && <audio ref={audio} src={value.url} preload="metadata" className="sr-only" aria-label="Recorded audio"

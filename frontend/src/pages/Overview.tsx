@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronRight, Mic } from 'lucide-react'
+import { ChevronRight, FileText, FlaskConical, Mic } from 'lucide-react'
 import { api, fmtDate } from '../lib/api'
 import type { MeetingSummary, Task } from '../types'
-import { Empty, ErrorBox, ListBox, Loading, Section, Status, SyntheticTag, type Tone, plural, useLoad } from '../components/ui'
+import { ErrorBox, ListBox, Loading, Section, Status, SyntheticTag, type Tone, plural, useLoad } from '../components/ui'
 import { BUSY, OPEN_TASK, isSynthetic, meetingStatus, shortDate, todayIso } from '../lib/status'
 
 interface CsRow { id: number; meeting_id: number; meeting_title: string; state: string; items: number; open_questions: number }
@@ -67,9 +67,20 @@ export default function Overview() {
       </header>
       <ErrorBox error={error} onRetry={reload} />
       {loading && !data ? <Loading /> : data && !data.meetings.length ? (
-        <Empty action={newBtn}>
-          No meetings yet. Add a consented recording or a transcript; the tasks it proposes wait for your approval before anything changes.
-        </Empty>
+        <section aria-labelledby="start-h" className="rounded-xl border border-rule bg-panel px-6 py-7">
+          <h2 id="start-h" className="text-[17px] font-semibold text-ink">No meetings yet</h2>
+          <p className="mt-1 max-w-[62ch] text-[14px] text-slate">Add a consented recording or a transcript. The tasks it proposes wait for your approval before anything changes.</p>
+          <ul className="mt-5 grid gap-3 sm:grid-cols-3">
+            {[
+              { to: '/meetings/new', icon: <Mic size={18} />, title: 'Record your first meeting', detail: 'Use this computer’s microphone' },
+              { to: '/meetings/new?mode=transcript', icon: <FileText size={18} />, title: 'Upload a transcript', detail: 'JSON, text, VTT or SRT' },
+              { to: '/meetings/new?mode=transcript&sample=1', icon: <FlaskConical size={18} />, title: 'Try a synthetic sample', detail: 'A short planning meeting written for testing, labelled SYNTHETIC' },
+            ].map(a => (
+              <li key={a.title}><Link to={a.to} className="flex h-full items-start gap-3 rounded-lg border border-rule px-4 py-3.5 hover:border-accent hover:bg-accent-soft">
+                <span className="text-accent">{a.icon}</span><span><span className="block font-medium text-ink">{a.title}</span><span className="block text-[13px] text-slate">{a.detail}</span></span>
+              </Link></li>))}
+          </ul>
+        </section>
       ) : data && (
         <div className="space-y-9">
           <Section title="Meetings awaiting review" count={pending.length + stuck.length} actions={<Link to="/approvals" className="text-sky hover:underline">All approvals</Link>}>

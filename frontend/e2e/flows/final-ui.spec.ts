@@ -17,11 +17,14 @@ test.describe('with the demo data', () => {
 
   test.describe('intro', () => {
     test.use({ keepIntro: true }) // these tests watch the intro, so it is not skipped
-    test('intro: plays on every load; Space steps through the lines; Enter workspace drops the parameter', async ({ page, watch }) => {
+    test('intro: plays on the first load and at ?present=1, never on a refresh; Space steps through the lines', async ({ page, watch }) => {
       await page.goto(sb.url + '/')
       await expect(intro(page)).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(intro(page)).toHaveCount(0)
       await page.reload()
-      await expect(intro(page)).toBeVisible() // a refresh plays it again
+      await expect(page.getByLabel('Organiser token')).toBeVisible()
+      await expect(intro(page)).toHaveCount(0) // a presenter can refresh a page without replaying it
       await page.goto(sb.url + '/?present=1')
       await expect(intro(page)).toContainText('AI can already write the minutes.')
       expect(watch.requests, 'the intro requests no data').toEqual([])
@@ -100,6 +103,14 @@ test.describe('with the demo data', () => {
     expect(file.suggestedFilename()).toMatch(/report\.pdf$/)
     const bytes = readFileSync((await file.path())!)
     expect(bytes.subarray(0, 5).toString()).toBe('%PDF-')
+    // Preview opens the same PDF in a new tab. Headless Chromium has no PDF viewer, so there the
+    // tab hands the PDF over as a download; a desktop browser displays it.
+    const popup = page.waitForEvent('popup')
+    await main(page).getByRole('button', { name: 'Preview report' }).click()
+    const tab = await popup
+    const shown = await tab.waitForEvent('download').then(d => d.path()).then(p => readFileSync(p!).subarray(0, 5).toString())
+    expect(shown).toBe('%PDF-')
+    await tab.close()
   })
 
   test('results page: a meeting waiting for approval offers "Review and approve tasks"', async ({ page }) => {

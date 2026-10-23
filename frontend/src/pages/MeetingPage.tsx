@@ -44,7 +44,8 @@ function stages(m: MeetingDetail, now: number): { label: string; state: StageSta
   const ok = (step: string) => run.find(l => l.step === step && l.status === 'ok')
   const fail = st === 'failed' ? run.find(l => l.status !== 'ok') ?? { step: (m.processing_error ?? '').split(':')[0], at: '', status: 'error', detail: null } : undefined
   const before = (step: string) => { const i = run.findIndex(l => l.step === step && l.status === 'ok'); return i > 0 ? run[i - 1].at : undefined }
-  const took = (step: string) => { const e = ok(step), s = before(step); return e && s ? `Done in ${clock(secs(s, Date.parse(e.at)))}` : 'Done' }
+  // The summary is written alongside the extraction, so this stage can finish at the same moment.
+  const took = (step: string) => { const e = ok(step), s = before(step); const t = e && s ? secs(s, Date.parse(e.at)) : 0; return t ? `Done in ${clock(t)}` : 'Done' }
   const running = () => (log.length ? `Running for ${clock(secs(log[log.length - 1].at, now))}` : 'Running')
   const t = lastIndex(log, l => l.step === 'transcribe' && l.status === 'ok')
   const tq = t >= 0 ? lastIndex(log.slice(0, t), l => l.step === 'queue') : -1
@@ -568,6 +569,21 @@ function SummaryShare({ meetingId }: { meetingId: number }) {
     channel, content_hash: latest.content_hash, recipients: channel === 'email' ? recipients.split(',').map(s => s.trim()).filter(Boolean) : [],
   }), s => channel === 'copy' ? 'Copied to the clipboard and marked approved. Nothing was sent.'
     : s?.state === 'sent' ? 'Email sent.' : `Approved, but the email was NOT sent: ${s?.error ?? 'see the status below'}.`)
+  /** Approval is recorded only after the browser confirms the text is on the clipboard. */
+  async function copyAndApprove() {
+    if (!latest) return
+    setBusy(true)
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('this browser does not allow copying from this page')
+      await navigator.clipboard.writeText(latest.content)
+    } catch (e) {
+      setBusy(false)
+      toast('error', `Nothing was copied, so the summary was not marked approved (${e instanceof Error ? e.message : String(e)}). Select the text and copy it by hand.`)
+      return
+    }
+    setBusy(false)
+    await approve('copy')
+  }
   const stateText = (s: Share) => s.state === 'sent' ? 'Email sent' : s.state === 'failed' ? 'Email failed; not sent'
     : s.state === 'approved' ? (s.channel === 'email' ? 'Approved for email, NOT sent' : 'Approved for copying; not sent anywhere') : 'Prepared, not approved'
   return (
@@ -578,7 +594,7 @@ function SummaryShare({ meetingId }: { meetingId: number }) {
           {latest.error && <p className="text-[13px] text-slate">{latest.error}</p>}
           <pre className="scroll-quiet max-h-60 overflow-auto whitespace-pre-wrap rounded-md border border-rule bg-panel-2 p-3 text-[13px] text-ink">{latest.content}</pre>
           <div className="flex flex-wrap items-end gap-2">
-            <Button size="sm" disabled={busy} onClick={() => { void navigator.clipboard?.writeText(latest.content); void approve('copy') }}>Copy and mark approved</Button>
+            <Button size="sm" disabled={busy} loading={busy} onClick={() => void copyAndApprove()}>Copy and mark approved</Button>
           </div>
           <div className="flex flex-wrap items-end gap-2">
             <div className="min-w-[14rem] flex-1"><Field label="Email recipients (comma-separated)" hint="Email is only sent if the server has SMTP configured."><input className={inputCls} value={recipients} onChange={e => setRecipients(e.target.value)} placeholder="name@example.com" /></Field></div>

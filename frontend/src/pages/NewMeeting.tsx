@@ -1,5 +1,5 @@
-import { useState, type DragEvent, type FormEvent, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type DragEvent, type FormEvent, type ReactNode } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FileAudio, FileText, Mic, UploadCloud, X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { MeetingSummary } from '../types'
@@ -30,7 +30,9 @@ const MODES: { key: Mode; label: string; detail: string; icon: ReactNode }[] = [
 
 export default function NewMeeting() {
   const nav = useNavigate()
-  const [mode, setMode] = useState<Mode>('record')
+  const [params] = useSearchParams()
+  // ?mode=recording|transcript opens that option; &sample=1 also attaches the synthetic transcript.
+  const [mode, setMode] = useState<Mode>(() => (['recording', 'transcript'].includes(params.get('mode') ?? '') ? params.get('mode') as Mode : 'record'))
   const [title, setTitle] = useState('')
   const [when, setWhen] = useState(localNow())
   const [tz, setTz] = useState('Asia/Kolkata')
@@ -87,6 +89,7 @@ export default function NewMeeting() {
     setFile(new File([demoTranscript], DEMO_NAME, { type: 'application/json' }))
     setTitle(d.title); setWhen(d.scheduled_at.slice(0, 16)); setTz(d.timezone); setDemo(true)
   }
+  useEffect(() => { if (params.get('sample') === '1' && mode === 'transcript') pickDemo() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   function recorded(r: Recording | null) {
     setRecording(r)
     if (r && !title.trim()) setTitle(`Recorded meeting, ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`)

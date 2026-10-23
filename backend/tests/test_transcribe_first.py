@@ -105,3 +105,54 @@ def test_an_analysis_failure_keeps_the_transcript_and_retry_skips_transcription(
     assert r.status_code == 200, r.text
     m = client.get(f"/api/meetings/{mid}").json()
     assert m["processing_status"] == "ready_for_review" and len(calls) == 1
+
+
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg not available")
+def test_a_video_with_sound_is_stored_as_video_and_transcribed_from_its_audio(client, llm, monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(processing.stt, "transcribe", lambda path: calls.append(Path(path)) or ([dict(r) for r in ROWS], META))
+    mp4 = tmp_path / "meeting.mp4"
+    subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=160x120:rate=10:duration=2",
+                    "-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-shortest", "-c:v", "mpeg4", "-c:a", "aac", str(mp4)],
+                   check=True, timeout=60)
+    mid = meeting(client)
+    r = client.post(f"/api/meetings/{mid}/upload", data={"transcribe_only": "true"},
+                    files={"file": ("meeting.mp4", mp4.read_bytes(), "video/mp4")})
+    assert r.status_code == 200, r.text
+    m = client.get(f"/api/meetings/{mid}").json()
+    assert m["source_type"] == "video" and m["processing_status"] == "transcribed"
+    assert len(calls) == 1 and calls[0].suffix == ".wav"  # speech-to-text got the extracted audio track
+
+
+def test_a_video_without_sound_is_refused(client, tmp_path):
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg not available")
+    mp4 = tmp_path / "silent.mp4"
+    subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=160x120:rate=10:duration=1",
+                    "-c:v", "mpeg4", str(mp4)], check=True, timeout=60)
+    mid = meeting(client)
+    r = client.post(f"/api/meetings/{mid}/upload", files={"file": ("silent.mp4", mp4.read_bytes(), "video/mp4")})
+    assert r.status_code == 422 and "no audio stream" in r.json()["detail"]
+
+
+def test_a_transcription_failure_keeps_the_recording_and_try_again_transcribes_it(client, llm, monkeypatch):
+    from app.services.speech.sarvam import STTError
+    attempts = []
+
+    def flaky(path):
+        attempts.append(path)
+        if len(attempts) == 1:
+            raise STTError("provider timed out")
+        return [dict(r) for r in ROWS], META
+    monkeypatch.setattr(processing.stt, "transcribe", flaky)
+    mid = meeting(client)
+    r = client.post(f"/api/meetings/{mid}/upload", data={"transcribe_only": "1"},
+                    files={"file": ("recording.wav", silent_wav(), "audio/wav")})
+    assert r.status_code == 200
+    m = client.get(f"/api/meetings/{mid}").json()
+    assert m["processing_status"] == "failed" and m["processing_error"].startswith("transcribe:") and m["segments"] == []
+    assert client.get(f"/api/meetings/{mid}/media-url").status_code == 200  # the recording is kept
+    r = client.post(f"/api/meetings/{mid}/process", json={"steps": ["transcribe"]})  # "Try transcription again"
+    assert r.status_code == 200
+    m = client.get(f"/api/meetings/{mid}").json()
+    assert m["processing_status"] == "transcribed" and len(m["segments"]) == 1 and len(attempts) == 2
