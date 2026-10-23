@@ -155,3 +155,24 @@ test('empty database: the Overview and Tasks empty states lead somewhere', async
     await expect(h1(page, 'Approvals')).toBeVisible()
   } finally { await empty.stop() }
 })
+
+test('keyboard: focus stays inside an open dialog or drawer and returns to the opener on close', async ({ page }) => {
+  await signIn(page, sb, '/approvals/4')
+  const opener = main(page).getByRole('button', { name: 'Reject all', exact: true })
+  await opener.focus(); await page.keyboard.press('Enter')
+  const dlg = page.getByRole('dialog', { name: 'Reject all proposed changes?' })
+  await expect(dlg).toBeVisible()
+  for (const key of ['Tab', 'Tab', 'Tab', 'Tab', 'Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab']) {
+    await page.keyboard.press(key)
+    expect(await dlg.evaluate(d => d.contains(document.activeElement))).toBe(true)
+  }
+  await page.keyboard.press('Escape')
+  await expect(dlg).toBeHidden()
+  await expect(opener).toBeFocused()
+  await page.locator('tr[data-item="login-screen"]').getByRole('button', { name: 'Finish the login screen' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Finish the login screen' })
+  for (let i = 0; i < 25; i++) {
+    await page.keyboard.press('Tab')
+    expect(await drawer.evaluate(d => d.contains(document.activeElement))).toBe(true)
+  }
+})
