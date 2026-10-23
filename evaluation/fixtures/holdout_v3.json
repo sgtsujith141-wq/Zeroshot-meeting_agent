@@ -1,0 +1,275 @@
+{
+ "description": "FRESH HOLDOUT v3, written on 2026-10-23 from the Round 2 brief's difficult statements, with new names and domains, and committed with its match keys before any run on it. Same developer as the code, so not independent of developer bias. Synthetic; NOT the official three-real-meeting evaluation.",
+ "version": "1.0",
+ "fixtures": [
+  {
+   "id": "W01_self_commit_tomorrow",
+   "scenario": "Named person commits with a relative deadline",
+   "prior_approved_tasks": [],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "Farhan, can you finish the vendor contract review?"
+    },
+    {
+     "id": "s2",
+     "speaker": "Farhan",
+     "start_seconds": 6,
+     "text": "I will finish it tomorrow."
+    }
+   ],
+   "expected_final_active_commitments": [
+    {
+     "title": "Vendor contract review",
+     "owner": "Farhan",
+     "due_date": "2026-11-26"
+    }
+   ],
+   "expected_flags": [],
+   "expected_change_ops": [
+    "CREATE vendor contract review"
+   ],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W02_someone_should",
+   "scenario": "Suggestion with no owner is not a task",
+   "prior_approved_tasks": [],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "Someone should check the API rate limits at some point."
+    }
+   ],
+   "expected_final_active_commitments": [],
+   "expected_flags": [
+    "tentative or ownerless"
+   ],
+   "expected_change_ops": [],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W03_actually_reassign",
+   "scenario": "Correction reassigns an approved task",
+   "prior_approved_tasks": [
+    {
+     "task_id": "TASK-503",
+     "title": "Load testing",
+     "owner": "Devika",
+     "status": "approved"
+    }
+   ],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "Devika was going to do the load testing."
+    },
+    {
+     "id": "s2",
+     "speaker": "Chair",
+     "start_seconds": 5,
+     "text": "Actually, Omar will handle the load testing instead."
+    },
+    {
+     "id": "s3",
+     "speaker": "Omar",
+     "start_seconds": 10,
+     "text": "Okay, I'll take it."
+    }
+   ],
+   "expected_final_active_commitments": [
+    {
+     "task_id": "TASK-503",
+     "title": "Load testing",
+     "owner": "Omar"
+    }
+   ],
+   "expected_flags": [],
+   "expected_change_ops": [
+    "UPDATE TASK-503 owner Devika -> Omar"
+   ],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W04_cancel_old_plan",
+   "scenario": "Ambiguous cancellation of a plan, not clearly the task",
+   "prior_approved_tasks": [
+    {
+     "task_id": "TASK-504",
+     "title": "Data migration dry run",
+     "owner": "Lina",
+     "status": "approved"
+    }
+   ],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "About the data migration, cancel the old plan."
+    },
+    {
+     "id": "s2",
+     "speaker": "Lina",
+     "start_seconds": 5,
+     "text": "Understood."
+    }
+   ],
+   "expected_final_active_commitments": [],
+   "expected_flags": [
+    "clarify whether the dry run task is cancelled"
+   ],
+   "expected_change_ops": [],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W05_done_and_merged",
+   "scenario": "Completion of an approved task",
+   "prior_approved_tasks": [
+    {
+     "task_id": "TASK-505",
+     "title": "Search API",
+     "owner": "Kiran",
+     "status": "approved"
+    }
+   ],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Kiran",
+     "start_seconds": 0,
+     "text": "The search API is done and merged."
+    }
+   ],
+   "expected_final_active_commitments": [],
+   "expected_flags": [],
+   "expected_change_ops": [
+    "COMPLETE TASK-505"
+   ],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W06_dependency_after",
+   "scenario": "Second task starts only after the first",
+   "prior_approved_tasks": [],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "Kiran, please build the export endpoint by Friday."
+    },
+    {
+     "id": "s2",
+     "speaker": "Kiran",
+     "start_seconds": 5,
+     "text": "Sure."
+    },
+    {
+     "id": "s3",
+     "speaker": "Chair",
+     "start_seconds": 9,
+     "text": "Rhea, testing can start after the export endpoint is complete; please test it next Monday."
+    },
+    {
+     "id": "s4",
+     "speaker": "Rhea",
+     "start_seconds": 17,
+     "text": "Will do."
+    }
+   ],
+   "expected_final_active_commitments": [
+    {
+     "title": "Build the export endpoint",
+     "owner": "Kiran",
+     "due_date": "2026-11-27"
+    },
+    {
+     "title": "Test the export endpoint",
+     "owner": "Rhea",
+     "due_date": "2026-11-30",
+     "blocked_by": "Build the export endpoint"
+    }
+   ],
+   "expected_flags": [],
+   "expected_change_ops": [],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W07_hindi_owner_deadline",
+   "scenario": "Hindi-English commitment with a relative deadline",
+   "prior_approved_tasks": [],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "Ankit, kal tak invoice reconciliation complete kar dena."
+    },
+    {
+     "id": "s2",
+     "speaker": "Ankit",
+     "start_seconds": 6,
+     "text": "Haan, kal tak kar dunga."
+    }
+   ],
+   "expected_final_active_commitments": [
+    {
+     "title": "Invoice reconciliation",
+     "owner": "Ankit",
+     "due_date": "2026-11-26"
+    }
+   ],
+   "expected_flags": [],
+   "expected_change_ops": [],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  },
+  {
+   "id": "W08_kannada_no_owner",
+   "scenario": "Kannada-English request with no owner",
+   "prior_approved_tasks": [],
+   "segments": [
+    {
+     "id": "s1",
+     "speaker": "Chair",
+     "start_seconds": 0,
+     "text": "Yaradru ondu dashboard draft maadi, Friday olage."
+    }
+   ],
+   "expected_final_active_commitments": [
+    {
+     "title": "Dashboard draft",
+     "owner": null,
+     "due_date": "2026-11-27"
+    }
+   ],
+   "expected_flags": [
+    "ask for an owner"
+   ],
+   "expected_change_ops": [],
+   "synthetic": true,
+   "meeting_date": "2026-11-25T11:00:00+05:30",
+   "meeting_timezone": "Asia/Kolkata"
+  }
+ ]
+}

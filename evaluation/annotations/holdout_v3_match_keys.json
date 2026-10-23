@@ -1,0 +1,96 @@
+{
+ "description": "Pre-registered match keys for holdout_v3.json (rubric v2), committed before any run on holdout v3.",
+ "cases": {
+  "W01_self_commit_tomorrow": {
+   "items": [
+    {
+     "groups": [
+      [
+       "vendor",
+       "contract"
+      ]
+     ]
+    }
+   ]
+  },
+  "W02_someone_should": {
+   "items": [],
+   "forbidden_active": [
+    [
+     "rate",
+     "limit"
+    ]
+   ]
+  },
+  "W03_actually_reassign": {
+   "items": [
+    {
+     "groups": [
+      [
+       "load"
+      ]
+     ]
+    }
+   ],
+   "must_update_existing": "TASK-503"
+  },
+  "W04_cancel_old_plan": {
+   "items": [],
+   "protected_existing": "TASK-504",
+   "requires_clarification": true
+  },
+  "W05_done_and_merged": {
+   "items": [],
+   "expected_ops": [
+    {
+     "task_id": "TASK-505",
+     "op": "complete"
+    }
+   ]
+  },
+  "W06_dependency_after": {
+   "items": [
+    {
+     "groups": [
+      [
+       "export"
+      ]
+     ],
+     "exclude": [
+      "test"
+     ]
+    },
+    {
+     "groups": [
+      [
+       "test"
+      ]
+     ]
+    }
+   ]
+  },
+  "W07_hindi_owner_deadline": {
+   "items": [
+    {
+     "groups": [
+      [
+       "invoice"
+      ]
+     ]
+    }
+   ]
+  },
+  "W08_kannada_no_owner": {
+   "items": [
+    {
+     "groups": [
+      [
+       "dashboard"
+      ]
+     ]
+    }
+   ],
+   "requires_clarification": true
+  }
+ }
+}
