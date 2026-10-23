@@ -2,57 +2,58 @@
 @import "@fontsource/instrument-sans/400.css";
 @import "@fontsource/instrument-sans/500.css";
 @import "@fontsource/instrument-sans/600.css";
-@import "@fontsource/instrument-sans/700.css";
 @import "@fontsource/source-serif-4/400.css";
-@import "@fontsource/source-serif-4/400-italic.css";
 
-/* Theme tokens. Dark is the default; [data-theme="light"] is the accessible alternative.
-   Class names (bg-panel, text-slate, border-rule …) stay stable across themes. */
+/* Theme tokens. Dark is the default; [data-theme="light"] is the alternative.
+   Neutral surfaces, one accent for the primary action, status colours used as text and
+   small dots rather than tinted blocks. Class names stay stable across themes. */
 :root {
   color-scheme: dark;
-  --bg: #0D1015;
-  --surface: #12161C;
-  --surface-2: #171C24;
-  --surface-3: #1D232D;
-  --line: #232A35;
-  --line-strong: #303946;
-  --text: #E6EAF0;
-  --muted: #9EA7B4;
-  --faint: #6C7584;
-  --accent: #44CDBD;
-  --accent-hover: #63DDCF;
-  --on-accent: #052522;
-  --accent-soft: rgb(68 205 189 / 0.12);
-  --violet: #B19CF9;   --violet-soft: rgb(177 156 249 / 0.13);
-  --sky: #78B4FF;      --sky-soft: rgb(120 180 255 / 0.13);
-  --rose: #F27A86;     --rose-soft: rgb(242 122 134 / 0.13);
-  --green: #6BCF90;    --green-soft: rgb(107 207 144 / 0.13);
-  --amber: #E8B75D;    --amber-soft: rgb(232 183 93 / 0.13);
-  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -16px rgb(0 0 0 / 0.6);
-  --ring: rgb(120 180 255 / 0.7);
+  --bg: #0F1114;
+  --surface: #14171B;
+  --surface-2: #191D22;
+  --surface-3: #20252B;
+  --line: #24292F;
+  --line-strong: #323840;
+  --text: #E8EAED;
+  --muted: #A2A9B2;
+  --faint: #737B85;
+  --accent: #5FBFB1;
+  --accent-hover: #79CFC3;
+  --on-accent: #06211E;
+  --accent-soft: rgb(95 191 177 / 0.12);
+  --violet: #B3A2F2;   --violet-soft: rgb(179 162 242 / 0.12);
+  --sky: #82B6F5;      --sky-soft: rgb(130 182 245 / 0.12);
+  --rose: #EE8590;     --rose-soft: rgb(238 133 144 / 0.12);
+  --green: #7CCB98;    --green-soft: rgb(124 203 152 / 0.12);
+  --amber: #E2B866;    --amber-soft: rgb(226 184 102 / 0.12);
+  --shadow: 0 16px 40px -20px rgb(0 0 0 / 0.7);
+  --ring: rgb(130 182 245 / 0.75);
+  --flash: rgb(226 184 102 / 0.24);
 }
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #F4F5F7;
+  --bg: #F7F8FA;
   --surface: #FFFFFF;
-  --surface-2: #FAFAFB;
-  --surface-3: #EEF0F3;
-  --line: #E2E5EA;
-  --line-strong: #CBD1D9;
-  --text: #141920;
-  --muted: #535C69;
-  --faint: #828A96;
-  --accent: #0F766E;
-  --accent-hover: #0C5F59;
+  --surface-2: #F3F4F6;
+  --surface-3: #E9EBEF;
+  --line: #E3E6EA;
+  --line-strong: #CCD1D8;
+  --text: #15191E;
+  --muted: #4F5864;
+  --faint: #7C8591;
+  --accent: #0E7368;
+  --accent-hover: #0B5D54;
   --on-accent: #FFFFFF;
-  --accent-soft: rgb(15 118 110 / 0.09);
-  --violet: #6A4BD6;   --violet-soft: rgb(106 75 214 / 0.09);
-  --sky: #1D62C8;      --sky-soft: rgb(29 98 200 / 0.09);
-  --rose: #C0283C;     --rose-soft: rgb(192 40 60 / 0.08);
-  --green: #1D7B45;    --green-soft: rgb(29 123 69 / 0.09);
-  --amber: #9A5B00;    --amber-soft: rgb(154 91 0 / 0.10);
-  --shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 8px 24px -14px rgb(16 24 40 / 0.18);
-  --ring: rgb(29 98 200 / 0.6);
+  --accent-soft: rgb(14 115 104 / 0.08);
+  --violet: #6247C9;   --violet-soft: rgb(98 71 201 / 0.08);
+  --sky: #1F5FBF;      --sky-soft: rgb(31 95 191 / 0.08);
+  --rose: #B8293C;     --rose-soft: rgb(184 41 60 / 0.07);
+  --green: #1C7443;    --green-soft: rgb(28 116 67 / 0.08);
+  --amber: #925800;    --amber-soft: rgb(146 88 0 / 0.09);
+  --shadow: 0 16px 40px -22px rgb(16 24 40 / 0.35);
+  --ring: rgb(31 95 191 / 0.6);
+  --flash: rgb(146 88 0 / 0.14);
 }
 
 @theme inline {
@@ -69,11 +70,8 @@
   --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
-  --color-create: var(--accent);
-  --color-create-soft: var(--accent-soft);
-  --color-update: var(--sky);
-  --color-update-soft: var(--sky-soft);
   --color-sky: var(--sky);
   --color-sky-soft: var(--sky-soft);
   --color-violet: var(--violet);
@@ -88,33 +86,29 @@
 
 html { background: var(--bg); color: var(--text); }
 body {
-  font-family: var(--font-sans); font-size: 14.5px; line-height: 1.5; letter-spacing: -0.003em;
-  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-feature-settings: "ss01", "cv11";
+  background: var(--bg);
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.5; letter-spacing: -0.002em;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
-::selection { background: rgb(68 205 189 / 0.28); }
-:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 6px; }
-.spoken { font-family: var(--font-serif); font-size: 15.5px; line-height: 1.6; letter-spacing: 0; }
+::selection { background: var(--accent-soft); }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
+/* Words somebody actually said are set in a serif, so evidence never reads like system text. */
+.spoken { font-family: var(--font-serif); font-size: 15px; line-height: 1.55; letter-spacing: 0; }
 .tnum { font-variant-numeric: tabular-nums; }
-.shadow-soft { box-shadow: var(--shadow); }
+.shadow-pop { box-shadow: var(--shadow); }
 input, select, textarea { color: inherit; }
 input[type="date"], input[type="datetime-local"] { color-scheme: inherit; }
-
-/* Thin, quiet scrollbars inside panels */
 .scroll-quiet { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 
-/* Real-operation indicators only (no decorative motion) */
+/* Motion only where it answers an action or shows real work. */
 @keyframes ps-spin { to { transform: rotate(360deg); } }
 @keyframes ps-shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
-@keyframes ps-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-@keyframes ps-drawer { from { transform: translateX(16px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes ps-flash { 0% { background: rgb(232 183 93 / 0.28); } 100% { background: transparent; } }
+@keyframes ps-flash { 0% { background: var(--flash); } 100% { background: transparent; } }
 .anim-spin { animation: ps-spin 0.8s linear infinite; }
-.anim-in { animation: ps-in 0.16s ease-out both; }
-.anim-drawer { animation: ps-drawer 0.18s ease-out both; }
 .seg-flash { animation: ps-flash 1.8s ease-out both; }
 .skeleton {
   background: linear-gradient(90deg, var(--surface-2) 0px, var(--surface-3) 120px, var(--surface-2) 240px);
-  background-size: 200px 100%; animation: ps-shimmer 1.3s linear infinite; border-radius: 6px;
+  background-size: 200px 100%; animation: ps-shimmer 1.3s linear infinite; border-radius: 4px;
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }

@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useId, useRef, useState, type ComponentProps, type KeyboardEvent, type ReactElement, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, CheckCircle2, Inbox as InboxIcon, Loader2, RotateCcw, X, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Loader2, MoreHorizontal, RotateCcw, TriangleAlert, X, XCircle } from 'lucide-react'
 import { ApiError, fmtTime } from '../lib/api'
 
 // ---- data loading --------------------------------------------------------------------
@@ -10,8 +10,11 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = [], pollMs?: 
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loads, setLoads] = useState(0) // completed loads, successful or not
   const fnRef = useRef(fn)
   fnRef.current = fn
+  const pollRef = useRef(pollMs)
+  pollRef.current = pollMs
   const reload = useCallback(async () => {
     try {
       const d = await fnRef.current()
@@ -20,77 +23,88 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = [], pollMs?: 
     } catch (e) {
       setError(e instanceof ApiError ? e.message : String(e))
       return null
-    } finally { setLoading(false) }
+    } finally { setLoading(false); setLoads(n => n + 1) }
   }, [])
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    let alive = true
-    const tick = async () => {
-      const d = await reload()
-      const ms = typeof pollMs === 'function' ? pollMs(d) : pollMs
-      if (alive && ms) timer = setTimeout(tick, ms)
-    }
     setLoading(true)
-    tick()
-    return () => { alive = false; if (timer) clearTimeout(timer) }
+    void reload()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
+  // Polling is re-armed after every load, including manual reloads and failed requests, so a
+  // page that starts work (e.g. "Re-run analysis") keeps refreshing until the work is done.
+  useEffect(() => {
+    const p = pollRef.current
+    const ms = typeof p === 'function' ? p(data) : p
+    if (!ms) return
+    const t = setTimeout(() => { void reload() }, ms)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loads])
   return { data, error, loading, reload, setData }
 }
 
 export const errText = (e: unknown) => (e instanceof ApiError ? e.message : String(e))
+export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
-// ---- layout primitives -----------------------------------------------------------------
+// ---- page structure ------------------------------------------------------------------------
 
-export function PageHeader({ title, children, sub, meta }: { title: ReactNode; sub?: ReactNode; meta?: ReactNode; children?: ReactNode }) {
+export interface Crumb { label: string; to: string }
+
+export function PageHeader({ title, sub, meta, actions, crumbs }: {
+  title: ReactNode; sub?: ReactNode; meta?: ReactNode; actions?: ReactNode; crumbs?: Crumb[]
+}) {
   return (
-    <header className="mb-6 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-      <div className="min-w-0 flex-1 basis-[22rem]">
-        <h1 className="text-[1.6rem] font-semibold leading-tight tracking-[-0.018em] text-ink">{title}</h1>
-        {sub && <div className="mt-1.5 max-w-[72ch] text-[14.5px] text-slate">{sub}</div>}
-        {meta && <div className="mt-3 flex flex-wrap items-center gap-2">{meta}</div>}
+    <header className="mb-6">
+      {crumbs && (
+        <nav aria-label="Breadcrumb" className="mb-1.5 flex min-w-0 items-center gap-1 text-[13px] text-faint">
+          {crumbs.map(c => (
+            <span key={c.to} className="flex shrink-0 items-center gap-1">
+              <Link to={c.to} className="hover:text-ink">{c.label}</Link><ChevronRight size={13} aria-hidden />
+            </span>
+          ))}
+          <span className="min-w-0 truncate" aria-current="page">{typeof title === 'string' ? title : ''}</span>
+        </nav>
+      )}
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0 flex-1 basis-[20rem]">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.012em] text-ink">{title}</h1>
+          {sub && <div className="mt-1 max-w-[70ch] text-[14px] text-slate">{sub}</div>}
+          {meta && <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-slate">{meta}</div>}
+        </div>
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
-      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </header>
   )
 }
 
-export function Panel({ title, children, actions, className = '', flush = false, icon }: {
-  title?: ReactNode; children: ReactNode; actions?: ReactNode; className?: string; flush?: boolean; icon?: ReactNode
+/** A titled group of content. No box: a heading, an optional count, actions on the right. */
+export function Section({ title, count, actions, children, className = '', id }: {
+  title: ReactNode; count?: number; actions?: ReactNode; children: ReactNode; className?: string; id?: string
 }) {
+  const auto = useId()
+  id = id ?? `s${auto.replace(/:/g, '')}`
   return (
-    <section className={`min-w-0 rounded-xl border border-rule bg-panel shadow-soft ${className}`}>
-      {title && (
-        <div className="flex items-center justify-between gap-3 border-b border-rule px-4 py-3">
-          <h2 className="flex items-center gap-2 text-[14px] font-semibold text-ink">{icon && <span className="text-faint">{icon}</span>}{title}</h2>
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
-        </div>
-      )}
-      <div className={flush ? '' : 'p-4'}>{children}</div>
+    <section className={`min-w-0 ${className}`} aria-labelledby={id}>
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <h2 id={id} className="text-[15px] font-semibold text-ink">{title}{count != null && <span className="ml-2 font-normal text-faint tnum">{count}</span>}</h2>
+        {actions && <div className="flex items-center gap-3 text-[13px]">{actions}</div>}
+      </div>
+      {children}
     </section>
   )
 }
 
-export function SectionTitle({ children, count, aside }: { children: ReactNode; count?: number; aside?: ReactNode }) {
-  return (
-    <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h2 className="text-[15.5px] font-semibold text-ink">{children}{count != null && <span className="ml-2 font-normal text-faint tnum">{count}</span>}</h2>
-      {aside}
-    </div>
-  )
-}
-
-// ---- states ------------------------------------------------------------------------------
+// ---- states ----------------------------------------------------------------------------------
 
 export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`skeleton ${className}`} aria-hidden />
 }
 
-export function Loading({ label = 'Loading', rows = 3 }: { label?: string; rows?: number }) {
+export function Loading({ label = 'Loading', rows = 4 }: { label?: string; rows?: number }) {
   return (
-    <div role="status" aria-label={label} className="space-y-3 py-2">
-      <Skeleton className="h-6 w-56" />
-      {Array.from({ length: rows }).map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+    <div role="status" aria-label={label} className="space-y-2 py-2">
+      <Skeleton className="mb-4 h-6 w-52" />
+      {Array.from({ length: rows }).map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
     </div>
   )
 }
@@ -98,157 +112,181 @@ export function Loading({ label = 'Loading', rows = 3 }: { label?: string; rows?
 export function ErrorBox({ error, onRetry }: { error: string | null; onRetry?: () => void }) {
   if (!error) return null
   return (
-    <div role="alert" className="anim-in mb-4 flex items-start justify-between gap-4 rounded-lg border border-cancel/35 bg-cancel-soft px-4 py-3 text-[14px] text-ink">
-      <span className="flex items-start gap-2.5"><XCircle size={17} className="mt-0.5 shrink-0 text-cancel" />{error}</span>
-      {onRetry && <Button size="sm" kind="ghost" icon={<RotateCcw size={14} />} onClick={onRetry}>Try again</Button>}
+    <div role="alert" className="mb-4 flex items-start justify-between gap-4 rounded-md border border-cancel/40 px-3.5 py-2.5 text-[14px] text-ink">
+      <span className="flex items-start gap-2"><XCircle size={16} className="mt-0.5 shrink-0 text-cancel" />{error}</span>
+      {onRetry && <Button size="sm" kind="ghost" icon={<RotateCcw size={13} />} onClick={onRetry}>Try again</Button>}
     </div>
   )
 }
 
-export function Empty({ children, icon, action }: { children: ReactNode; icon?: ReactNode; action?: ReactNode }) {
+export function Empty({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-rule-strong px-6 py-10 text-center text-[14px] text-slate">
-      <span className="text-faint">{icon ?? <InboxIcon size={22} />}</span>
-      <div className="max-w-[48ch]">{children}</div>
-      {action}
+    <div className="py-6 text-[14px] text-slate">
+      <p className="max-w-[60ch]">{children}</p>
+      {action && <div className="mt-3">{action}</div>}
     </div>
   )
 }
 
-export function Notice({ tone = 'ask', children, icon }: { tone?: Tone; children: ReactNode; icon?: ReactNode }) {
+export type Tone = 'accent' | 'sky' | 'violet' | 'ask' | 'cancel' | 'done' | 'neutral'
+const TEXT: Record<Tone, string> = {
+  accent: 'text-accent', sky: 'text-sky', violet: 'text-violet', ask: 'text-ask', cancel: 'text-cancel', done: 'text-done', neutral: 'text-slate',
+}
+const DOT: Record<Tone, string> = {
+  accent: 'bg-accent', sky: 'bg-sky', violet: 'bg-violet', ask: 'bg-ask', cancel: 'bg-cancel', done: 'bg-done', neutral: 'bg-faint',
+}
+const BAR: Record<Tone, string> = {
+  accent: 'border-l-accent', sky: 'border-l-sky', violet: 'border-l-violet', ask: 'border-l-ask', cancel: 'border-l-cancel', done: 'border-l-done', neutral: 'border-l-rule-strong',
+}
+
+/** One line of important information: a coloured left rule, a title, the details, actions. */
+export function Notice({ tone = 'ask', title, children, actions, role }: { tone?: Tone; title?: ReactNode; children?: ReactNode; actions?: ReactNode; role?: 'status' | 'alert' }) {
   return (
-    <div className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-2.5 text-[14px] ${noticeCls[tone]}`}>
-      <span className="mt-0.5 shrink-0">{icon ?? <AlertTriangle size={16} />}</span><div className="min-w-0 text-ink">{children}</div>
+    <div role={role} className={`rounded-md border border-rule border-l-[3px] ${BAR[tone]} bg-panel px-3.5 py-2.5 text-[14px]`}>
+      {title && <div className="font-medium text-ink">{title}</div>}
+      {children && <div className={`${title ? 'mt-0.5' : ''} text-slate`}>{children}</div>}
+      {actions && <div className="mt-2 flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   )
 }
 
-// ---- chips & status ------------------------------------------------------------------------
-
-export type Tone = 'create' | 'update' | 'ask' | 'cancel' | 'done' | 'violet' | 'neutral'
-const toneCls: Record<Tone, string> = {
-  create: 'bg-create-soft text-create', update: 'bg-sky-soft text-sky', ask: 'bg-ask-soft text-ask',
-  cancel: 'bg-cancel-soft text-cancel', done: 'bg-done-soft text-done', violet: 'bg-violet-soft text-violet',
-  neutral: 'bg-panel-3 text-slate',
-}
-const noticeCls: Record<Tone, string> = {
-  create: 'border-create/30 bg-create-soft text-create', update: 'border-sky/30 bg-sky-soft text-sky',
-  ask: 'border-ask/30 bg-ask-soft text-ask', cancel: 'border-cancel/30 bg-cancel-soft text-cancel',
-  done: 'border-done/30 bg-done-soft text-done', violet: 'border-violet/30 bg-violet-soft text-violet',
-  neutral: 'border-rule bg-panel-2 text-slate',
-}
-export function Chip({ tone = 'neutral', children, title, icon }: { tone?: Tone; children: ReactNode; title?: string; icon?: ReactNode }) {
+/** Inline status: a small dot and a label. */
+export function Status({ tone = 'neutral', children, busy }: { tone?: Tone; children: ReactNode; busy?: boolean }) {
   return (
-    <span title={title} className={`inline-flex items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[12.5px] font-medium leading-5 ${toneCls[tone]}`}>
-      {icon}{children}
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] ${TEXT[tone]}`}>
+      {busy ? <Loader2 size={12} className="anim-spin" aria-hidden /> : <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[tone]}`} />}
+      {children}
     </span>
   )
 }
 
-export function stateTone(state: string): Tone {
-  if (['proposed', 'READY_FOR_REVIEW', 'scheduled', 'prepared'].includes(state)) return 'create'
-  if (['APPLIED', 'done', 'delivered', 'sent', 'approved', 'completed', 'ready_for_review'].includes(state)) return 'done'
-  if (['needs_clarification', 'held', 'NEEDS_CLARIFICATION', 'queued', 'transcribing', 'interpreting', 'writing_minutes', 'draft'].includes(state)) return 'ask'
-  if (['cancelled', 'rejected', 'failed', 'FAILED', 'REJECTED', 'blocked'].includes(state)) return 'cancel'
-  if (['in_progress', 'update'].includes(state)) return 'update'
-  return 'neutral'
-}
-
-const STATE_LABEL: Record<string, string> = {
-  proposed: 'Ready to approve', needs_clarification: 'Needs an answer', held: 'On hold until answered',
-  tentative: 'Suggestion only', cancelled: 'Cancelled in meeting', rejected: 'Ruled out', excluded: 'Excluded by you',
-  no_change: 'No change', completed: 'Reported done',
-  NEEDS_CLARIFICATION: 'Questions open', READY_FOR_REVIEW: 'Ready for approval', APPLIED: 'Approved and applied',
-  REJECTED: 'Rejected', FAILED: 'Apply failed', APPROVED: 'Approved', DRAFT: 'Draft',
-  ready_for_review: 'Processed', failed: 'Failed', queued: 'Queued', transcribing: 'Transcribing',
-  interpreting: 'Interpreting', writing_minutes: 'Writing minutes', transcribed: 'Transcript stored',
-  uploaded: 'Uploaded', created: 'Waiting for upload',
-  todo: 'To do', in_progress: 'In progress', blocked: 'Blocked', done: 'Done',
-  draft: 'Draft', scheduled: 'Scheduled', delivered: 'Delivered', prepared: 'Prepared', approved: 'Approved', sent: 'Sent',
-}
-export const stateLabel = (s: string) => STATE_LABEL[s] ?? s.replace(/_/g, ' ')
-
-const BUSY = ['queued', 'transcribing', 'interpreting', 'writing_minutes']
-export function StateChip({ state }: { state: string }) {
-  return <Chip tone={stateTone(state)} icon={BUSY.includes(state) ? <Loader2 size={12} className="anim-spin" /> : undefined}>{stateLabel(state)}</Chip>
-}
-
-export function Avatar({ name, size = 22 }: { name: string | null | undefined; size?: number }) {
-  if (!name) return <span aria-hidden className="inline-flex shrink-0 items-center justify-center rounded-full border border-dashed border-rule-strong text-faint" style={{ width: size, height: size, fontSize: size * 0.45 }}>?</span>
-  const initials = name.split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase()
-  const hue = [...name].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7)
-  return (
-    <span aria-hidden className="inline-flex shrink-0 items-center justify-center rounded-full font-semibold"
-      style={{ width: size, height: size, fontSize: size * 0.42, background: `hsl(${hue} 45% 45% / 0.22)`, color: `hsl(${hue} 62% 62%)` }}>
-      {initials}
-    </span>
-  )
-}
-
-export function Spinner({ size = 15 }: { size?: number }) {
+export function Spinner({ size = 14 }: { size?: number }) {
   return <Loader2 size={size} className="anim-spin" aria-hidden />
 }
 
 // ---- controls ----------------------------------------------------------------------------------
 
-type BtnKind = 'primary' | 'secondary' | 'danger' | 'quiet' | 'ghost'
+type BtnKind = 'primary' | 'secondary' | 'danger' | 'ghost' | 'link'
 export function Button({ kind = 'secondary', size = 'md', icon, loading, className = '', children, disabled, ...props }:
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { kind?: BtnKind; size?: 'sm' | 'md'; icon?: ReactNode; loading?: boolean }) {
+  ComponentProps<'button'> & { kind?: BtnKind; size?: 'sm' | 'md'; icon?: ReactNode; loading?: boolean }) {
   const k = {
     primary: 'bg-accent text-on-accent hover:bg-accent-hover disabled:bg-panel-3 disabled:text-faint',
-    secondary: 'border border-rule-strong bg-panel-2 text-ink hover:bg-panel-3 disabled:text-faint disabled:hover:bg-panel-2',
-    danger: 'border border-cancel/35 bg-transparent text-cancel hover:bg-cancel-soft disabled:opacity-50',
-    ghost: 'text-slate hover:bg-panel-3 hover:text-ink disabled:text-faint',
-    quiet: 'text-sky hover:underline underline-offset-2 disabled:text-faint',
+    secondary: 'border border-rule-strong bg-panel text-ink hover:bg-panel-2 disabled:text-faint disabled:hover:bg-panel',
+    danger: 'border border-cancel/40 text-cancel hover:bg-cancel-soft disabled:opacity-50',
+    ghost: 'text-slate hover:bg-panel-2 hover:text-ink disabled:text-faint disabled:hover:bg-transparent',
+    link: 'text-sky underline-offset-2 hover:underline disabled:text-faint disabled:no-underline',
   }[kind]
-  const s = kind === 'quiet' ? 'h-auto px-0' : size === 'sm' ? 'h-7 px-2.5 text-[13px]' : 'h-8 px-3 text-[13.5px]'
+  const s = kind === 'link' ? 'h-auto px-0' : size === 'sm' ? 'h-7 px-2.5 text-[13px]' : 'h-8 px-3 text-[13.5px]'
   return (
-    <button {...props} disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors duration-150 disabled:cursor-not-allowed ${s} ${k} ${className}`}>
-      {loading ? <Spinner size={14} /> : icon}{children}
+    <button type="button" {...props} disabled={disabled || loading}
+      className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors duration-100 disabled:cursor-not-allowed ${s} ${k} ${className}`}>
+      {loading ? <Spinner size={13} /> : icon}{children}
     </button>
   )
 }
 
-export function Field({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
+export function Field({ label, hint, children, htmlFor }: { label: string; hint?: ReactNode; children: ReactNode; htmlFor?: string }) {
+  const auto = useId()
+  const id = htmlFor ?? auto
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[13px] font-medium text-ink">{label}</span>
-      {children}
-      {hint && <span className="mt-1.5 block text-[12.5px] text-faint">{hint}</span>}
-    </label>
+    <div>
+      <label htmlFor={id} className="mb-1 block text-[13px] font-medium text-ink">{label}</label>
+      {/* The single child control receives the id so the label names exactly that control. */}
+      {withId(children, id)}
+      {hint && <p className="mt-1 text-[12.5px] text-faint">{hint}</p>}
+    </div>
   )
 }
-export const inputCls = 'h-9 w-full rounded-md border border-rule-strong bg-panel-2 px-2.5 text-[14px] text-ink placeholder:text-faint transition-colors focus:border-sky focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-sky/25'
+function withId(node: ReactNode, id: string): ReactNode {
+  if (!isValidElement(node)) return node
+  const el = node as ReactElement<{ id?: string }>
+  return el.props.id ? el : cloneElement(el, { id })
+}
+export const inputCls = 'h-8 w-full rounded-md border border-rule-strong bg-panel px-2.5 text-[14px] text-ink placeholder:text-faint focus:border-sky focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-sky/25'
+
+/** Popover menu for secondary actions. Closes on Esc, outside click and selection. */
+export function Menu({ label, items, align = 'right', icon }: {
+  label: string; align?: 'left' | 'right'; icon?: ReactNode
+  items: ({ label: string; onSelect: () => void; danger?: boolean; disabled?: boolean } | null)[]
+}) {
+  const [open, setOpen] = useState(false)
+  const box = useRef<HTMLDivElement>(null)
+  const btn = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const down = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false) }
+    const key = (e: globalThis.KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); btn.current?.focus() } }
+    document.addEventListener('mousedown', down); document.addEventListener('keydown', key)
+    box.current?.querySelector<HTMLElement>('[role="menuitem"]:not([disabled])')?.focus()
+    return () => { document.removeEventListener('mousedown', down); document.removeEventListener('keydown', key) }
+  }, [open])
+  const nav = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowDown', 'ArrowUp'].includes(e.key)) return
+    e.preventDefault()
+    const all = [...(box.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])') ?? [])]
+    const i = all.indexOf(document.activeElement as HTMLElement)
+    all[(i + (e.key === 'ArrowDown' ? 1 : -1) + all.length) % all.length]?.focus()
+  }
+  return (
+    <div ref={box} className="relative" onKeyDown={nav}>
+      <Button ref={btn} kind="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} icon={icon ?? <MoreHorizontal size={15} />}>{label}</Button>
+      {open && (
+        <div role="menu" aria-label={label} className={`shadow-pop absolute z-40 mt-1 min-w-[12rem] rounded-md border border-rule-strong bg-panel py-1 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+          {items.filter(Boolean).map(it => (
+            <button key={it!.label} type="button" role="menuitem" disabled={it!.disabled}
+              className={`block w-full px-3 py-1.5 text-left text-[13.5px] hover:bg-panel-2 focus:bg-panel-2 focus:outline-none disabled:text-faint ${it!.danger ? 'text-cancel' : 'text-ink'}`}
+              onClick={() => { setOpen(false); it!.onSelect() }}>{it!.label}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Tabs with arrow-key navigation. */
+export function Tabs<K extends string>({ tabs, value, onChange, label }: { tabs: { key: K; label: ReactNode }[]; value: K; onChange: (k: K) => void; label: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const key = (e: KeyboardEvent) => {
+    if (!['ArrowRight', 'ArrowLeft'].includes(e.key)) return
+    const i = tabs.findIndex(t => t.key === value)
+    const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length]
+    onChange(next.key)
+    requestAnimationFrame(() => ref.current?.querySelector<HTMLElement>(`[data-tab="${next.key}"]`)?.focus())
+  }
+  return (
+    <div ref={ref} role="tablist" aria-label={label} onKeyDown={key} className="mb-4 flex flex-wrap gap-x-1 border-b border-rule">
+      {tabs.map(t => (
+        <button key={t.key} type="button" role="tab" data-tab={t.key} aria-selected={t.key === value} tabIndex={t.key === value ? 0 : -1}
+          onClick={() => onChange(t.key)}
+          className={`-mb-px whitespace-nowrap border-b-2 px-2.5 pb-2 pt-1 text-[13.5px] font-medium transition-colors ${t.key === value ? 'border-accent text-ink' : 'border-transparent text-slate hover:text-ink'}`}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 // ---- evidence -------------------------------------------------------------------------------------
 
 export interface SegLike { speaker_label: string; start_seconds: number; end_seconds?: number | null; text: string }
 
-export function SegmentChip({ segKey, seg, name, onClick, to }: { segKey: string; seg?: SegLike; name?: string | null; onClick?: () => void; to?: string }) {
-  const who = name || seg?.speaker_label
-  const body = <><span className="text-faint">{segKey}</span>{seg && <><span className="text-ink">{who}</span><span className="tnum text-faint">{fmtTime(seg.start_seconds)}</span></>}</>
-  const cls = 'inline-flex items-center gap-1.5 rounded-md border border-rule bg-panel-2 px-1.5 py-0.5 text-[12px] leading-5 transition-colors hover:border-sky/50 hover:bg-sky-soft'
-  if (!seg) return <span className={`${cls} text-cancel`}>{segKey} missing</span>
-  if (onClick) return <button type="button" className={cls} onClick={onClick} aria-label={`Show segment ${segKey} in transcript`}>{body}</button>
+/** A reference to one transcript segment: speaker, time and key. Clicking shows it in the transcript. */
+export function SegRef({ segKey, seg, name, onClick, to }: { segKey: string; seg?: SegLike; name?: string | null; onClick?: () => void; to?: string }) {
+  if (!seg) return <span className="text-[12.5px] text-cancel">{segKey} missing</span>
+  const who = name || seg.speaker_label
+  const body = <>{who} <span className="tnum">{fmtTime(seg.start_seconds)}</span> <span className="text-faint">({segKey})</span></>
+  const cls = 'whitespace-nowrap text-[12.5px] text-sky hover:underline underline-offset-2'
+  if (onClick) return <button type="button" className={cls} onClick={onClick} aria-label={`Show ${segKey} in transcript`}>{body}</button>
   if (to) return <Link className={cls} to={to}>{body}</Link>
-  return <span className={cls}>{body}</span>
+  return <span className="whitespace-nowrap text-[12.5px] text-slate">{body}</span>
 }
 
-export function Quote({ segKey, seg, speakerName, meetingId, onFocus, compact }: {
-  segKey: string; seg?: SegLike; speakerName?: string | null; meetingId?: number; onFocus?: (k: string) => void; compact?: boolean
-}) {
-  if (!seg) return <div className="text-[13px] text-cancel">Evidence {segKey} not found in this meeting</div>
-  const who = speakerName && speakerName !== seg.speaker_label ? `${speakerName} (${seg.speaker_label})` : seg.speaker_label
+export function Quote({ segKey, seg, name, onShow, to }: { segKey: string; seg?: SegLike; name?: string | null; onShow?: (k: string) => void; to?: string }) {
+  if (!seg) return <p className="text-[13px] text-cancel">Segment {segKey} is not in this meeting.</p>
   return (
     <figure className="border-l-2 border-rule-strong pl-3">
-      <blockquote className={`spoken text-ink ${compact ? 'line-clamp-2' : ''}`}>“{seg.text}”</blockquote>
-      <figcaption className="mt-1 flex flex-wrap items-center gap-2 text-[12.5px] text-faint">
-        {onFocus ? <button type="button" className="hover:text-sky" onClick={() => onFocus(segKey)}>{who}, <span className="tnum">{fmtTime(seg.start_seconds)}</span></button>
-          : meetingId ? <Link className="hover:text-sky" to={`/meetings/${meetingId}#${segKey}`}>{who}, <span className="tnum">{fmtTime(seg.start_seconds)}</span></Link>
-          : <span>{who}, <span className="tnum">{fmtTime(seg.start_seconds)}</span></span>}
-        <span>segment {segKey}</span>
-      </figcaption>
+      <blockquote className="spoken text-ink">“{seg.text}”</blockquote>
+      <figcaption className="mt-0.5"><SegRef segKey={segKey} seg={seg} name={name} onClick={onShow ? () => onShow(segKey) : undefined} to={to} /></figcaption>
     </figure>
   )
 }
@@ -262,11 +300,20 @@ function useOverlay(open: boolean, onClose: () => void) {
   useEffect(() => {
     if (!open) return
     const prev = document.activeElement as HTMLElement | null
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current() }
+    const h = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); closeRef.current() }
+      if (e.key === 'Tab' && ref.current) { // keep focus inside the overlay
+        const f = [...ref.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        if (!f.length) return
+        const first = f[0], last = f[f.length - 1]
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
     document.addEventListener('keydown', h)
     const t = setTimeout(() => {
-      const first = ref.current?.querySelector<HTMLElement>('[data-autofocus]') ?? ref.current?.querySelector<HTMLElement>('input, textarea, select')
-      ;(first ?? ref.current)?.focus()
+      const first = ref.current?.querySelector<HTMLElement>('[data-autofocus]') ?? ref.current
+      first?.focus()
     }, 10)
     return () => { document.removeEventListener('keydown', h); clearTimeout(t); prev?.focus?.() }
   }, [open])
@@ -274,38 +321,39 @@ function useOverlay(open: boolean, onClose: () => void) {
 }
 
 export function Dialog({ open, onClose, title, children, footer, width = 460 }: {
-  open: boolean; onClose: () => void; title: ReactNode; children: ReactNode; footer?: ReactNode; width?: number
+  open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode; width?: number
 }) {
   const ref = useOverlay(open, onClose)
   if (!open) return null
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/55 p-4 pt-[12vh]" onMouseDown={onClose}>
-      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined}
-        className="anim-in w-full rounded-xl border border-rule-strong bg-panel shadow-soft outline-none" style={{ maxWidth: width }} onMouseDown={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between gap-3 border-b border-rule px-4 py-3">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[12vh]" onMouseDown={onClose}>
+      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
+        className="shadow-pop w-full rounded-lg border border-rule-strong bg-panel outline-none" style={{ maxWidth: width }} onMouseDown={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3.5">
           <h2 className="text-[15px] font-semibold">{title}</h2>
-          <Button kind="ghost" size="sm" aria-label="Close" onClick={onClose}><X size={16} /></Button>
+          <Button kind="ghost" size="sm" aria-label="Close" onClick={onClose}><X size={15} /></Button>
         </div>
-        <div className="px-4 py-4 text-[14px]">{children}</div>
-        {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-rule px-4 py-3">{footer}</div>}
+        <div className="px-4 py-2 text-[14px]">{children}</div>
+        {footer && <div className="flex flex-wrap justify-end gap-2 px-4 pb-4 pt-2">{footer}</div>}
       </div>
     </div>, document.body)
 }
 
-export function Drawer({ open, onClose, title, sub, children, width = 560 }: {
-  open: boolean; onClose: () => void; title: ReactNode; sub?: ReactNode; children: ReactNode; width?: number
+export function Drawer({ open, onClose, title, sub, children, width = 560, footer }: {
+  open: boolean; onClose: () => void; title: string; sub?: ReactNode; children: ReactNode; width?: number; footer?: ReactNode
 }) {
   const ref = useOverlay(open, onClose)
   if (!open) return null
   return createPortal(
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/45" onMouseDown={onClose}>
-      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : 'Details'}
-        className="anim-drawer flex h-full w-full flex-col border-l border-rule-strong bg-panel outline-none" style={{ maxWidth: width }} onMouseDown={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-3 border-b border-rule px-5 py-4">
-          <div className="min-w-0">{sub && <div className="mb-0.5 text-[12.5px] text-faint">{sub}</div>}<h2 className="text-[18px] font-semibold leading-snug">{title}</h2></div>
-          <Button kind="ghost" size="sm" aria-label="Close" onClick={onClose}><X size={17} /></Button>
+    <div className="fixed inset-0 z-40 flex justify-end bg-black/40" onMouseDown={onClose}>
+      <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title}
+        className="flex h-full w-full flex-col border-l border-rule-strong bg-panel outline-none" style={{ maxWidth: width }} onMouseDown={e => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3 border-b border-rule px-5 py-3.5">
+          <div className="min-w-0">{sub && <div className="text-[12.5px] text-faint">{sub}</div>}<h2 className="text-[17px] font-semibold leading-snug">{title}</h2></div>
+          <Button kind="ghost" size="sm" aria-label="Close" onClick={onClose}><X size={16} /></Button>
         </div>
-        <div className="scroll-quiet flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        <div className="scroll-quiet flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        {footer && <div className="border-t border-rule px-5 py-3">{footer}</div>}
       </div>
     </div>, document.body)
 }
@@ -321,17 +369,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback((tone: Toast['tone'], text: ReactNode) => {
     const id = Date.now() + Math.random()
     setToasts(t => [...t, { id, tone, text }])
-    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), tone === 'error' ? 8000 : 5000)
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), tone === 'error' ? 9000 : 5000)
   }, [])
   return (
     <ToastCtx.Provider value={push}>
       {children}
       <div aria-live="polite" className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-[min(380px,calc(100vw-2rem))] flex-col gap-2">
         {toasts.map(t => (
-          <div key={t.id} role="status" className="anim-in pointer-events-auto flex items-start gap-2.5 rounded-lg border border-rule-strong bg-panel-2 px-3.5 py-3 text-[14px] shadow-soft">
-            {t.tone === 'ok' ? <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-done" /> : t.tone === 'error' ? <XCircle size={17} className="mt-0.5 shrink-0 text-cancel" /> : <AlertTriangle size={17} className="mt-0.5 shrink-0 text-ask" />}
+          <div key={t.id} role="status" className="shadow-pop pointer-events-auto flex items-start gap-2.5 rounded-md border border-rule-strong bg-panel px-3.5 py-2.5 text-[14px]">
+            {t.tone === 'ok' ? <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-done" /> : t.tone === 'error' ? <XCircle size={16} className="mt-0.5 shrink-0 text-cancel" /> : <TriangleAlert size={16} className="mt-0.5 shrink-0 text-ask" />}
             <div className="min-w-0 flex-1">{t.text}</div>
-            <button className="text-faint hover:text-ink" aria-label="Dismiss" onClick={() => setToasts(x => x.filter(y => y.id !== t.id))}><X size={15} /></button>
+            <button className="text-faint hover:text-ink" aria-label="Dismiss" onClick={() => setToasts(x => x.filter(y => y.id !== t.id))}><X size={14} /></button>
           </div>
         ))}
       </div>

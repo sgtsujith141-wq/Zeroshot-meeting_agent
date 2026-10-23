@@ -57,7 +57,8 @@ export interface ChangeSet {
     uncovered_segment_ids?: string[]
   }
   ledger_snapshot: { code: string; revision: number }[]
-  proposal_hash: string; applied_result: { created?: Record<string, string>; updated?: string[]; cancelled?: string[]; completed?: string[] }
+  organizer_edits?: { answers?: Record<string, { choice: string; value: string | null } | null>; items?: Record<string, Record<string, unknown>> } | null
+  proposal_hash: string; applied_result: { created?: Record<string, string>; updated?: string[]; cancelled?: string[]; completed?: string[]; skipped?: unknown[] }
   error: string | null; updated_at: string
   segments: Record<string, { speaker_label: string; start_seconds: number; end_seconds: number | null; text: string }>
 }

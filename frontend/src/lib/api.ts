@@ -26,7 +26,7 @@ async function request<T>(method: string, path: string, body?: unknown, raw = fa
   try {
     res = await fetch(path, { method, headers, body: payload })
   } catch {
-    throw new ApiError(0, 'Cannot reach the server. Check that the backend is running on port 8000.')
+    throw new ApiError(0, 'Cannot reach the server. Check that the backend is running, then try again.')
   }
   if (res.status === 401) window.dispatchEvent(new Event('ps53:unauthorized'))
   if (!res.ok) {

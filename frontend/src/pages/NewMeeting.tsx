@@ -1,9 +1,9 @@
 import { useState, type DragEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ClipboardCheck, FileAudio, FileText, ShieldCheck, Sparkles, UploadCloud, X } from 'lucide-react'
+import { UploadCloud, X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { MeetingSummary } from '../types'
-import { Button, ErrorBox, Field, PageHeader, Panel, errText, inputCls, useLoad } from '../components/ui'
+import { Button, ErrorBox, Field, PageHeader, Section, errText, inputCls, useLoad } from '../components/ui'
 
 const TIMEZONES = ['Asia/Kolkata', 'UTC', 'Europe/London', 'America/New_York', 'Asia/Singapore']
 const ACCEPT = '.wav,.mp3,.m4a,.aac,.ogg,.flac,.opus,.mp4,.mov,.mkv,.webm,.json,.txt,.vtt,.srt'
@@ -35,17 +35,25 @@ export default function NewMeeting() {
     e.preventDefault()
     if (!file) return
     setBusy(true); setError(null)
+    let created: MeetingSummary | null = null
     try {
-      const m = await api.post<MeetingSummary>('/api/meetings', {
+      created = await api.post<MeetingSummary>('/api/meetings', {
         title, scheduled_at: when, timezone: tz, consent_confirmed: consent,
         consent_statement: 'Organiser confirmed in the web form that every participant consented to recording and processing, including by third-party AI providers.',
       })
       const form = new FormData()
       form.append('file', file)
       form.append('auto_process', 'true')
-      await api.upload(`/api/meetings/${m.id}/upload`, form)
-      nav(`/meetings/${m.id}`)
-    } catch (err) { setError(errText(err)) } finally { setBusy(false) }
+      await api.upload(`/api/meetings/${created.id}/upload`, form)
+      nav(`/meetings/${created.id}`)
+    } catch (err) {
+      // A refused upload must not leave an empty meeting behind.
+      let cleanup = ''
+      if (created) {
+        try { await api.del(`/api/meetings/${created.id}`) } catch { cleanup = ` The empty meeting “${title}” could not be removed; delete it from Meetings.` }
+      }
+      setError(`${errText(err).replace(/\.$/, '')}. ${cleanup ? cleanup.trim() : 'Nothing was saved; check the file and try again.'}`)
+    } finally { setBusy(false) }
   }
   function drop(e: DragEvent) {
     e.preventDefault(); setOver(false)
@@ -55,13 +63,14 @@ export default function NewMeeting() {
 
   return (
     <>
-      <PageHeader title="Add a meeting" sub="Upload a recording (audio or video) or an existing transcript. Nothing becomes a task until you approve it." />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <form onSubmit={submit} className="min-w-0 space-y-5">
+      <PageHeader title="New meeting" crumbs={[{ label: 'Meetings', to: '/meetings' }]}
+        sub="Upload a recording (audio or video) or an existing transcript. Nothing becomes a task until you approve it." />
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <form onSubmit={submit} className="min-w-0 max-w-[640px] space-y-5">
           <ErrorBox error={error} />
           <Field label="Meeting title"><input className={inputCls} required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Sprint review, week 43" /></Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Date and time" hint="Relative deadlines like “by Friday” are resolved from this date.">
+            <Field label="Date and time" hint="Relative deadlines like “by Friday” are worked out from this date.">
               <input type="datetime-local" className={inputCls} required value={when} onChange={e => setWhen(e.target.value)} />
             </Field>
             <Field label="Meeting time zone">
@@ -70,59 +79,55 @@ export default function NewMeeting() {
           </div>
 
           <div>
-            <label htmlFor="meeting-file" className="mb-1.5 block text-[13px] font-medium text-ink">Recording or transcript</label>
-            <input id="meeting-file" type="file" required accept={ACCEPT} className="peer sr-only" onChange={e => setFile(e.target.files?.[0] ?? null)} />
-            <label htmlFor="meeting-file" onDragOver={e => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={drop}
-              className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-7 text-center transition-colors peer-focus-visible:border-sky ${over ? 'border-sky bg-sky-soft' : 'border-rule-strong bg-panel hover:bg-panel-2'}`}>
+            <span className="mb-1 block text-[13px] font-medium text-ink" id="file-label">Recording or transcript</span>
+            <input id="meeting-file" type="file" required accept={ACCEPT} aria-labelledby="file-label" className="peer sr-only" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+            <div onDragOver={e => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={drop} data-testid="drop-zone"
+              className={`rounded-md border border-dashed px-4 py-5 text-[14px] peer-focus-visible:border-sky ${over ? 'border-sky bg-sky-soft' : 'border-rule-strong'}`}>
               {file ? (
-                <span className="flex items-center gap-2.5 text-[14px]">
-                  {isTranscript ? <FileText size={20} className="text-sky" /> : <FileAudio size={20} className="text-create" />}
-                  <span className="font-medium text-ink">{file.name}</span><span className="text-faint">{fmtSize(file.size)}</span>
-                  <button type="button" aria-label="Remove file" className="text-faint hover:text-cancel" onClick={e => { e.preventDefault(); setFile(null) }}><X size={16} /></button>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate"><span className="font-medium text-ink">{file.name}</span> <span className="text-faint">{fmtSize(file.size)}, {isTranscript ? 'transcript' : 'recording'}</span></span>
+                  <Button kind="ghost" size="sm" aria-label="Remove file" icon={<X size={14} />} onClick={() => setFile(null)} />
+                </div>
               ) : (
-                <>
-                  <UploadCloud size={24} className="text-faint" />
-                  <span className="text-[14px] text-ink"><span className="font-medium text-sky">Choose a file</span> or drop it here</span>
-                </>
+                <div className="flex flex-wrap items-center gap-2 text-slate">
+                  <UploadCloud size={18} className="text-faint" aria-hidden />
+                  <label htmlFor="meeting-file" className="cursor-pointer font-medium text-sky hover:underline">Choose a file</label> or drop it here.
+                </div>
               )}
-              <span className="text-[12.5px] text-faint">Audio: wav, mp3, m4a, aac, ogg, flac, opus. Video: mp4, mov, mkv, webm. Transcript: json, txt (“Speaker: text” lines), vtt, srt.</span>
-            </label>
+              <p className="mt-2 text-[12.5px] text-faint">Audio: wav, mp3, m4a, aac, ogg, flac, opus. Video: mp4, mov, mkv, webm. Transcript: json, txt (“Speaker: text” lines), vtt, srt.</p>
+            </div>
           </div>
 
-          <fieldset className="rounded-xl border border-rule bg-panel px-4 py-4 shadow-soft">
-            <legend className="flex items-center gap-1.5 px-1 text-[13.5px] font-semibold text-ask"><ShieldCheck size={15} />Consent</legend>
-            <p className="text-[14px] text-ink">Recording or transcribing people without their agreement is not allowed. Processing sends data to these services:</p>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-[14px] text-slate">
-              <li>Audio and video go to <strong className="text-ink">Sarvam AI</strong> for transcription and speaker separation when a Sarvam key is configured; otherwise they are transcribed by a <strong className="text-ink">local Whisper</strong> model on this machine, which does not separate speakers.</li>
-              <li>Transcript text goes to the configured language model: <strong className="text-ink">Google Gemini</strong> (a third party) or a <strong className="text-ink">local Ollama</strong> model on this machine. The Diagnostics page shows which one is active.</li>
+          <div className="space-y-2 border-t border-rule pt-4">
+            <h2 className="text-[14px] font-semibold">Consent</h2>
+            <p className="text-ink">Recording or transcribing people without their agreement is not allowed. Processing sends data to these services:</p>
+            <ul className="list-disc space-y-1 pl-5 text-slate">
+              <li>Audio and video go to <strong className="font-medium text-ink">Sarvam AI</strong> for transcription and speaker separation when a Sarvam key is configured; otherwise a <strong className="font-medium text-ink">local Whisper</strong> model on this machine transcribes them, without separating speakers.</li>
+              <li>Transcript text goes to the configured language model: <strong className="font-medium text-ink">Google Gemini</strong> (a third party) or a <strong className="font-medium text-ink">local Ollama</strong> model on this machine.</li>
               <li>Files and results are stored in this server’s local database and upload folder.</li>
             </ul>
-            <label className="mt-3 flex items-start gap-2.5 rounded-lg bg-panel-2 px-3 py-2.5 text-[14px] font-medium text-ink">
+            <label className="flex items-start gap-2.5 pt-1 font-medium text-ink">
               <input type="checkbox" className="mt-1 accent-[var(--accent)]" checked={consent} onChange={e => setConsent(e.target.checked)} required />
               I confirm that every participant agreed to this recording and to the processing described above.
             </label>
-          </fieldset>
+          </div>
 
-          <Button kind="primary" type="submit" loading={busy} disabled={!consent || !file || !title.trim()} icon={<UploadCloud size={15} />}>{busy ? 'Uploading…' : 'Upload and process'}</Button>
+          <Button kind="primary" type="submit" loading={busy} disabled={!consent || !file || !title.trim()}>{busy ? 'Uploading…' : 'Upload and process'}</Button>
         </form>
 
-        <aside className="space-y-4">
-          <Panel title="What happens next" icon={<Sparkles size={15} />}>
+        <aside>
+          <Section title="What happens next">
             <ol className="space-y-3 text-[13.5px]">
               {[
-                ['Speech to text', isTranscript ? 'Skipped for transcript files.' : stt === 'sarvam' ? 'Sarvam saaras:v4, code-mixed, with speaker separation.' : stt === 'whisper' ? 'Local Whisper on this machine. No speaker separation.' : 'No speech service available: upload a transcript instead.'],
-                ['Interpretation', llm ? `${llm} describes what was said as ordered events.` : 'No language model available right now.'],
+                ['Speech to text', isTranscript ? 'Skipped for transcript files.' : stt === 'sarvam' ? 'Sarvam saaras:v4, with speaker separation.' : stt === 'whisper' ? 'Local Whisper on this machine. Speakers are not separated.' : 'No speech service is available: upload a transcript instead.'],
+                ['Interpretation', llm ? `${llm} describes what was said as ordered events.` : 'No language model is available right now.'],
                 ['Rules and questions', 'The server works out proposed task changes and asks about anything unclear.'],
-                ['Your review', 'Nothing reaches the task board until you approve it.'],
+                ['Your approval', 'Nothing reaches the task board until you approve it.'],
               ].map(([t, d], i) => (
-                <li key={t} className="flex gap-3">
-                  <span className="tnum flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-panel-3 text-[11.5px] font-semibold text-slate">{i + 1}</span>
-                  <span><span className="font-medium text-ink">{t}</span><span className="block text-slate">{d}</span></span>
-                </li>))}
+                <li key={t} className="flex gap-3"><span className="tnum w-4 shrink-0 text-faint">{i + 1}</span><span><span className="font-medium text-ink">{t}</span><span className="block text-slate">{d}</span></span></li>))}
             </ol>
-          </Panel>
-          <p className="flex items-start gap-2 px-1 text-[12.5px] text-faint"><ClipboardCheck size={14} className="mt-0.5 shrink-0" />A local model can take a few minutes per meeting. The meeting page shows progress and refreshes by itself.</p>
+            <p className="mt-4 text-[12.5px] text-faint">A local model takes a few minutes per meeting. The meeting page shows progress and refreshes by itself.</p>
+          </Section>
         </aside>
       </div>
     </>
