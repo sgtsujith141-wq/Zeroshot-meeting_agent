@@ -23,7 +23,7 @@ test.describe('screens', () => {
   test(`every route at ${W}px`, async ({ page }) => {
     test.setTimeout(240_000)
     await page.setViewportSize({ width: W, height: W < 600 ? 844 : 900 })
-    if (THEME) await page.addInitScript(t => localStorage.setItem('ps53.theme', t), THEME)
+    if (THEME) await page.addInitScript(t => localStorage.setItem('ps53.theme.choice', t), THEME)
     const tag = THEME ? `${W}-${THEME}` : `${W}`
     await page.goto(sb.url + '/')
     await page.screenshot({ path: `${SHOTS}/${tag}-signin.png`, animations: 'disabled' })

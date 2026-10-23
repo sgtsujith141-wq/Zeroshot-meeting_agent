@@ -11,7 +11,7 @@ async function signIn(page: Page) {
   await page.goto('/')
   await page.getByLabel('Organiser token').fill(TOKEN)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Overview', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Your workspace', exact: true })).toBeVisible()
 }
 const shot = async (page: Page, name: string) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }) }
 const main = (page: Page) => page.getByRole('main')
@@ -100,13 +100,13 @@ test('audio: upload a recording through the UI and get a transcript', async ({ p
   await main(page).getByLabel('Meeting title').fill(process.env.AUDIO_TITLE ?? 'Audio upload check (synthetic TTS)')
   await main(page).getByLabel('Recording or transcript').setInputFiles(process.env.AUDIO_FILE!)
   await main(page).getByLabel(/I confirm that every participant agreed/).check()
-  await main(page).getByRole('button', { name: 'Upload and process' }).click()
+  await main(page).getByRole('button', { name: 'Analyze meeting' }).click()
   await expect(main(page).getByText(/^Processing: /).first()).toBeVisible()
   await shot(page, 'a-01-processing')
   await expect(main(page).getByText(/^(Needs review|Ready to approve|Processed)$/).first()).toBeVisible({ timeout: 1_440_000 })
   await page.waitForLoadState('networkidle')
   await shot(page, 'a-02-meeting')
-  await main(page).getByRole('link', { name: 'Review proposed changes' }).click()
+  await main(page).getByRole('link', { name: 'Review and approve tasks' }).first().click()
   await expect(main(page).getByRole('heading', { name: /^Proposed changes/ })).toBeVisible()
   await shot(page, 'a-03-approval')
 })
@@ -116,7 +116,7 @@ test('read-only: screens of one processed meeting and its approval', async ({ pa
   const id = process.env.MEETING_ID
   await signIn(page)
   await page.goto(`/meetings/${id}`)
-  await expect(main(page).getByRole('heading', { name: /^Transcript/ }).or(main(page).getByRole('tab', { name: /^Transcript/ })).first()).toBeVisible()
+  await expect(main(page).getByRole('heading', { name: 'Meeting summary' })).toBeVisible()
   await page.waitForLoadState('networkidle')
   await shot(page, `m${id}-meeting`)
   await page.goto(`/approvals/${id}`)

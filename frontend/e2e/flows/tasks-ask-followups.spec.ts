@@ -54,7 +54,7 @@ test('task drawer: moving a task is stored with a new revision', async ({ page }
   await clickAnd(page, drawer(page, 'Update the release notes').getByRole('button', { name: 'In progress' }))
   expect((await tasks(sb)).find(t => t.code === 'TASK-3')).toMatchObject({ status: 'in_progress', revision: 2 })
   await expect(page.getByRole('status').filter({ hasText: 'TASK-3 moved to In progress' })).toBeVisible()
-  await expect(drawer(page, 'Update the release notes')).toContainText('TASK-3, revision 2')
+  await expect(drawer(page, 'Update the release notes')).toContainText('Revision 2')
   await expect(main(page).getByRole('row', { name: /TASK-3/ })).toContainText('In progress')
 })
 
@@ -66,7 +66,7 @@ test('task drawer: a change made elsewhere is refused, explained, and the drawer
   await apiFor(sb).raw('PATCH', '/api/tasks/TASK-3', { expected_revision: 1, status: 'blocked', blocked_reason: 'changed elsewhere' })
   await clickAnd(page, d.getByRole('button', { name: 'In progress' }))
   await expect(d.getByRole('alert')).toContainText('TASK-3 was changed elsewhere and is now Blocked (revision 2). Nothing was changed by this click.')
-  await expect(d).toContainText('TASK-3, revision 2')
+  await expect(d).toContainText('Revision 2')
   expect((await tasks(sb)).find(t => t.code === 'TASK-3')!.status).toBe('blocked')
 })
 
@@ -108,7 +108,8 @@ test('a reassigned task keeps its identity and records each revision', async () 
 test('ask: search without the model shows labelled passages with links; Enter sends', async ({ page }) => {
   await signIn(page, sb, '/ask')
   await main(page).getByLabel('Write an answer with the model').uncheck()
-  await main(page).getByLabel('Question').fill('Who owns the regression tests?')
+  // A question about the discussion: task-state questions are answered from the records instead.
+  await main(page).getByLabel('Question').fill('What did Asha say about Stripe?')
   const res = page.waitForResponse(r => r.url().includes('/api/memory/query'))
   await main(page).getByLabel('Question').press('Enter')
   await res; await page.waitForLoadState('networkidle')
@@ -126,7 +127,7 @@ test('ask: a question nothing stored matches says so, distinct from a failed req
   await clickAnd(page, main(page).getByRole('button', { name: 'Ask' }), /memory\/query/)
   await expect(main(page).getByText('Nothing found in stored meetings')).toBeVisible()
   await page.route('**/api/memory/query', r => r.fulfill({ status: 500, body: '{"detail":"search index unavailable"}', contentType: 'application/json' }))
-  await main(page).getByLabel('Question').fill('Who owns the regression tests?')
+  await main(page).getByLabel('Question').fill('What did Asha say about Stripe?')
   await clickAnd(page, main(page).getByRole('button', { name: 'Ask' }), /memory\/query/)
   await expect(main(page).getByText('Request failed')).toBeVisible()
   await expect(main(page).getByText(/did not reach the meeting records: search index unavailable/)).toBeVisible()
@@ -193,7 +194,7 @@ test('reminders: draft in a dialog, approve, cancel; each state is stored', asyn
   const rowOf = () => main(page).getByRole('row').filter({ hasText: 'Draft, not scheduled' })
   await clickAnd(page, rowOf().getByRole('button', { name: 'Approve' }))
   expect((await reminders(sb)).find(r => r.id === mine.id)!.delivery_state).toBe('scheduled')
-  await clickAnd(page, main(page).getByRole('row').filter({ hasText: 'Oct 30' }).getByRole('button', { name: 'Cancel' }))
+  await clickAnd(page, main(page).getByRole('row').filter({ hasText: '30 Oct' }).getByRole('button', { name: 'Cancel' }))
   expect((await reminders(sb)).find(r => r.id === mine.id)!.delivery_state).toBe('cancelled')
 })
 

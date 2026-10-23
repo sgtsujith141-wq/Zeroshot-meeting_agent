@@ -14,8 +14,8 @@ test.afterEach(async () => { await sb.stop() })
 
 test('brand link and the Overview "All …" links', async ({ page }) => {
   await signIn(page, sb, '/tasks')
-  await page.getByRole('complementary').getByRole('link', { name: 'Meeting actions' }).click()
-  await expect(h1(page, 'Overview')).toBeVisible()
+  await page.getByRole('complementary').getByRole('link', { name: 'Meeting Actions' }).click()
+  await expect(h1(page, 'Your workspace')).toBeVisible()
   for (const [link, heading] of [['All approvals', 'Approvals'], ['All tasks', 'Tasks'], ['All meetings', 'Meetings']]) {
     await page.goto(sb.url + '/')
     await main(page).getByRole('link', { name: link }).click()
@@ -28,19 +28,19 @@ test('brand link and the Overview "All …" links', async ({ page }) => {
   await expect(h1(page, 'Meetings')).toBeVisible()
 })
 
-test('meeting workspace: breadcrumb, "View approval", decision references, the Actions tab link, Hide events', async ({ page }) => {
+test('meeting results: breadcrumb, "View approved tasks", decision references, Technical details, Hide events', async ({ page }) => {
   await signIn(page, sb, '/meetings/2')
-  await region(page, 'Decisions').getByRole('button', { name: 'Show s4 in transcript' }).click()
-  await expect(page.locator('[data-seg="s4"]')).toHaveClass(/seg-flash/)
-  await main(page).getByRole('tab', { name: 'Processing' }).click()
+  await region(page, 'Decisions made').getByRole('button', { name: 'Show s4 in transcript' }).click()
+  await expect(page.getByRole('dialog', { name: 'Transcript' }).locator('[data-seg="s4"]')).toHaveClass(/seg-flash/)
+  await page.keyboard.press('Escape')
+  await main(page).getByRole('tab', { name: 'Technical details' }).click()
   await main(page).getByRole('button', { name: 'Show events' }).click()
   await main(page).getByRole('button', { name: 'Hide events' }).click()
   await expect(main(page).getByRole('button', { name: 'Show events' })).toBeVisible()
-  await main(page).getByRole('tab', { name: 'Actions' }).click()
-  await main(page).getByRole('link', { name: 'approval page' }).click()
+  await main(page).getByRole('link', { name: 'View approved tasks' }).first().click()
   await expect(page).toHaveURL(/\/approvals\/2$/)
   await page.goto(sb.url + '/meetings/2')
-  await main(page).getByRole('link', { name: 'View approval' }).click()
+  await main(page).getByRole('complementary').getByRole('link', { name: 'View approved tasks' }).click()
   await expect(page).toHaveURL(/\/approvals\/2$/)
   await page.goto(sb.url + '/meetings/2')
   await page.getByRole('navigation', { name: 'Breadcrumb' }).getByRole('link', { name: 'Meetings' }).click()
@@ -93,7 +93,7 @@ test('orphaned answers: "Make … the owner", "Use …" and "Remove the due date
   let c = await item('login-screen')
   expect(c.proposal.items.find(i => i.key === 'login-screen')!.owner).toBe('Priya')
   expect(c.organizer_edits.answers['login-screen|missing_owner'] ?? null).toBeNull()
-  await clickAnd(page, page.getByRole('alert').getByRole('button', { name: 'Use Sun, Nov 1, 2026' }))
+  await clickAnd(page, page.getByRole('alert').getByRole('button', { name: 'Use Sun 1 Nov 2026' }))
   c = await item('mobile-app-launch-sync')
   expect(c.proposal.items.find(i => i.key === 'mobile-app-launch-sync')!.deadline.date).toBe('2026-11-01')
   await clickAnd(page, page.getByRole('alert').getByRole('button', { name: 'Remove the due date' }))
@@ -148,7 +148,7 @@ test('empty database: the Overview and Tasks empty states lead somewhere', async
   const empty = await startSandbox('empty', 'links-empty')
   try {
     await signIn(page, empty)
-    await main(page).getByRole('link', { name: 'Add a meeting' }).click()
+    await main(page).getByRole('link', { name: 'New meeting' }).last().click() // the empty state's own link
     await expect(h1(page, 'New meeting')).toBeVisible()
     await page.goto(empty.url + '/tasks')
     await main(page).getByRole('link', { name: 'Go to Approvals' }).click()

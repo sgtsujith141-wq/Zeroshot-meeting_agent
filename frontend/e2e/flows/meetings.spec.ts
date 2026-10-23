@@ -18,20 +18,18 @@ test.afterEach(async () => { await sb.stop() })
 
 type M = { id: number; processing_status: string; source_type: string | null }
 // Expectations come from the sandbox's own API, so they hold whatever the copied demo data holds.
-const attentionCount = (ms: M[]) => ms.filter(m => ['queued', 'transcribing', 'interpreting', 'writing_minutes', 'failed', 'created'].includes(m.processing_status) || !m.source_type).length
+// "Needs your review" lists change sets waiting for approval plus meetings that failed or have no file.
+const stuckCount = (ms: M[]) => ms.filter(m => m.processing_status === 'failed' || m.processing_status === 'created' || !m.source_type).length
 
 test('Overview: every queue matches the API and each row opens the place to act', async ({ page }) => {
   await signIn(page, sb)
   const meetings = await apiFor(sb).get<M[]>('/api/meetings')
   const section = (name: string) => main(page).getByRole('region', { name: new RegExp(`^${name}`) })
-  await expect(section('Pending approvals').getByRole('listitem')).toHaveCount(2)
+  await expect(section('Needs your review').getByRole('listitem')).toHaveCount(2 + stuckCount(meetings))
   await expect(section('Upcoming tasks').getByRole('listitem')).toHaveCount(3)
-  const attention = attentionCount(meetings)
-  if (attention) await expect(section('Meetings requiring attention').getByRole('listitem')).toHaveCount(attention)
-  else await expect(section('Meetings requiring attention')).toContainText('No meeting is processing, failed or waiting for a file.')
-  await expect(section('Blocked work')).toContainText('No open task is waiting on another.')
+  await expect(section('Upcoming tasks')).not.toContainText('Blocked')
   await expect(section('Recent meetings').getByRole('listitem')).toHaveCount(Math.min(5, meetings.length))
-  await section('Pending approvals').getByRole('link', { name: /Audio upload check/ }).click()
+  await section('Needs your review').getByRole('link', { name: /Audio upload check/ }).click()
   await expect(page).toHaveURL(/\/approvals\/4$/)
   await page.goto(sb.url + '/')
   await section('Upcoming tasks').getByRole('link', { name: /TASK-4/ }).click()
@@ -45,17 +43,21 @@ test('Overview: every queue matches the API and each row opens the place to act'
   await expect(h1(page, 'New meeting')).toBeVisible()
 })
 
-test('Overview: a blocked task and a meeting needing a file show up and open', async ({ page }) => {
+test('Overview: a blocked task says what it waits for, and a meeting needing a file shows up; both open', async ({ page }) => {
   await apiFor(sb).raw('POST', '/api/tasks/TASK-4/dependencies', { prerequisite_code: 'TASK-3' })
   await apiFor(sb).raw('POST', '/api/meetings', { title: 'Empty meeting', scheduled_at: '2026-10-23T10:00', timezone: 'Asia/Kolkata', consent_confirmed: true })
   await signIn(page, sb)
-  const blocked = main(page).getByRole('region', { name: /^Blocked work/ })
-  await expect(blocked).toContainText('Waiting for TASK-3 Update the release notes')
-  await blocked.getByRole('link', { name: /TASK-4/ }).click()
+  const blocked = main(page).getByRole('region', { name: /^Upcoming tasks/ }).getByRole('listitem').filter({ hasText: 'TASK-4' })
+  await expect(blocked).toContainText('waiting for TASK-3 Update the release notes')
+  await expect(blocked).toContainText('Blocked')
+  await blocked.getByRole('link').click()
   await expect(page.getByRole('dialog', { name: 'Prepare the rollback runbook' })).toBeVisible()
   await page.goto(sb.url + '/')
-  await main(page).getByRole('region', { name: /^Meetings requiring attention/ }).getByRole('link', { name: /Empty meeting/ }).click()
+  const empty = main(page).getByRole('region', { name: /^Needs your review/ }).getByRole('link', { name: /Empty meeting/ })
+  await expect(empty).toContainText('No recording or transcript uploaded yet.')
+  await empty.click()
   await expect(h1(page, 'Empty meeting')).toBeVisible()
+  await expect(main(page).getByText('Nothing uploaded yet')).toBeVisible()
 })
 
 test('Meetings: search and status filter narrow the list; a row opens the workspace', async ({ page }) => {
@@ -73,25 +75,27 @@ test('Meetings: search and status filter narrow the list; a row opens the worksp
   await expect(h1(page, 'Audio upload check (synthetic TTS)')).toBeVisible()
 })
 
-test('workspace: tabs (also by arrow keys), evidence links focus the transcript, #segment links work', async ({ page }) => {
+test('results: evidence links open the transcript at the line, secondary tabs work by arrow keys, #segment links work', async ({ page }) => {
   await signIn(page, sb, '/meetings/2')
-  await expect(tab(page, 'Summary')).toHaveAttribute('aria-selected', 'true')
+  const transcript = page.getByRole('dialog', { name: 'Transcript' })
   await main(page).getByRole('button', { name: 'Show s7 in transcript' }).first().click()
-  await expect(page.locator('[data-seg="s7"]')).toBeInViewport()
-  await expect(page.locator('[data-seg="s7"]')).toHaveClass(/seg-flash/)
-  await tab(page, 'Summary').focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(tab(page, 'Actions')).toHaveAttribute('aria-selected', 'true')
+  await expect(transcript.locator('[data-seg="s7"]')).toBeInViewport()
+  await expect(transcript.locator('[data-seg="s7"]')).toHaveClass(/seg-flash/)
+  await page.keyboard.press('Escape')
+  await expect(transcript).toHaveCount(0)
   await expect(main(page).getByRole('cell', { name: /Run regression tests/ })).toBeVisible()
-  await expect(main(page).getByText('Updated TASK-2')).toBeVisible()
-  await page.keyboard.press('ArrowRight')
+  await expect(main(page).getByRole('table').getByText('Updated TASK-2')).toBeVisible()
   await expect(tab(page, /^Speakers/)).toHaveAttribute('aria-selected', 'true')
-  await tab(page, 'Processing').click()
+  await tab(page, /^Speakers/).focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(tab(page, 'Share summary')).toHaveAttribute('aria-selected', 'true')
+  await page.keyboard.press('ArrowRight')
+  await expect(tab(page, 'Technical details')).toHaveAttribute('aria-selected', 'true')
   await main(page).getByRole('button', { name: 'Show events' }).click()
   await main(page).getByRole('button', { name: 's6', exact: true }).first().click()
-  await expect(page.locator('[data-seg="s6"]')).toHaveClass(/seg-flash/)
+  await expect(transcript.locator('[data-seg="s6"]')).toHaveClass(/seg-flash/)
   await page.goto(sb.url + '/meetings/2#s5'); await page.waitForLoadState('networkidle')
-  await expect(page.locator('[data-seg="s5"]')).toBeInViewport()
+  await expect(transcript.locator('[data-seg="s5"]')).toBeInViewport()
 })
 
 test('workspace: confirming a speaker is stored and acknowledged', async ({ page }) => {
@@ -143,6 +147,7 @@ test('workspace: delete is refused when approved tasks depend on it, and works f
 test('workspace: summary prepare, copy-approve (nothing sent), and email without SMTP is reported as NOT sent', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
   await signIn(page, sb, '/meetings/2')
+  await tab(page, 'Share summary').click()
   await clickAnd(page, main(page).getByRole('button', { name: 'Prepare summary' }))
   let s = await apiFor(sb).get<{ state: string; channel: string; content: string; error: string | null }[]>('/api/meetings/2/summaries')
   expect(s[0].state).toBe('prepared')
@@ -165,7 +170,8 @@ test('workspace: summary prepare, copy-approve (nothing sent), and email without
 
 test('workspace: the recording plays from a clicked timestamp', async ({ page }) => {
   await signIn(page, sb, '/meetings/4')
-  const audio = page.locator('audio')
+  await main(page).getByRole('button', { name: 'Transcript', exact: true }).click()
+  const audio = page.getByRole('dialog', { name: 'Transcript' }).locator('audio')
   await expect(audio).toHaveAttribute('src', /media\?sig=/)
   const loaded = await page.evaluate(() => new Promise<boolean>(r => {
     const a = document.querySelector('audio')!
@@ -178,20 +184,20 @@ test('workspace: the recording plays from a clicked timestamp', async ({ page })
   expect(Math.abs(await audio.evaluate((a: HTMLAudioElement) => a.currentTime) - seg.start_seconds)).toBeLessThan(0.6)
 })
 
-test('workspace: the primary action opens the approval; phone shows the transcript as a tab', async ({ page }) => {
+test('results: the primary action opens the approval; on a phone the transcript opens full width', async ({ page }) => {
   await signIn(page, sb, '/meetings/4')
-  await main(page).getByRole('link', { name: 'Review proposed changes' }).click()
+  await main(page).getByRole('link', { name: 'Review and approve tasks' }).first().click()
   await expect(page).toHaveURL(/\/approvals\/4$/)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto(sb.url + '/meetings/4'); await page.waitForLoadState('networkidle')
-  await tab(page, /^Transcript/).click()
-  await expect(page.locator('[data-seg="s2"]')).toBeVisible()
+  await main(page).getByRole('button', { name: 'Transcript', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Transcript' }).locator('[data-seg="s2"]')).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1)
 })
 
 test('upload form: disabled until title, file and consent; the file can be removed or dropped in', async ({ page }) => {
   await signIn(page, sb, '/meetings/new')
-  const up = main(page).getByRole('button', { name: 'Upload and process' })
+  const up = main(page).getByRole('button', { name: 'Analyze meeting' })
   await expect(up).toBeDisabled()
   await main(page).getByLabel('Meeting title').fill('Audit upload')
   await main(page).getByLabel('Recording or transcript').setInputFiles(path.join(DEMO, 'synthetic_meeting_1_planning.json'))
@@ -218,7 +224,7 @@ for (const [name, file, status, msg] of [
     await main(page).getByLabel('Meeting title').fill('Refused upload')
     await main(page).getByLabel('Recording or transcript').setInputFiles(file)
     await main(page).getByLabel(/I confirm that every participant agreed/).check()
-    await clickAnd(page, main(page).getByRole('button', { name: 'Upload and process' }), /^DELETE \/api\/meetings\/\d+$/)
+    await clickAnd(page, main(page).getByRole('button', { name: 'Analyze meeting' }), /^DELETE \/api\/meetings\/\d+$/)
     await expect(main(page).getByRole('alert')).toContainText(msg)
     await expect(main(page).getByRole('alert')).toContainText('Nothing was saved')
     expect((await apiFor(sb).get<unknown[]>('/api/meetings')).length).toBe(before)
@@ -231,11 +237,12 @@ test('upload form: the title, date, time and time zone typed are what the server
   await signIn(page, sb, '/meetings/new')
   await main(page).getByLabel('Meeting title').fill('Time zone check')
   await main(page).getByLabel('Date and time').fill('2026-11-03T15:30')
+  await main(page).getByText('More options').click() // the time zone is a secondary field
   await main(page).getByLabel('Meeting time zone').selectOption('Europe/London')
   await main(page).getByLabel('Recording or transcript').setInputFiles({ name: 'empty.txt', mimeType: 'text/plain', buffer: Buffer.from('') })
   await main(page).getByLabel(/I confirm that every participant agreed/).check()
   const req = page.waitForRequest(r => r.method() === 'POST' && new URL(r.url()).pathname === '/api/meetings')
-  await main(page).getByRole('button', { name: 'Upload and process' }).click()
+  await main(page).getByRole('button', { name: 'Analyze meeting' }).click()
   expect((await req).postDataJSON()).toMatchObject({ title: 'Time zone check', scheduled_at: '2026-11-03T15:30', timezone: 'Europe/London', consent_confirmed: true })
   await expect(main(page).getByRole('alert')).toBeVisible()
 })

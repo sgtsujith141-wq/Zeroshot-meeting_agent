@@ -9,7 +9,7 @@ async function signIn(page: Page) {
   await page.goto('/')
   await page.getByLabel('Organiser token').fill(TOKEN)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Overview', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Your workspace', exact: true })).toBeVisible()
 }
 const shot = async (page: Page, name: string) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }) }
 
@@ -47,7 +47,7 @@ test('new meeting form enforces consent before upload', async ({ page }) => {
   await signIn(page)
   await page.getByRole('main').getByRole('link', { name: 'New meeting' }).click()
   await expect(page.getByText('Recording or transcribing people without their agreement is not allowed')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Upload and process' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Analyze meeting' })).toBeDisabled()
   await shot(page, '07-new-meeting')
 })
 

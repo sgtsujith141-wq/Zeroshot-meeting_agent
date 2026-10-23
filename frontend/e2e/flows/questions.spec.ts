@@ -48,8 +48,8 @@ test('cancellation of an existing task: "Keep the task" keeps it; "Cancel the wh
   await clickAnd(page, q(page, 'ambiguous_cancellation_existing').getByRole('button', { name: 'Cancel the whole task' }))
   expect(await answer('ambiguous_cancellation_existing')).toBe('cancel_task')
   expect((await item('TASK-4')).operation).toBe('cancel')
-  await expect(page.locator('tr[data-item="TASK-4"]')).toContainText('Cancel task')
-  await expect(page.locator('tr[data-item="TASK-4"]')).toContainText('Status: Cancelled')
+  await expect(page.locator('tr[data-item="TASK-4"]')).toContainText('TASK-4: cancel task')
+  await expect(page.locator('tr[data-item="TASK-4"]')).toContainText('Status: To do→ changes to Cancelled')
 })
 
 test('cancellation of a new item: "It is cancelled" drops it; "Keep it" keeps it as a new task', async ({ page }) => {

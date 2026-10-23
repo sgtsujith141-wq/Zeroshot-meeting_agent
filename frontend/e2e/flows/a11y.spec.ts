@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test'
 import { test, expect, signIn } from '../support/fixtures'
 import { startSandbox, type Sandbox } from '../support/sandbox'
 
-const ROUTES = ['/', '/meetings', '/meetings/2', '/meetings/4', '/meetings/new', '/approvals', '/approvals/4', '/approvals/2',
+const ROUTES = ['/', '/meetings', '/meetings/1', '/meetings/2', '/meetings/3', '/meetings/4', '/meetings/new', '/approvals', '/approvals/4', '/approvals/2',
   '/tasks', '/tasks?view=board', '/ask', '/follow-ups', '/follow-ups?tab=calendar', '/follow-ups?tab=reminders', '/follow-ups?tab=notifications', '/diagnostics']
 
 async function audit(page: Page, where: string) {
@@ -20,7 +20,7 @@ test.afterAll(async () => { await sb.stop() })
 for (const theme of ['dark', 'light'] as const) {
   test(`no WCAG A/AA violations on any route (${theme} theme)`, async ({ page }) => {
     test.setTimeout(180_000)
-    await page.addInitScript(t => localStorage.setItem('ps53.theme', t), theme)
+    await page.addInitScript(t => localStorage.setItem('ps53.theme.choice', t), theme)
     await page.goto(sb.url + '/')
     const found: string[] = await audit(page, 'sign-in')
     await signIn(page, sb)
@@ -50,5 +50,16 @@ test('no violations inside the approval drawer, the transcript drawer, the task 
   await page.goto(sb.url + '/follow-ups?tab=reminders'); await page.waitForLoadState('networkidle')
   await page.getByRole('button', { name: 'New reminder' }).click()
   found.push(...await audit(page, 'reminder dialog'))
+  expect(found).toEqual([])
+})
+
+test('no violations in the presentation intro, on a line and on the closing screen', async ({ page }) => {
+  await page.goto(sb.url + '/?present=1')
+  await expect(page.getByText('AI can already write the minutes.')).toBeVisible()
+  const found: string[] = await audit(page, 'intro line')
+  for (let i = 0; i < 4; i++) await page.keyboard.press('Space')
+  await expect(page.getByRole('button', { name: 'Enter workspace' })).toBeVisible()
+  await page.waitForTimeout(700) // let the closing screen finish fading in before checking contrast
+  found.push(...await audit(page, 'intro closing screen'))
   expect(found).toEqual([])
 })

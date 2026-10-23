@@ -17,7 +17,7 @@ test('upload → processing → re-run → suggestion made a task → approved �
     await main(page).getByLabel('Meeting title').fill('Planning upload check')
     await main(page).getByLabel('Recording or transcript').setInputFiles(path.join(DEMO, 'synthetic_meeting_1_planning.json'))
     await main(page).getByLabel(/I confirm that every participant agreed/).check()
-    await main(page).getByRole('button', { name: 'Upload and process' }).click()
+    await main(page).getByRole('button', { name: 'Analyze meeting' }).click()
     await expect(page).toHaveURL(/\/meetings\/\d+$/)
     const id = Number(page.url().split('/').pop())
     await expect(main(page).getByText(/^Processing: /).first()).toBeVisible()
@@ -28,7 +28,7 @@ test('upload → processing → re-run → suggestion made a task → approved �
     await clickAnd(page, page.getByRole('dialog').getByRole('button', { name: 'Re-run analysis' }))
     await expect(main(page).getByText(/^Processing: /).first()).toBeVisible()
     await expect(main(page).getByText('Needs review', { exact: true }).or(main(page).getByText('Ready to approve', { exact: true })).first()).toBeVisible({ timeout: 12 * 60_000 })
-    await main(page).getByRole('link', { name: 'Review proposed changes' }).click()
+    await main(page).getByRole('link', { name: 'Review and approve tasks' }).first().click()
     await page.waitForLoadState('networkidle')
     type C = { state: string; proposal: { items: { key: string; state: string; title: string; operation: string; owner: string | null }[]; clarifications: { answer: unknown; deferred: boolean }[] } }
     const c = await apiFor(sb).get<C>(`/api/meetings/${id}/changeset`)

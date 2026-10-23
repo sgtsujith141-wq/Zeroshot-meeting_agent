@@ -22,7 +22,9 @@ const row = (page: Page, key: string) => page.locator(`tr[data-item="${key}"]`)
 const btn = (page: Page, name: string) => main(page).getByRole('button', { name, exact: true })
 const approveBtn = (page: Page) => btn(page, 'Approve')
 const drawer = (page: Page, title: string) => page.getByRole('dialog', { name: title })
-const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+// Change lines read "Deadline: 26 October → 27 October"; the arrow is followed by screen-reader text.
+const fmt = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
+const to = ' changes to '
 
 let sb: Sandbox
 test.beforeEach(async () => { sb = await startSandbox('demo', 'approvals') })
@@ -40,7 +42,7 @@ async function exclude(page: Page, key: string, title: string) {
 }
 async function answerM4(page: Page) {
   await clickAnd(page, btn(page, 'Same as TASK-3'))
-  await clickAnd(page, btn(page, 'Fri, Oct 30, 2026'))
+  await clickAnd(page, btn(page, 'Fri 30 Oct 2026'))
   await exclude(page, 'mobile-app-launch-sync', 'Sync on mobile app launch')
   await expect(approveBtn(page)).toBeEnabled()
 }
@@ -75,9 +77,9 @@ test('existing-task question: "Same as TASK-3" links it, "Change answer" undoes 
 
 test('deadline question: candidate date, a typed date, and no deadline are each stored', async ({ page }) => {
   await signIn(page, sb, '/approvals/4')
-  await clickAnd(page, btn(page, 'Fri, Oct 30, 2026'))
+  await clickAnd(page, btn(page, 'Fri 30 Oct 2026'))
   expect(answer(await cs(sb, 4), 'login-screen|ambiguous_deadline')).toEqual({ choice: 'set_due', value: '2026-10-30' })
-  await expect(row(page, 'login-screen')).toContainText('Fri, Oct 30, 2026')
+  await expect(row(page, 'login-screen')).toContainText('Deadline: 30 October')
   const undo = () => clickAnd(page, main(page).getByRole('listitem').filter({ hasText: /^Which date\?/ }).getByRole('button', { name: 'Change answer' }))
   await undo()
   await q(page, 'ambiguous_deadline').getByLabel('Due date').fill('2026-11-02')
@@ -137,7 +139,7 @@ test('P0: an answer the server stops using is surfaced, blocks approval, and "Le
   await expect(orphan).toContainText('Your answer “leave unassigned” for “Finish the login screen” (who is this speaker?) was not applied. It is now proposed with owner Kavya')
   // Answer the other questions; approval must stay blocked until the organiser decides.
   await clickAnd(page, btn(page, 'Same as TASK-3'))
-  await clickAnd(page, btn(page, 'Fri, Oct 30, 2026'))
+  await clickAnd(page, btn(page, 'Fri 30 Oct 2026'))
   await exclude(page, 'mobile-app-launch-sync', 'Sync on mobile app launch')
   await expect(approveBtn(page)).toBeDisabled()
   await expect(main(page).getByText('Decide on 1 earlier answer that no longer applies.')).toBeVisible()
@@ -230,11 +232,10 @@ test('approving applies exactly the changes the table shows, and the page shows 
   // What the table says will be written.
   await expect(row(page, 'login-screen')).toContainText('Will apply')
   await expect(row(page, 'login-screen')).toContainText('Owner: Kavya')
-  await expect(row(page, 'login-screen')).toContainText(`Due: ${fmt('2026-10-30')}`)
+  await expect(row(page, 'login-screen')).toContainText(`Deadline: ${fmt('2026-10-30')}`)
   // Linking to TASK-3 also applies the meeting's stated priority, so that is shown too.
-  await expect(row(page, 'release-notes')).toContainText('Change priority')
-  await expect(row(page, 'release-notes')).toContainText('Priority: Medium')
-  await expect(row(page, 'release-notes')).toContainText('Priority: High')
+  await expect(row(page, 'release-notes')).toContainText('TASK-3: change priority')
+  await expect(row(page, 'release-notes')).toContainText(`Priority: Medium→${to}High`)
   await expect(main(page).getByText('Approving applies 1 new task, 1 update, exactly as listed.')).toBeVisible()
   const r = await clickAnd(page, approveBtn(page))
   expect(r.status()).toBe(200)
@@ -252,7 +253,7 @@ test('approving applies exactly the changes the table shows, and the page shows 
   // After approval the table switches to what the recorded revisions say.
   await expect(row(page, 'login-screen')).toContainText(`Created ${created[0].code}`)
   await expect(row(page, 'release-notes')).toContainText('Updated TASK-3')
-  await expect(main(page).getByRole('columnheader', { name: 'Before' })).toBeVisible()
+  await expect(main(page).getByRole('columnheader', { name: 'What approval changed' })).toBeVisible()
   await expect(approveBtn(page)).toHaveCount(0)
 })
 
@@ -269,11 +270,9 @@ test('P0: after a re-check, every change approval makes to TASK-2 is flagged, an
   await clickAnd(page, stale.getByRole('button', { name: 'Re-check against the current board' }))
   await expect(page.getByRole('status').filter({ hasText: 'What changed after your last action' })).toContainText('“Run regression tests”')
   const r2 = row(page, 'TASK-2')
-  await expect(r2).toContainText('Move deadline, change priority')
-  await expect(r2).toContainText(`Due: ${fmt('2026-10-26')}`)
-  await expect(r2).toContainText(`Due: ${fmt('2026-10-27')}`)
-  await expect(r2).toContainText('Priority: Not set')
-  await expect(r2).toContainText('Priority: High')
+  await expect(r2).toContainText('TASK-2: move deadline, change priority')
+  await expect(r2).toContainText(`Deadline: ${fmt('2026-10-26')}→${to}${fmt('2026-10-27')}`)
+  await expect(r2).toContainText(`Priority: Not set→${to}High`)
   const d = await openRow(page, 'TASK-2', 'Run regression tests')
   await expect(d.getByText('Approval keeps the existing dependency on TASK-1; it never removes dependencies.')).toBeVisible()
   await d.getByRole('button', { name: 'Close' }).click()
@@ -359,7 +358,7 @@ test('while an answer is being saved, other choices are disabled and only one re
   const done = page.waitForResponse(r => r.request().method() === 'PATCH')
   await btn(page, 'Same as TASK-3').click()
   await expect(btn(page, 'It is a new task')).toBeDisabled()
-  await expect(btn(page, 'Fri, Oct 30, 2026')).toBeDisabled()
+  await expect(btn(page, 'Fri 30 Oct 2026')).toBeDisabled()
   await btn(page, 'Same as TASK-3').click({ force: true, timeout: 1000 }).catch(() => {})
   await done; await page.waitForLoadState('networkidle')
   expect(watch.requests.filter(r => r.startsWith('PATCH /api/changesets/')).length).toBe(1)
@@ -399,9 +398,8 @@ test('an applied approval is read-only and shows what each recorded revision cha
   await signIn(page, sb, '/approvals/2')
   await expect(main(page).getByText('Approved and applied')).toBeVisible()
   for (const name of ['Approve', 'Reject all', 'Change answer']) await expect(btn(page, name)).toHaveCount(0)
-  await expect(row(page, 'TASK-2')).toContainText('Reassign, move deadline')
-  await expect(row(page, 'TASK-2')).toContainText('Owner: Priya')
-  await expect(row(page, 'TASK-2')).toContainText('Owner: Samiksha')
+  await expect(row(page, 'TASK-2')).toContainText('TASK-2: reassign, move deadline')
+  await expect(row(page, 'TASK-2')).toContainText(`Owner: Priya→${to}Samiksha`)
   await expect(row(page, 'rollback-runbook')).toContainText('Created TASK-4')
   const d = await openRow(page, 'TASK-2', 'Run regression tests')
   await expect(d.getByRole('heading', { name: 'What approval changed' })).toBeVisible()
