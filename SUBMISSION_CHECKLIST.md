@@ -46,14 +46,15 @@ Sarvam keys, no SMTP, synthetic transcripts only.
 | Baseline vs candidate on the same model, fixtures, per-case mismatches logged | **PASS** | `evaluation/results/*`, `docs/evaluation.md`. |
 | Feasibility gate decision | **PASS** | Kept: better on targeted failure classes with both models; weaker dependency recall documented. |
 | Gemini as the evaluated model | **UNVERIFIED** | No `GEMINI_API_KEY`. Adapter config and error mapping checked against google-genai 2.32.0. `scripts/provider_smoke.py` runs the live check once a key exists. Local Ollama was used for every measured result. |
+| Live provider smoke (2026-10-23) | **PARTIAL** | `scripts/provider_smoke.py`: Gemini **SKIP** (`GEMINI_API_KEY` not set); Sarvam **SKIP** (`SARVAM_API_KEY` not set); Ollama qwen3:8b **PASS**; local Whisper **PASS** on a synthetic TTS clip. Result: `evaluation/results/20261023T000011Z_provider_smoke.json` |
 
 ## Engineering
 
 | Item | Status |
 |---|---|
-| Backend tests (offline) | **PASS**: 68 passing (`cd backend && .venv/bin/pytest`) |
-| UI smoke tests | **PASS**: 4 Playwright tests against the live server (incl. phone-width overflow); 2 scripted organiser walkthroughs on live data |
-| CI | **PASS**: GitHub Actions green from commit `7b86116` (backend tests and frontend build) |
+| Backend tests (offline) | **PASS**: 107 passing on 2026-10-23 (`cd backend && .venv/bin/pytest`), including SDK-surface checks for Sarvam/Gemini and one real local Whisper transcription (skipped where unavailable) |
+| UI smoke tests | **PASS**: 4 Playwright tests against the live server on the real token (incl. phone-width overflow); scripted walkthroughs on live data: meeting 1 approval, meeting 2 cross-meeting update, audio upload through the UI |
+| CI | **PASS** on the latest pushed commits (GitHub Actions: offline backend tests + frontend build). Some earlier runs stalled on `apt-get install ffmpeg`; the step now has a timeout. |
 | Secrets | `.env` git-ignored; `.env.example` placeholders only. Staged diffs scanned before each commit. |
 
 ## Organiser-only items the repository cannot verify

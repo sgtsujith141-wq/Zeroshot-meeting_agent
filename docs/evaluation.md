@@ -143,6 +143,9 @@ Baseline (pre-fix): strict F1 0.111, safety 6/11. Baseline + date rules: 0.333.
     speaker.
 - Those guards were designed after seeing holdout v1, so **holdout v1 is contaminated
   from `43a73c7` on**. A fresh holdout v2 was written after the code freeze.
+- For information only (contaminated): a live run of the final code on holdout v1
+  (`20261022T235601Z…`) gave candidate 0.706 / 11/11 / 9 of 12 fully correct, against
+  baseline 0.118 / 7/11 and baseline + date rules 0.353.
 
 ### 1d. Holdout v2: fresh, clean measurement of the final code
 
