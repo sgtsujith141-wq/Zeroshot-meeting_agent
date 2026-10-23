@@ -8,6 +8,7 @@ retrieved passages; otherwise the answer is "not found in stored meetings".
 from __future__ import annotations
 
 import re
+import time
 import unicodedata
 
 from sqlalchemy import text
@@ -17,6 +18,7 @@ from ..models import ChangeSet, Decision, LLMRun, Meeting, OpenQuestion, Task, T
 from .llm import LLMError, LLMUnavailable, get_llm
 from .llm_schemas import GroundedAnswerOut
 from .prompts import MEMORY_SYSTEM
+from . import task_answers
 
 NOT_FOUND = "not found in stored meetings"
 STOP = {"the", "a", "an", "is", "are", "was", "were", "what", "who", "when", "which", "did", "do", "does",
@@ -139,6 +141,15 @@ def related_tasks(session: Session, passages: list[dict]) -> list[dict]:
 
 
 def answer(session: Session, question: str, use_llm: bool = True) -> dict:
+    """Task-state questions are answered from approved records without a model; everything else
+    goes through grounded retrieval. latency_ms is the server time spent answering."""
+    started = time.perf_counter()
+    out = task_answers.try_answer(session, question) or _grounded(session, question, use_llm)
+    out["latency_ms"] = round((time.perf_counter() - started) * 1000, 1)
+    return out
+
+
+def _grounded(session: Session, question: str, use_llm: bool) -> dict:
     passages = search(session, question)
     current = related_tasks(session, passages)
     base = {"question": question, "passages": passages, "current_state": current}

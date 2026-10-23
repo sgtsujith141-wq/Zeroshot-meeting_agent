@@ -260,13 +260,15 @@ def test_memory_grounded_and_not_found(client, llm):
     seg = next(p for p in r["citations"] if p["doc_type"] == "segment")
     assert seg["seg_key"] == "s4" and seg["meeting_id"] == 1
     assert any(p["doc_type"] == "decision" for p in r["passages"])
-    llm.push("memory_answer", {"answer": "Rahul owns it.", "citations": ["P1"], "found": True})
-    r = client.post("/api/memory/query", json={"question": "who owns the authentication API"}).json()
+    # Ownership questions are answered from task records (test_task_answers.py); a question about
+    # what was said exercises the grounded model path.
+    llm.push("memory_answer", {"answer": "Rahul said Friday.", "citations": ["P1"], "found": True})
+    r = client.post("/api/memory/query", json={"question": "what did Rahul say about the authentication API"}).json()
     assert r["mode"] == "llm_grounded" and r["citations"] and r["current_state"]
     cited_ids = {p["passage_id"] for p in r["citations"]}
     assert cited_ids == {"P1"}  # current state is derived only from cited passages
-    llm.push("memory_answer", {"answer": "Rahul owns it.", "citations": ["[P1]"], "found": True})
-    r = client.post("/api/memory/query", json={"question": "who owns the authentication API"}).json()
+    llm.push("memory_answer", {"answer": "Rahul said Friday.", "citations": ["[P1]"], "found": True})
+    r = client.post("/api/memory/query", json={"question": "what did Rahul say about the authentication API"}).json()
     assert r["found"] and [p["passage_id"] for p in r["citations"]] == ["P1"]  # bracketed id normalised
     llm.push("memory_answer", {"answer": "made up", "citations": ["P99"], "found": True})
     r = client.post("/api/memory/query", json={"question": "authentication API owner"}).json()
