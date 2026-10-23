@@ -58,7 +58,8 @@ export async function startSandbox(seed: 'demo' | 'empty' = 'demo', name = 'sb',
   const out = openSync(log, 'a')
   const proc = spawn(path.join(BACKEND, '.venv/bin/uvicorn'), ['app.main:app', '--host', '127.0.0.1', '--port', String(port), '--log-level', 'warning'], {
     cwd: BACKEND, stdio: ['ignore', out, out],
-    env: { ...process.env, ...env, DATA_DIR: data, ORGANIZER_TOKEN: token, ORGANIZER_NAME: 'Organiser' },
+    // WHISPER_PREWARM=0: sandboxes start often; a test that transcribes loads the model itself.
+    env: { ...process.env, WHISPER_PREWARM: '0', ...env, DATA_DIR: data, ORGANIZER_TOKEN: token, ORGANIZER_NAME: 'Organiser' },
   })
   const url = `http://127.0.0.1:${port}`
   await waitUp(url, proc, log)

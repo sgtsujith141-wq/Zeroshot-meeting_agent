@@ -222,9 +222,14 @@ def run_pipeline(meeting_id: int, steps: tuple[str, ...] = ("transcribe", "inter
                     session, meeting)
                 session.add(meeting)
                 session.commit()
-            changesets.create_or_refresh(session, meeting.id, actor="system")
-            meeting.processing_status, meeting.processing_error = "ready_for_review", None
-            _log(meeting, "changeset", "ok")
+            if steps == ("transcribe",):
+                # Transcription only: the transcript is stored and shown at once; the organiser
+                # can correct it, then start the analysis (interpret + minutes) separately.
+                meeting.processing_status, meeting.processing_error = "transcribed", None
+            else:
+                changesets.create_or_refresh(session, meeting.id, actor="system")
+                meeting.processing_status, meeting.processing_error = "ready_for_review", None
+                _log(meeting, "changeset", "ok")
         except (LLMUnavailable, sarvam.STTUnavailable) as exc:
             session.rollback()
             meeting = session.get(Meeting, meeting_id)

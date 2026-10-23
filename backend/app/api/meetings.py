@@ -108,6 +108,7 @@ def get_meeting(meeting_id: int, _: str = Depends(require_organizer),
 
 @router.post("/{meeting_id}/upload")
 async def upload(meeting_id: int, file: UploadFile = File(...), auto_process: str | None = Form(None),
+                 transcribe_only: str | None = Form(None),
                  actor: str = Depends(require_organizer), session: Session = Depends(get_session)) -> dict:
     m = _meeting(session, meeting_id)
     if not m.consent_confirmed:
@@ -152,8 +153,13 @@ async def upload(meeting_id: int, file: UploadFile = File(...), auto_process: st
             dest.unlink(missing_ok=True)
             raise HTTPException(422, f"media rejected: {exc}") from exc
         m.file_path, m.duration_seconds = str(dest), info["duration_seconds"]
+        if kind == "video" and not info["has_video"]:
+            kind = m.source_type = "audio"  # e.g. a browser microphone recording in a .webm container
         m.processing_status = "uploaded"
-        steps = ("transcribe", "interpret", "minutes")
+        # transcribe_only: stop after speech-to-text so the transcript can be read and corrected
+        # before the (slower) analysis is started with POST /process.
+        only = (transcribe_only or "").strip().lower() in ("1", "true", "yes", "on")
+        steps = ("transcribe",) if only else ("transcribe", "interpret", "minutes")
     record(session, actor, "meeting", m.id, "upload", after={"kind": kind, "size": size, "name": name})
     session.add(m)
     session.commit()

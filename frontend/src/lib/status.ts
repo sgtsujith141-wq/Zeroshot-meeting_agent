@@ -14,6 +14,7 @@ export function meetingStatus(m: Pick<MeetingSummary, 'processing_status' | 'cha
   if (p === 'failed') return { label: 'Failed', tone: 'cancel', key: 'failed' }
   if (p === 'created' || !m.source_type) return { label: 'Waiting for upload', tone: 'neutral', key: 'empty' }
   const cs = m.change_set?.state
+  if (p === 'transcribed' && !cs) return { label: 'Transcript ready', tone: 'sky', key: 'transcribed' }
   if (cs === 'NEEDS_CLARIFICATION') return { label: 'Needs review', tone: 'ask', key: 'review' }
   if (cs === 'READY_FOR_REVIEW') return { label: 'Ready to approve', tone: 'accent', key: 'review' }
   if (cs === 'APPLIED') return { label: 'Approved', tone: 'done', key: 'approved' }

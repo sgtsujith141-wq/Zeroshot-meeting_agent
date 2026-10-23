@@ -1,16 +1,19 @@
-import { useState, type DragEvent, type FormEvent } from 'react'
+import { useState, type DragEvent, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, UploadCloud, X } from 'lucide-react'
+import { FileAudio, FileText, Mic, UploadCloud, X } from 'lucide-react'
 import { api } from '../lib/api'
 import type { MeetingSummary } from '../types'
-import { Button, ErrorBox, Field, PageHeader, Section, SyntheticTag, errText, inputCls, useLoad } from '../components/ui'
+import { Button, ErrorBox, Field, PageHeader, SyntheticTag, errText, inputCls, useLoad } from '../components/ui'
+import Recorder, { type Recording } from '../components/Recorder'
 // A synthetic transcript written for demonstrations (no real people). Bundled so the demo needs no file on disk.
 import demoTranscript from '../../../demo/synthetic_meeting_1_planning.json?raw'
 const DEMO_NAME = 'synthetic_meeting_1_planning.json'
 
 const TIMEZONES = ['Asia/Kolkata', 'UTC', 'Europe/London', 'America/New_York', 'Asia/Singapore']
-const ACCEPT = '.wav,.mp3,.m4a,.aac,.ogg,.flac,.opus,.mp4,.mov,.mkv,.webm,.json,.txt,.vtt,.srt'
+const MEDIA_ACCEPT = '.wav,.mp3,.m4a,.aac,.ogg,.flac,.opus,.mp4,.mov,.mkv,.webm'
+const TRANSCRIPT_ACCEPT = '.json,.txt,.vtt,.srt'
 const TRANSCRIPT_EXT = ['json', 'txt', 'vtt', 'srt']
+type Mode = 'record' | 'recording' | 'transcript'
 
 function localNow() {
   const d = new Date()
@@ -19,25 +22,38 @@ function localNow() {
 }
 const fmtSize = (b: number) => (b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.ceil(b / 1e3)} KB`)
 
+const MODES: { key: Mode; label: string; detail: string; icon: ReactNode }[] = [
+  { key: 'record', label: 'Record audio', detail: 'Use this computer’s microphone', icon: <Mic size={18} /> },
+  { key: 'recording', label: 'Upload recording', detail: 'Audio or video file', icon: <FileAudio size={18} /> },
+  { key: 'transcript', label: 'Upload transcript', detail: 'JSON, text, VTT or SRT', icon: <FileText size={18} /> },
+]
+
 export default function NewMeeting() {
   const nav = useNavigate()
+  const [mode, setMode] = useState<Mode>('record')
   const [title, setTitle] = useState('')
   const [when, setWhen] = useState(localNow())
   const [tz, setTz] = useState('Asia/Kolkata')
   const [file, setFile] = useState<File | null>(null)
+  const [recording, setRecording] = useState<Recording | null>(null)
   const [consent, setConsent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [over, setOver] = useState(false)
   const [demo, setDemo] = useState(false)
-  const diag = useLoad(() => api.get<{ llm: { active: { provider: string | null; model: string | null } }; speech: { active: string | null } }>('/api/diagnostics'))
-  const isTranscript = file ? TRANSCRIPT_EXT.includes(file.name.split('.').pop()?.toLowerCase() ?? '') : false
+  const diag = useLoad(() => api.get<{ llm: { active: { provider: string | null; model: string | null } }; speech: { active: string | null; whisper_local: { model: string } } }>('/api/diagnostics'))
   const stt = diag.data?.speech.active
   const llm = diag.data?.llm.active.provider ? `${diag.data.llm.active.provider}/${diag.data.llm.active.model}` : null
+  const chosen = mode === 'record' ? recording?.file ?? null : file
+  const wrongKind = !!file && mode !== 'record' && (mode === 'transcript') !== TRANSCRIPT_EXT.includes(file.name.split('.').pop()?.toLowerCase() ?? '')
 
+  function choose(m: Mode) {
+    setMode(m); setError(null)
+    if (m !== mode) { setFile(null); setDemo(false) }
+  }
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (!file) return
+    if (!chosen || wrongKind) return
     setBusy(true); setError(null)
     let created: MeetingSummary | null = null
     try {
@@ -46,8 +62,10 @@ export default function NewMeeting() {
         consent_statement: 'Organiser confirmed in the web form that every participant consented to recording and processing, including by third-party AI providers.',
       })
       const form = new FormData()
-      form.append('file', file)
+      form.append('file', chosen)
       form.append('auto_process', 'true')
+      // A live recording is transcribed first, so its words can be read and corrected before analysis.
+      if (mode === 'record') form.append('transcribe_only', 'true')
       await api.upload(`/api/meetings/${created.id}/upload`, form)
       nav(`/meetings/${created.id}`)
     } catch (err) {
@@ -56,7 +74,7 @@ export default function NewMeeting() {
       if (created) {
         try { await api.del(`/api/meetings/${created.id}`) } catch { cleanup = ` The empty meeting “${title}” could not be removed; delete it from Meetings.` }
       }
-      setError(`${errText(err).replace(/\.$/, '')}. ${cleanup ? cleanup.trim() : 'Nothing was saved; check the file and try again.'}`)
+      setError(`${errText(err).replace(/\.$/, '')}. ${cleanup ? cleanup.trim() : mode === 'record' ? 'Nothing was saved; the recording is still here, so you can try again.' : 'Nothing was saved; check the file and try again.'}`)
     } finally { setBusy(false) }
   }
   function drop(e: DragEvent) {
@@ -69,46 +87,72 @@ export default function NewMeeting() {
     setFile(new File([demoTranscript], DEMO_NAME, { type: 'application/json' }))
     setTitle(d.title); setWhen(d.scheduled_at.slice(0, 16)); setTz(d.timezone); setDemo(true)
   }
+  function recorded(r: Recording | null) {
+    setRecording(r)
+    if (r && !title.trim()) setTitle(`Recorded meeting, ${new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`)
+  }
+  const missing = !title.trim() ? 'Add a title' : !chosen ? (mode === 'record' ? 'Record something' : 'Add a file') : wrongKind ? 'Choose a matching file' : !consent ? 'Confirm consent' : null
+  const action = mode === 'record' ? 'Transcribe recording' : 'Analyze meeting'
 
   return (
     <>
-      <PageHeader title="New meeting" crumbs={[{ label: 'Meetings', to: '/meetings' }]}
-        sub="Add a recording or a transcript. The tasks it finds wait for your approval before anything changes." />
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <form onSubmit={submit} className="min-w-0 max-w-[640px] space-y-5 rounded-xl border border-rule bg-panel p-5 sm:p-6">
+      <PageHeader title="New meeting" crumbs={[{ label: 'Meetings', to: '/meetings' }]} sub="Record a meeting or upload an existing recording." />
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <form onSubmit={submit} className="min-w-0 max-w-[720px] space-y-6">
           <ErrorBox error={error} />
-          <Field label="Meeting title"><input className={inputCls} required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Sprint review, week 43" /></Field>
-          <Field label="Date and time" hint="Relative deadlines like “by Friday” are worked out from this date.">
-            <input type="datetime-local" className={`${inputCls} sm:max-w-[16rem]`} required value={when} onChange={e => setWhen(e.target.value)} />
-          </Field>
-
-          <div>
-            <span className="mb-1 block text-[13px] font-medium text-ink" id="file-label">Recording or transcript</span>
-            <input id="meeting-file" type="file" required={!file} accept={ACCEPT} aria-labelledby="file-label" className="peer sr-only" onChange={e => { setFile(e.target.files?.[0] ?? null); setDemo(false) }} />
-            <div onDragOver={e => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={drop} data-testid="drop-zone"
-              className={`rounded-lg border border-dashed px-4 py-6 text-[14px] transition-colors peer-focus-visible:border-sky ${over ? 'border-sky bg-sky-soft' : 'border-rule-strong bg-panel-2/50'}`}>
-              {file ? (
-                <div className="flex items-center gap-2">
-                  <FileText size={18} className="shrink-0 text-accent" aria-hidden />
-                  <span className="flex min-w-0 flex-1 items-center gap-2"><span className="truncate font-medium text-ink">{file.name}</span>{demo && <SyntheticTag />}<span className="shrink-0 text-faint">{fmtSize(file.size)}, {isTranscript ? 'transcript' : 'recording'}</span></span>
-                  <Button kind="ghost" size="sm" aria-label="Remove file" icon={<X size={14} />} onClick={() => { setFile(null); setDemo(false) }} />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-1.5 text-center text-slate">
-                  <UploadCloud size={22} className="text-accent" aria-hidden />
-                  <span><label htmlFor="meeting-file" className="cursor-pointer font-medium text-sky hover:underline">Choose a file</label> or drop it here</span>
-                </div>
-              )}
-              <p className={`mt-2 text-[12.5px] text-faint ${file ? '' : 'text-center'}`}>Audio: wav, mp3, m4a, aac, ogg, flac, opus. Video: mp4, mov, mkv, webm. Transcript: json, txt (“Speaker: text” lines), vtt, srt.</p>
-            </div>
-            {!file && (
-              <p className="mt-2 text-[13px] text-slate">
-                No file to hand? <button type="button" onClick={pickDemo} className="font-medium text-sky hover:underline">Use the synthetic demo transcript</button>: a short planning meeting written for testing, with no real people in it.
-              </p>
-            )}
+          <div role="radiogroup" aria-label="How to add the meeting" className="grid gap-2 sm:grid-cols-3">
+            {MODES.map(m => (
+              <button key={m.key} type="button" role="radio" aria-checked={mode === m.key} onClick={() => choose(m.key)}
+                className={`flex items-start gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors ${mode === m.key ? 'border-accent bg-accent-soft' : 'border-rule bg-panel hover:border-rule-strong'}`}>
+                <span className={mode === m.key ? 'text-accent' : 'text-faint'}>{m.icon}</span>
+                <span><span className="block text-[14px] font-semibold text-ink">{m.label}</span><span className="block text-[12.5px] text-slate">{m.detail}</span></span>
+              </button>
+            ))}
           </div>
 
-          <details className="group text-[13.5px]">
+          {mode === 'record' ? (
+            <div>
+              <Recorder value={recording} onChange={recorded} />
+              {stt === 'whisper' && <p className="mt-2 text-[13px] text-slate">Speaker separation is not available with the current transcription provider (local Whisper): every line will be labelled SPEAKER_00 until you name the speaker.</p>}
+              {diag.data && !stt && <p role="alert" className="mt-2 text-[13px] text-cancel">No speech-to-text provider is available on this server, so a recording cannot be transcribed. Upload a transcript instead.</p>}
+            </div>
+          ) : (
+            <div>
+              <span className="mb-1 block text-[13px] font-medium text-ink" id="file-label">{mode === 'transcript' ? 'Transcript file' : 'Recording file'}</span>
+              <input id="meeting-file" type="file" required={!file} accept={mode === 'transcript' ? TRANSCRIPT_ACCEPT : MEDIA_ACCEPT} aria-labelledby="file-label" className="peer sr-only" onChange={e => { setFile(e.target.files?.[0] ?? null); setDemo(false) }} />
+              <div onDragOver={e => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={drop} data-testid="drop-zone"
+                className={`rounded-xl border border-dashed px-4 py-8 text-[14px] transition-colors peer-focus-visible:border-sky ${over ? 'border-sky bg-sky-soft' : 'border-rule-strong bg-panel'}`}>
+                {file ? (
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} className="shrink-0 text-accent" aria-hidden />
+                    <span className="flex min-w-0 flex-1 items-center gap-2"><span className="truncate font-medium text-ink">{file.name}</span>{demo && <SyntheticTag />}<span className="shrink-0 text-faint">{fmtSize(file.size)}</span></span>
+                    <Button kind="ghost" size="sm" aria-label="Remove file" icon={<X size={14} />} onClick={() => { setFile(null); setDemo(false) }} />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5 text-center text-slate">
+                    <UploadCloud size={24} className="text-accent" aria-hidden />
+                    <span><label htmlFor="meeting-file" className="cursor-pointer font-medium text-sky hover:underline">Choose a file</label> or drop it here</span>
+                  </div>
+                )}
+                <p className={`mt-2 text-[12.5px] text-faint ${file ? '' : 'text-center'}`}>{mode === 'transcript'
+                  ? 'JSON, text (“Speaker: text” lines), VTT or SRT.' : 'Audio: wav, mp3, m4a, aac, ogg, flac, opus. Video: mp4, mov, mkv, webm.'}</p>
+              </div>
+              {wrongKind && <p role="alert" className="mt-2 text-[13px] text-cancel">{mode === 'transcript' ? 'That is not a transcript file. Choose Upload recording for audio or video.' : 'That is a transcript file. Choose Upload transcript for it.'}</p>}
+              {mode === 'transcript' && !file && (
+                <p className="mt-2 text-[13px] text-slate">
+                  No file to hand? <button type="button" onClick={pickDemo} className="font-medium text-sky hover:underline">Use the synthetic demo transcript</button>: a short planning meeting written for testing, with no real people in it.
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_16rem]">
+            <Field label="Meeting title"><input className={inputCls} required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Sprint review, week 43" /></Field>
+            <Field label="Date and time" hint="“By Friday” is worked out from this date.">
+              <input type="datetime-local" className={inputCls} required value={when} onChange={e => setWhen(e.target.value)} />
+            </Field>
+          </div>
+          <details className="text-[13.5px]">
             <summary className="cursor-pointer text-slate hover:text-ink">More options</summary>
             <div className="mt-3 sm:max-w-[16rem]">
               <Field label="Meeting time zone" hint="Deadlines are worked out in this time zone.">
@@ -131,25 +175,27 @@ export default function NewMeeting() {
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Button kind="primary" type="submit" className="h-10 px-5 text-[14px]" loading={busy} disabled={!consent || !file || !title.trim()}>{busy ? 'Uploading…' : 'Analyze meeting'}</Button>
-            {!busy && (!consent || !file || !title.trim()) && <span className="text-[13px] text-faint">{!title.trim() ? 'Add a title' : !file ? 'Add a file' : 'Confirm consent'} to continue.</span>}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button kind="primary" type="submit" className="h-11 px-6 text-[14.5px]" loading={busy} disabled={!!missing}>{busy ? 'Uploading…' : action}</Button>
+            {!busy && missing && <span className="text-[13px] text-faint">{missing} to continue.</span>}
           </div>
         </form>
 
-        <aside>
-          <Section title="What happens next">
-            <ol className="space-y-3 text-[13.5px]">
-              {[
-                ['Speech to text', isTranscript ? 'Skipped for transcript files.' : stt === 'sarvam' ? 'Sarvam saaras:v4, with speaker separation.' : stt === 'whisper' ? 'Local Whisper on this machine. Speakers are not separated.' : 'No speech service is available: upload a transcript instead.'],
-                ['Interpretation', llm ? `${llm} describes what was said as ordered events.` : 'No language model is available right now.'],
-                ['Rules and questions', 'The server works out proposed task changes and asks about anything unclear.'],
-                ['Your approval', 'Nothing reaches the task board until you approve it.'],
-              ].map(([t, d], i) => (
-                <li key={t} className="flex gap-3"><span className="tnum w-4 shrink-0 text-faint">{i + 1}</span><span><span className="font-medium text-ink">{t}</span><span className="block text-slate">{d}</span></span></li>))}
-            </ol>
-            <p className="mt-4 text-[12.5px] text-faint">A local model takes a few minutes per meeting. The meeting page shows each step as it finishes.</p>
-          </Section>
+        <aside className="space-y-3 text-[13.5px]">
+          <h2 className="text-[15px] font-semibold text-ink">What happens next</h2>
+          <ol className="space-y-3">
+            {(mode === 'record' ? [
+              ['Transcription', stt === 'sarvam' ? 'Sarvam saaras:v4, with speaker separation.' : stt === 'whisper' ? `Local Whisper (${diag.data?.speech.whisper_local.model ?? 'faster-whisper'}) on this machine. A short clip takes seconds.` : 'No speech service is available.'],
+              ['Read and correct', 'The transcript appears as soon as it is ready. Fix any misheard line.'],
+              ['Analysis', llm ? `When you continue, ${llm} works out decisions and tasks. With a local model this takes a few minutes.` : 'No language model is available right now.'],
+              ['Your approval', 'Nothing reaches the task board until you approve it.'],
+            ] : [
+              ['Speech to text', mode === 'transcript' ? 'Skipped for transcript files.' : stt === 'sarvam' ? 'Sarvam saaras:v4, with speaker separation.' : stt === 'whisper' ? 'Local Whisper on this machine. Speakers are not separated.' : 'No speech service is available: upload a transcript instead.'],
+              ['Analysis', llm ? `${llm} works out decisions and tasks; the transcript shows as soon as it is ready.` : 'No language model is available right now.'],
+              ['Your approval', 'Nothing reaches the task board until you approve it.'],
+            ]).map(([t, d], i) => (
+              <li key={t} className="flex gap-3"><span className="tnum w-4 shrink-0 text-faint">{i + 1}</span><span><span className="font-medium text-ink">{t}</span><span className="block text-slate">{d}</span></span></li>))}
+          </ol>
         </aside>
       </div>
     </>

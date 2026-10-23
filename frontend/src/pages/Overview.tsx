@@ -45,7 +45,7 @@ export default function Overview() {
   const today = todayIso()
   const byId = new Map((data?.meetings ?? []).map(m => [m.id, m]))
   const pending = (data?.changesets ?? []).filter(c => ['NEEDS_CLARIFICATION', 'READY_FOR_REVIEW'].includes(c.state))
-  const stuck = (data?.meetings ?? []).filter(m => ['failed', 'empty'].includes(meetingStatus(m).key))
+  const stuck = (data?.meetings ?? []).filter(m => ['failed', 'empty', 'transcribed'].includes(meetingStatus(m).key))
   // Open work, soonest first; undated tasks last. Blocked tasks say what they wait for.
   const upcoming = (data?.tasks ?? []).filter(t => OPEN_TASK.includes(t.status))
     .sort((a, b) => (a.due_date ?? '9999') < (b.due_date ?? '9999') ? -1 : (a.due_date ?? '9999') > (b.due_date ?? '9999') ? 1 : a.id - b.id)
@@ -82,7 +82,7 @@ export default function Overview() {
                   status={c.open_questions ? { label: 'Needs answers', tone: 'ask' } : { label: 'Ready to approve', tone: 'accent' }} />
               }),
               ...stuck.map(m => <Row key={`m${m.id}`} to={`/meetings/${m.id}`} title={<MeetingName m={m} />}
-                detail={m.processing_error ?? 'No recording or transcript uploaded yet.'} aside={fmtDate(m.scheduled_at)} status={meetingStatus(m)} />),
+                detail={m.processing_error ?? (meetingStatus(m).key === 'transcribed' ? 'Transcript ready. Check it, then start the analysis.' : 'No recording or transcript uploaded yet.')} aside={fmtDate(m.scheduled_at)} status={meetingStatus(m)} />),
             ]}</ListBox>
           </Section>
 

@@ -33,7 +33,30 @@ export function watchPage(page: Page): Watch & { unexpected: () => string[] } {
   return w
 }
 
-export const test = base.extend<{ watch: Watch }>({
+// The presentation intro plays on every page load. Tests that are not about it skip it the way
+// a person would, by pressing its "Skip intro" button as soon as it appears.
+const SKIP_INTRO = () => {
+  const skip = () => {
+    const b = [...document.querySelectorAll('button')].find(x => x.textContent?.trim() === 'Skip intro')
+    if (b) b.click()
+    return !!b
+  }
+  const watchFor = () => {
+    if (skip()) return
+    const obs = new MutationObserver(() => { if (skip()) obs.disconnect() })
+    obs.observe(document.documentElement, { childList: true, subtree: true })
+    setTimeout(() => obs.disconnect(), 10_000)
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watchFor)
+  else watchFor()
+}
+
+export const test = base.extend<{ watch: Watch; keepIntro: boolean }>({
+  keepIntro: [false, { option: true }],
+  page: async ({ page, keepIntro }, use) => {
+    if (!keepIntro) await page.addInitScript(SKIP_INTRO)
+    await use(page)
+  },
   watch: [async ({ page }, use) => {
     const w = watchPage(page)
     await use(w)

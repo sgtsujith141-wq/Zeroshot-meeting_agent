@@ -37,9 +37,28 @@ async def lifespan(app: FastAPI):
         worker = ReminderWorker(engine, s.reminder_poll_seconds)
         worker.start()
     app.state.reminder_worker = worker
+    _prewarm_speech()
     yield
     if worker:
         worker.stop()
+
+
+def _prewarm_speech() -> None:
+    """Load the local Whisper model in the background at start, so the first recording is not
+    delayed by the model load (about 4 s for `small` on the demo laptop). WHISPER_PREWARM=0 skips it."""
+    import os
+    import threading
+
+    from .services.speech import stt, whisper_local
+    if os.getenv("WHISPER_PREWARM", "1") == "0":
+        return
+    try:
+        if stt.choose() != "whisper":
+            return
+    except stt.STTUnavailable:
+        return
+    threading.Thread(target=lambda: whisper_local._model(whisper_local.model_name()), name="whisper-prewarm",
+                     daemon=True).start()
 
 
 app = FastAPI(title="PS 5.3 Meeting-to-Action Tracker Agent", version="0.1.0", lifespan=lifespan)

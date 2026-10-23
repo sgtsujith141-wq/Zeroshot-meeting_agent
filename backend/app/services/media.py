@@ -61,7 +61,8 @@ def probe(path: Path) -> dict:
     if not any(s.get("codec_type") == "audio" for s in streams):
         raise MediaError("no audio stream found")
     dur = float(info.get("format", {}).get("duration") or 0.0)
-    return {"duration_seconds": dur, "format": info.get("format", {}).get("format_name")}
+    return {"duration_seconds": dur, "format": info.get("format", {}).get("format_name"),
+            "has_video": any(s.get("codec_type") == "video" for s in streams)}
 
 
 def normalise_audio(src: Path) -> Path:

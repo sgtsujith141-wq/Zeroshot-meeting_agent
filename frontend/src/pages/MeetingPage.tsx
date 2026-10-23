@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Check, FileText, X as XIcon } from 'lucide-react'
-import { api, ApiError, fmtDate, fmtDateTime } from '../lib/api'
+import { Check, Download, FileText, X as XIcon } from 'lucide-react'
+import { api, ApiError, fmtDate, fmtDateTime, fmtTime } from '../lib/api'
 import type { ChangeSet, Clarification, MeetingDetail, MeetingSummary, Participant, Task } from '../types'
 import {
   Button, Dialog, Drawer, Empty, ErrorBox, Field, Loading, Menu, Notice, PageHeader, SegRef, Section, Status, SyntheticTag, Tabs,
@@ -15,17 +15,16 @@ const STEP: Record<string, string> = { queue: 'Queued', transcribe: 'Speech to t
 
 // ---- processing ----------------------------------------------------------------------------------
 
-/** The four stages people see, each tied to a real backend status and log step. */
-const STAGES = [
-  { label: 'Preparing meeting', status: 'queued', steps: ['queue'] },
-  { label: 'Processing transcript', status: 'transcribing', steps: ['transcribe'] },
-  { label: 'Identifying decisions and tasks', status: 'interpreting', steps: ['interpret'] },
-  { label: 'Preparing results', status: 'writing_minutes', steps: ['minutes', 'changeset'] },
-]
-const STAGE_OF: Record<string, number> = { queue: 0, start: 0, transcribe: 1, interpret: 2, minutes: 3, changeset: 3 }
+type StageState = 'done' | 'active' | 'waiting' | 'failed' | 'todo'
+type Log = MeetingDetail['processing_log']
 
 const secs = (a: string, b: number) => Math.max(0, Math.round((b - Date.parse(a)) / 1000))
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+const lastIndex = (log: Log, pred: (l: Log[number]) => boolean) => { for (let i = log.length - 1; i >= 0; i--) if (pred(log[i])) return i; return -1 }
+const isMedia = (m: { source_type: string | null }) => m.source_type === 'audio' || m.source_type === 'video'
+/** Local Whisper never separates speakers; Sarvam reports whether it did. */
+const undiarized = (m: MeetingDetail) => m.stt_provider === 'whisper-local'
+  || m.processing_log.some(l => l.step === 'transcribe' && /diarized=False/.test(l.detail ?? ''))
 
 function useNow(on: boolean) {
   const [now, setNow] = useState(Date.now())
@@ -33,70 +32,153 @@ function useNow(on: boolean) {
   return now
 }
 
-function ProcessingView({ m, onRetry }: { m: MeetingDetail; onRetry: () => void }) {
+/** The five stages people see, each derived from the backend status and its processing log:
+ *  the log records the end of every step, so a stage starts when the previous entry was written. */
+function stages(m: MeetingDetail, now: number): { label: string; state: StageState; detail: string }[] {
+  const log = m.processing_log
+  const st = m.processing_status
+  const media = isMedia(m)
+  const has = m.segments.length > 0
+  const q = lastIndex(log, l => l.step === 'queue')
+  const run = q >= 0 ? log.slice(q) : log
+  const ok = (step: string) => run.find(l => l.step === step && l.status === 'ok')
+  const fail = st === 'failed' ? run.find(l => l.status !== 'ok') ?? { step: (m.processing_error ?? '').split(':')[0], at: '', status: 'error', detail: null } : undefined
+  const before = (step: string) => { const i = run.findIndex(l => l.step === step && l.status === 'ok'); return i > 0 ? run[i - 1].at : undefined }
+  const took = (step: string) => { const e = ok(step), s = before(step); return e && s ? `Done in ${clock(secs(s, Date.parse(e.at)))}` : 'Done' }
+  const running = () => (log.length ? `Running for ${clock(secs(log[log.length - 1].at, now))}` : 'Running')
+  const t = lastIndex(log, l => l.step === 'transcribe' && l.status === 'ok')
+  const tq = t >= 0 ? lastIndex(log.slice(0, t), l => l.step === 'queue') : -1
+
+  const transcription: [StageState, string] = !media ? ['done', 'Not needed: a transcript was uploaded']
+    : has && t >= 0 ? ['done', `${tq >= 0 ? `Done in ${clock(secs(log[tq].at, Date.parse(log[t].at)))}` : 'Done'}${m.stt_provider ? `, ${m.stt_provider}` : ''}`]
+    : st === 'transcribing' ? ['active', running()]
+    : st === 'queued' ? ['active', 'Waiting to start']
+    : fail && ['transcribe', 'start', 'recover'].includes(fail.step) ? ['failed', 'Stopped here'] : ['todo', '']
+  const extract: [StageState, string] = st === 'interpreting' ? ['active', running()]
+    : st === 'queued' && has ? ['active', 'Waiting to start']
+    : st === 'transcribed' ? ['waiting', 'Waiting for you to start the analysis']
+    : fail?.step === 'interpret' || (fail?.step === 'recover' && has && !ok('interpret')) ? ['failed', 'Stopped here']
+    : ok('interpret') ? ['done', took('interpret')] : ['todo', '']
+  const results: [StageState, string] = st === 'writing_minutes' ? ['active', running()]
+    : fail?.step === 'minutes' || (fail?.step === 'recover' && !!ok('interpret')) ? ['failed', 'Stopped here']
+    : ok('changeset') ? ['done', took('minutes')] : ['todo', '']
+  return [
+    { label: media ? 'Audio received' : 'Transcript received', state: 'done',
+      detail: media ? `${m.file_name ?? 'Recording'}${m.duration_seconds ? `, ${clock(Math.round(m.duration_seconds))} long` : ''}` : m.file_name ?? 'Transcript file' },
+    { label: media ? 'Transcription' : 'Transcription', state: transcription[0], detail: transcription[1] },
+    { label: 'Transcript ready', state: has ? 'done' : 'todo', detail: has ? `${plural(m.segments.length, 'line')}, shown below` : '' },
+    { label: 'Extracting decisions and actions', state: extract[0], detail: extract[1] },
+    { label: 'Preparing meeting results', state: results[0], detail: results[1] },
+  ]
+}
+
+function transcriptText(m: MeetingDetail) {
+  const names = Object.fromEntries(m.participants.map(p => [p.speaker_label, p.display_name]))
+  const head = [`${m.title}`, `${fmtDate(m.scheduled_at)} (${m.timezone})`, m.stt_provider ? `Transcribed by ${m.stt_provider}` : 'Uploaded transcript',
+    undiarized(m) ? 'Speaker separation was not available with this transcription provider.' : '', '']
+  return [...head, ...m.segments.map(s => {
+    const who = names[s.speaker_label] && names[s.speaker_label] !== s.speaker_label ? `${names[s.speaker_label]} (${s.speaker_label})` : s.speaker_label
+    return `[${fmtTime(s.start_seconds)}${s.end_seconds != null ? `–${fmtTime(s.end_seconds)}` : ''}] ${who}: ${s.text}`
+  })].filter((l, i) => l || i === 4).join('\n') + '\n'
+}
+function downloadTranscript(m: MeetingDetail) {
+  const url = URL.createObjectURL(new Blob([transcriptText(m)], { type: 'text/plain;charset=utf-8' }))
+  const a = Object.assign(document.createElement('a'), { href: url, download: `${m.title.replace(/[^\w.-]+/g, '_')}-transcript.txt` })
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+/** The recording and its transcript, available as soon as transcription finished, whatever
+ *  happens to the analysis afterwards. Lines can be corrected while nothing is running. */
+function TranscriptPanel({ m, audioUrl, editable, onSaved }: { m: MeetingDetail; audioUrl: string | null; editable: boolean; onSaved: () => void }) {
+  const toast = useToast()
+  const audio = useRef<HTMLAudioElement>(null)
+  const names = Object.fromEntries(m.participants.map(p => [p.speaker_label, p.display_name]))
+  async function edit(key: string, text: string) {
+    try { await api.patch(`/api/meetings/${m.id}/segments/${key}`, { text }); toast('ok', `${key} corrected.`); onSaved(); return true }
+    catch (e) { toast('error', errText(e)); return false }
+  }
+  return (
+    <section aria-labelledby="transcript-h" className="anim-rise rounded-xl border border-rule bg-panel">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rule px-5 py-3.5">
+        <div>
+          <h2 id="transcript-h" className="text-[15px] font-semibold text-ink">Transcript <span className="tnum font-normal text-faint">{m.segments.length}</span></h2>
+          <p className="text-[12.5px] text-slate">{m.stt_provider ? `Transcribed by ${m.stt_provider}. ` : ''}Timestamps are per segment, not per word.{editable ? ' Correct any misheard line before the analysis.' : ''}</p>
+        </div>
+        <Button size="sm" icon={<Download size={14} />} onClick={() => downloadTranscript(m)}>Download transcript</Button>
+      </div>
+      <div className="px-5 py-3">
+        {undiarized(m) && <p className="mb-2 text-[13px] text-ask">Speaker separation is not available with the current transcription provider. Every line is labelled {m.segments[0]?.speaker_label ?? 'SPEAKER_00'}; name the speaker under Speakers after the analysis.</p>}
+        {audioUrl && <audio ref={audio} controls preload="metadata" src={audioUrl} className="mb-2 h-10 w-full" aria-label="Meeting recording" />}
+        <Transcript segments={m.segments} names={names} audio={audio} hasAudio={!!audioUrl} onEdit={editable ? edit : undefined} />
+      </div>
+    </section>
+  )
+}
+
+function ProcessingView({ m, audioUrl, onAnalyze, onRetranscribe, onSaved, busy }: {
+  m: MeetingDetail; audioUrl: string | null; onAnalyze: () => void; onRetranscribe: () => void; onSaved: () => void; busy: boolean
+}) {
   const working = BUSY.includes(m.processing_status)
   const now = useNow(working)
-  // Only this run's entries: everything from the latest "queue" entry on.
-  const q = m.processing_log.map(l => l.step).lastIndexOf('queue')
-  const run = q >= 0 ? m.processing_log.slice(q) : m.processing_log
-  const failedAt = !working ? run.find(l => l.status !== 'ok') : undefined
-  const ok = run.filter(l => l.status === 'ok')
-  const active = working ? STAGES.findIndex(s => s.status === m.processing_status)
-    : failedAt?.step === 'recover' ? Math.min(3, Math.max(0, ...ok.map(l => STAGE_OF[l.step] ?? 0)) + 1) : STAGE_OF[failedAt?.step ?? 'start'] ?? 0
-  const startedAt = run[0]?.at
-  const transcriptFile = !(m.source_type === 'audio' || m.source_type === 'video')
-  // A stage starts when the previous step was logged; its duration is the gap between entries.
-  const stageTimes = STAGES.map((s, i) => {
-    const end = [...ok].reverse().find(l => s.steps.includes(l.step))
-    const prev = [...ok].reverse().find(l => (STAGE_OF[l.step] ?? -1) < i)
-    return { end: end?.at, start: prev?.at }
-  })
+  const steps = stages(m, now)
+  const has = m.segments.length > 0
+  const ready = m.processing_status === 'transcribed'
+  const failed = m.processing_status === 'failed'
+  const q = lastIndex(m.processing_log, l => l.step === 'queue')
+  const startedAt = q >= 0 ? m.processing_log[q].at : undefined
+  const transcribing = working && !has
   const sample = useLoad(() => api.get<MeetingSummary[]>('/api/meetings'), [m.id])
   const earlier = (sample.data ?? []).filter(x => x.id !== m.id && isSynthetic(x) && x.processing_status === 'ready_for_review' && x.change_set && x.created_at < m.created_at)
   const pick = earlier.find(x => x.title === m.title) ?? earlier.find(x => x.change_set?.state === 'APPLIED') ?? earlier[0]
+  const silent = ready && !has // transcribed, but nothing was recognised as speech
+  const title = transcribing ? 'Transcribing your recording' : working ? 'Analyzing your meeting' : silent ? 'No speech recognised' : ready ? 'Transcript ready'
+    : failed && has ? 'Transcription complete; AI analysis unavailable.' : failed ? (isMedia(m) ? 'Transcription failed' : 'Analysis stopped') : 'Not processed'
+  const sub = transcribing ? 'The words appear below as soon as speech-to-text finishes.'
+    : working ? 'The transcript is below. Decisions and tasks follow when the analysis finishes; this page updates by itself.'
+    : silent ? 'The recording was transcribed, but no speech was found in it. Check that the right microphone is selected and not muted, then record again.'
+    : ready ? 'Read the transcript below and correct anything misheard. Then start the analysis to find decisions and tasks.'
+    : failed ? m.processing_error : ''
 
   return (
-    <div className="anim-rise mx-auto max-w-[620px] py-4">
-      <div className="rounded-xl border border-rule bg-panel px-6 py-6 sm:px-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-[17px] font-semibold text-ink">{working ? 'Analyzing your meeting' : 'Analysis stopped'}</h2>
+    <div className="space-y-6">
+      <div className="anim-rise rounded-xl border border-rule bg-panel px-5 py-5 sm:px-7">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 className={`text-[17px] font-semibold ${failed ? 'text-cancel' : 'text-ink'}`}>{title}</h2>
           {startedAt && working && <span className="tnum text-[13px] text-slate"><span className="sr-only">Elapsed </span>{clock(secs(startedAt, now))}</span>}
         </div>
-        <p className="mt-1 text-[13.5px] text-slate">{working ? 'This page updates by itself as each step finishes. With a local model this usually takes a few minutes.' : m.processing_error}</p>
-
-        <ol className="mt-6" aria-label="Analysis steps">
-          {STAGES.map((s, i) => {
-            const state = i < active ? 'done' : i === active ? (working ? 'active' : 'failed') : 'todo'
-            const t = stageTimes[i]
-            const detail = state === 'done' ? (i === 1 && transcriptFile ? `Transcript imported, ${plural(m.segments.length, 'line')}` : t.end && t.start ? `Done in ${clock(secs(t.start, Date.parse(t.end)))}` : 'Done')
-              : state === 'active' ? (t.start ? `Running for ${clock(secs(t.start, now))}` : 'Running')
-              : state === 'failed' ? 'Stopped here' : ''
-            return (
-              <li key={s.label} data-state={state} className="relative flex gap-4 pb-6 last:pb-0">
-                {i < STAGES.length - 1 && <span aria-hidden className={`absolute left-[11px] top-7 h-[calc(100%-1.5rem)] w-px ${state === 'done' ? 'bg-accent' : 'bg-rule-strong'}`} />}
-                <span aria-hidden className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
-                  state === 'done' ? 'border-accent bg-accent text-on-accent' : state === 'active' ? 'border-accent bg-accent-soft' : state === 'failed' ? 'border-cancel bg-cancel-soft text-cancel' : 'border-rule-strong bg-panel'}`}>
-                  {state === 'done' ? <Check size={13} strokeWidth={2.6} /> : state === 'active' ? <span className="anim-pulse h-2 w-2 rounded-full bg-accent" /> : state === 'failed' ? <XIcon size={13} strokeWidth={2.6} /> : null}
-                </span>
-                <div className="min-w-0 pt-0.5">
-                  <div className={`text-[14.5px] ${state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>{s.label}<span className="sr-only">: {state === 'todo' ? 'not started' : state}</span></div>
-                  {detail && <div className={`tnum text-[13px] ${state === 'failed' ? 'text-cancel' : 'text-slate'}`}>{detail}</div>}
-                </div>
-              </li>
-            )
-          })}
+        {sub && <p className="mt-1 max-w-[70ch] text-[13.5px] text-slate">{sub}</p>}
+        <ol className="mt-5 grid gap-y-4 sm:grid-cols-5 sm:gap-x-3" aria-label="Analysis steps">
+          {steps.map((s, i) => (
+            <li key={s.label} data-state={s.state} className="relative flex gap-3 sm:block">
+              {i < steps.length - 1 && <span aria-hidden className={`absolute left-[11px] top-7 h-[calc(100%-0.25rem)] w-px sm:left-7 sm:top-[11px] sm:h-px sm:w-[calc(100%-1.25rem)] ${s.state === 'done' ? 'bg-accent' : 'bg-rule-strong'}`} />}
+              <span aria-hidden className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+                s.state === 'done' ? 'border-accent bg-accent text-on-accent' : s.state === 'active' ? 'border-accent bg-accent-soft' : s.state === 'waiting' ? 'border-accent bg-panel' : s.state === 'failed' ? 'border-cancel bg-cancel-soft text-cancel' : 'border-rule-strong bg-panel'}`}>
+                {s.state === 'done' ? <Check size={13} strokeWidth={2.6} /> : s.state === 'active' ? <span className="anim-pulse h-2 w-2 rounded-full bg-accent" /> : s.state === 'waiting' ? <span className="h-2 w-2 rounded-full bg-accent" /> : s.state === 'failed' ? <XIcon size={13} strokeWidth={2.6} /> : null}
+              </span>
+              <div className="min-w-0 sm:mt-2.5 sm:pr-2">
+                <div className={`text-[14px] leading-snug ${s.state === 'todo' ? 'text-faint' : 'font-medium text-ink'}`}>{s.label}<span className="sr-only">: {s.state === 'todo' ? 'not started' : s.state}</span></div>
+                {s.detail && <div className={`tnum mt-0.5 text-[12.5px] ${s.state === 'failed' ? 'text-cancel' : 'text-slate'}`}>{s.detail}</div>}
+              </div>
+            </li>
+          ))}
         </ol>
-        {!working && <div className="mt-6 flex flex-wrap gap-2">
-          {m.segments.length > 0 && <Button kind="primary" onClick={onRetry}>Try again</Button>}
-          <Link to="/meetings/new" className="inline-flex h-8 items-center rounded-md border border-rule-strong px-3 text-[13.5px] font-medium hover:bg-panel-2">Upload a different file</Link>
-        </div>}
+        {!working && (
+          <div className="mt-6 flex flex-wrap gap-2">
+            {has && <Button kind="primary" className="h-10 px-5 text-[14px]" loading={busy} onClick={onAnalyze}>{ready ? 'Analyze meeting' : 'Retry analysis'}</Button>}
+            {!has && isMedia(m) && failed && <Button kind="primary" loading={busy} onClick={onRetranscribe}>Try transcription again</Button>}
+            {!has && <Link to="/meetings/new" className="inline-flex h-8 items-center rounded-md border border-rule-strong px-3 text-[13.5px] font-medium hover:bg-panel-2">{silent ? 'Record again' : 'Upload a different file'}</Link>}
+          </div>
+        )}
       </div>
-      {working && pick && (
-        <p className="mt-4 px-1 text-[13px] text-slate">
+      {working && has && pick && (
+        <p className="px-1 text-[13px] text-slate">
           Taking too long for the time you have? <Link to={`/meetings/${pick.id}`} className="font-medium text-sky hover:underline">Open a sample processed earlier</Link>: “{pick.title}”,
           a separate synthetic meeting analysed on {fmtDate(pick.created_at)}. It is not the result of this upload, which keeps running here.
         </p>
       )}
+      {has ? <TranscriptPanel m={m} audioUrl={audioUrl} editable={!working} onSaved={onSaved} />
+        : isMedia(m) && audioUrl && <audio controls preload="metadata" src={audioUrl} className="h-10 w-full" aria-label="Meeting recording" />}
     </div>
   )
 }
@@ -203,8 +285,15 @@ export default function MeetingPage() {
     </Dialog>
   </>
 
-  if (working || (m.processing_status === 'failed' && !hasResults)) {
-    return <>{header}<ProcessingView m={m} onRetry={() => setConfirm('rerun')} />{dialogs}</>
+  async function start(steps: string[], note: string) {
+    setBusy(true)
+    try { await api.post(`/api/meetings/${mid}/process`, { steps }); toast('info', note); await reload() }
+    catch (e) { toast('error', errText(e)) } finally { setBusy(false) }
+  }
+  if (working || (m.processing_status === 'transcribed' && !m.change_set) || (m.processing_status === 'failed' && !hasResults)) {
+    return <>{header}<ProcessingView m={m} audioUrl={audioUrl} busy={busy} onSaved={() => void reload()}
+      onAnalyze={() => start(['interpret', 'minutes'], 'Analysis started. The transcript stays available while it runs.')}
+      onRetranscribe={() => start(['transcribe'], 'Transcription started again.')} />{dialogs}</>
   }
 
   const planned = actions.data?.planned ?? []
