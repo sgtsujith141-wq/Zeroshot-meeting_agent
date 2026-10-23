@@ -1,31 +1,121 @@
 @import "tailwindcss";
-@import "@fontsource/public-sans/400.css";
-@import "@fontsource/public-sans/500.css";
-@import "@fontsource/public-sans/600.css";
-@import "@fontsource/public-sans/700.css";
+@import "@fontsource/instrument-sans/400.css";
+@import "@fontsource/instrument-sans/500.css";
+@import "@fontsource/instrument-sans/600.css";
+@import "@fontsource/instrument-sans/700.css";
 @import "@fontsource/source-serif-4/400.css";
 @import "@fontsource/source-serif-4/400-italic.css";
 
-@theme {
-  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
-  --color-paper: #F3F5F7;
-  --color-panel: #FFFFFF;
-  --color-ink: #1C2430;
-  --color-slate: #5B6676;
-  --color-rule: #D9DEE4;
-  --color-create: #0F6E6E;
-  --color-create-soft: #E3F1F0;
-  --color-update: #2F5DA8;
-  --color-update-soft: #E6EDF8;
-  --color-ask: #9A5B00;
-  --color-ask-soft: #FBF0DE;
-  --color-cancel: #B4233C;
-  --color-cancel-soft: #F8E5E8;
+/* Theme tokens. Dark is the default; [data-theme="light"] is the accessible alternative.
+   Class names (bg-panel, text-slate, border-rule …) stay stable across themes. */
+:root {
+  color-scheme: dark;
+  --bg: #0D1015;
+  --surface: #12161C;
+  --surface-2: #171C24;
+  --surface-3: #1D232D;
+  --line: #232A35;
+  --line-strong: #303946;
+  --text: #E6EAF0;
+  --muted: #9EA7B4;
+  --faint: #6C7584;
+  --accent: #44CDBD;
+  --accent-hover: #63DDCF;
+  --on-accent: #052522;
+  --accent-soft: rgb(68 205 189 / 0.12);
+  --violet: #B19CF9;   --violet-soft: rgb(177 156 249 / 0.13);
+  --sky: #78B4FF;      --sky-soft: rgb(120 180 255 / 0.13);
+  --rose: #F27A86;     --rose-soft: rgb(242 122 134 / 0.13);
+  --green: #6BCF90;    --green-soft: rgb(107 207 144 / 0.13);
+  --amber: #E8B75D;    --amber-soft: rgb(232 183 93 / 0.13);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --ring: rgb(120 180 255 / 0.7);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F4F5F7;
+  --surface: #FFFFFF;
+  --surface-2: #FAFAFB;
+  --surface-3: #EEF0F3;
+  --line: #E2E5EA;
+  --line-strong: #CBD1D9;
+  --text: #141920;
+  --muted: #535C69;
+  --faint: #828A96;
+  --accent: #0F766E;
+  --accent-hover: #0C5F59;
+  --on-accent: #FFFFFF;
+  --accent-soft: rgb(15 118 110 / 0.09);
+  --violet: #6A4BD6;   --violet-soft: rgb(106 75 214 / 0.09);
+  --sky: #1D62C8;      --sky-soft: rgb(29 98 200 / 0.09);
+  --rose: #C0283C;     --rose-soft: rgb(192 40 60 / 0.08);
+  --green: #1D7B45;    --green-soft: rgb(29 123 69 / 0.09);
+  --amber: #9A5B00;    --amber-soft: rgb(154 91 0 / 0.10);
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 8px 24px -14px rgb(16 24 40 / 0.18);
+  --ring: rgb(29 98 200 / 0.6);
 }
 
-html { background: var(--color-paper); color: var(--color-ink); }
-body { font-family: var(--font-sans); font-size: 15px; line-height: 1.5; }
-:focus-visible { outline: 2px solid var(--color-update); outline-offset: 2px; border-radius: 4px; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
-.spoken { font-family: var(--font-serif); font-size: 15.5px; line-height: 1.6; }
+@theme inline {
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --color-paper: var(--bg);
+  --color-panel: var(--surface);
+  --color-panel-2: var(--surface-2);
+  --color-panel-3: var(--surface-3);
+  --color-rule: var(--line);
+  --color-rule-strong: var(--line-strong);
+  --color-ink: var(--text);
+  --color-slate: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-create: var(--accent);
+  --color-create-soft: var(--accent-soft);
+  --color-update: var(--sky);
+  --color-update-soft: var(--sky-soft);
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-ask: var(--amber);
+  --color-ask-soft: var(--amber-soft);
+  --color-cancel: var(--rose);
+  --color-cancel-soft: var(--rose-soft);
+  --color-done: var(--green);
+  --color-done-soft: var(--green-soft);
+}
+
+html { background: var(--bg); color: var(--text); }
+body {
+  font-family: var(--font-sans); font-size: 14.5px; line-height: 1.5; letter-spacing: -0.003em;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-feature-settings: "ss01", "cv11";
+}
+::selection { background: rgb(68 205 189 / 0.28); }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 6px; }
+.spoken { font-family: var(--font-serif); font-size: 15.5px; line-height: 1.6; letter-spacing: 0; }
+.tnum { font-variant-numeric: tabular-nums; }
+.shadow-soft { box-shadow: var(--shadow); }
+input, select, textarea { color: inherit; }
+input[type="date"], input[type="datetime-local"] { color-scheme: inherit; }
+
+/* Thin, quiet scrollbars inside panels */
+.scroll-quiet { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
+/* Real-operation indicators only (no decorative motion) */
+@keyframes ps-spin { to { transform: rotate(360deg); } }
+@keyframes ps-shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
+@keyframes ps-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes ps-drawer { from { transform: translateX(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ps-flash { 0% { background: rgb(232 183 93 / 0.28); } 100% { background: transparent; } }
+.anim-spin { animation: ps-spin 0.8s linear infinite; }
+.anim-in { animation: ps-in 0.16s ease-out both; }
+.anim-drawer { animation: ps-drawer 0.18s ease-out both; }
+.seg-flash { animation: ps-flash 1.8s ease-out both; }
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0px, var(--surface-3) 120px, var(--surface-2) 240px);
+  background-size: 200px 100%; animation: ps-shimmer 1.3s linear infinite; border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

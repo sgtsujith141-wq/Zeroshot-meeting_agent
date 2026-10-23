@@ -69,6 +69,9 @@ Then:
 - Approve:
   - "Approval is pinned to the exact version I reviewed. The server refuses a stale or
     unanswered proposal, even if the button were hacked on."
+  - If another meeting was approved after this proposal was checked, the review shows
+    *The task board changed* and offers *Re-check against the current board* (no model
+    call, answers kept) before Approve is enabled again.
 
 ## 3:15 Next meeting changes existing work (75 s): meeting 2 review (already applied)
 

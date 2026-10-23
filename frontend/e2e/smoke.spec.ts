@@ -7,7 +7,7 @@ async function signIn(page: Page) {
   await page.goto('/')
   await page.getByLabel('Organiser token').fill(TOKEN)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { name: 'Meetings' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible()
 }
 
 async function shot(page: Page, name: string) {
@@ -33,7 +33,7 @@ test('every main view loads from the live API without errors', async ({ page }) 
     ['Calendar & reminders', 'Calendar and reminders', '04-follow-up'], ['Next agenda', 'Next meeting agenda', '05-agenda'],
     ['Ask past meetings', 'Ask past meetings', '06-memory'], ['Diagnostics', 'Diagnostics', '07-diagnostics'],
   ]) {
-    await page.getByRole('link', { name: link, exact: true }).click()
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: new RegExp(`^${link}`) }).click()
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
     await expect(page.getByRole('alert')).toHaveCount(0)
     await shot(page, name)
@@ -43,7 +43,8 @@ test('every main view loads from the live API without errors', async ({ page }) 
 
 test('new meeting form enforces consent before upload', async ({ page }) => {
   await signIn(page)
-  await page.getByRole('link', { name: 'Add a meeting' }).click()
+  await page.getByRole('link', { name: 'New meeting' }).first().click()
+  await expect(page.getByRole('heading', { name: 'Add a meeting', exact: true })).toBeVisible()
   await expect(page.getByText('Recording or transcribing people without their agreement is not allowed')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Upload and process' })).toBeDisabled()
   await shot(page, '08-new-meeting')

@@ -37,6 +37,7 @@ export interface ProposalItem {
   clarification_ids: string[]; excluded?: boolean
   before: { title: string; owner: string | null; due_date: string | null; status: string; depends_on: string[] } | null
   plan?: { calendar_event: boolean; in_app_reminder_at: string | null }
+  reported_complete?: boolean
 }
 
 export interface Clarification {
@@ -53,6 +54,7 @@ export interface ChangeSet {
     open_questions: { text: string; segment_ids: string[] }[]
     warnings: { kind: string; segment_ids: string[]; detail: string }[]
     rejected_events: { reason: string }[]
+    uncovered_segment_ids?: string[]
   }
   ledger_snapshot: { code: string; revision: number }[]
   proposal_hash: string; applied_result: { created?: Record<string, string>; updated?: string[]; cancelled?: string[]; completed?: string[] }
