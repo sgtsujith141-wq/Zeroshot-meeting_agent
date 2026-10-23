@@ -11,8 +11,16 @@ processed by then, show them instead and say so.
 - Meeting 3 processed, not approved.
 - The audio meeting processed: a real recording if available, else the synthetic TTS
   check (meeting 4).
-- Diagnostics page loaded. It shows which LLM and STT are live.
+- Diagnostics page loaded (More → Diagnostics). It shows which LLM and STT are live.
 - Never run a first-ever provider call live on stage.
+- Meetings 3 and 4 were proposed before the latest rule changes:
+  - Approving meeting 3 as stored is refused with *This proposal changed on the server*.
+    *Re-check against the current board* then lists the new TASK-2 deadline and priority.
+  - On meeting 4, the first answer re-runs the rules. *What changed after your last
+    action* then shows "Finish the login screen" getting owner Kavya, from "Kavya, please
+    finish the login screen by friday". SPEAKER_00 stays unmapped.
+
+  Both are expected, and both are good demo moments.
 
 ---
 
@@ -53,17 +61,20 @@ TTS)".**
 Then:
 - Show minutes and decisions with quotes, and "How this meeting was interpreted": the
   model only emits typed events, each citing a segment.
-- Consent: show the attestation on *Add a meeting* and the data-flow notice.
+- Consent: show the attestation on *Meetings → New meeting* and the data-flow notice.
 
-## 2:00 The review screen (75 s): Review changes → meeting 1
+## 2:00 The approval screen (75 s): Approvals → meeting 1
 
 - Point to the ranked question: **"Who is SPEAKER_03?"**
   - SPEAKER_03 said "I can update the release notes by Friday".
   - We never treat a diarization label as a person.
   - Map it to *Meera*: the proposal re-checks instantly, without calling the model.
-- Point to *Run regression tests*:
+- Point to the *Proposed changes* table: each row says what approval will write, with the
+  current and proposed values. Open *Run regression tests*:
   - it waits for the refund API, from "once the refund API is ready";
-  - "How this was worked out" shows the numbered steps.
+  - the drawer shows the quotes and "How this was worked out" as numbered steps.
+- After answering, the notice *What changed after your last action* lists every item the
+  answer affected, so nothing changes silently.
 - *Look into the flaky login test* stays a **suggestion**, because "maybe someone
   should…" is not a commitment.
 - Approve:
@@ -84,19 +95,20 @@ Then:
 - **Honest failure:** "The refund API is done and merged" was not recognised as a
   completion by the 8B local model. The engine refused to create a duplicate and asked
   "is this TASK-1?". We marked it done on the board ourselves.
-- Task board → TASK-2 drawer:
+- Tasks → TASK-2 drawer:
   - evidence from both meetings;
   - revision 1 → 2 history;
   - no longer blocked once TASK-1 is done.
 
 ## 4:30 Follow-up and memory (60 s)
 
-- *Calendar & reminders*:
-  - due dates, the `.ics` export ("an export, not a calendar sync");
-  - an in-app reminder that actually fired from the background worker.
-- *Next agenda*: overdue, blocked, due-soon tasks and open questions, each linked to its
-  source meeting.
-- *Ask past meetings*: "Who owns the regression tests and when are they due?" The
+- *Follow-ups*:
+  - *Agenda*: overdue, blocked, due-soon tasks and open questions, each linked to its
+    source meeting;
+  - *Calendar*: due dates and the `.ics` export ("an export, not a calendar sync");
+  - *Reminders* and *Notifications*: an in-app reminder that actually fired from the
+    background worker. Email shows *Not sent* while no SMTP server is configured.
+- *Ask AI*: "Who owns the regression tests and when are they due?" The
   answer cites the transcript lines and shows the *current approved state* separately
   (Samiksha, 26 Oct). That differs from what was first said (Priya).
 - Meeting 3 (synthetic Kannada/Hindi-English text):

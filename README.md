@@ -59,20 +59,24 @@ The reminder worker runs inside the backend process, polling every
 
 ## Using it (about 3-minute demo path)
 
-1. **Add a meeting.** Confirm consent and upload a transcript (`demo/*.json`, `.txt`,
-   `.vtt`, `.srt`) or a recording (needs `SARVAM_API_KEY`). Or use the CLI:
+1. **Meetings → New meeting.** Confirm consent and upload a transcript (`demo/*.json`, `.txt`,
+   `.vtt`, `.srt`) or a recording (needs `SARVAM_API_KEY`, or the optional local Whisper).
+   Or use the CLI:
    `backend/.venv/bin/python scripts/api.py ingest demo/synthetic_meeting_1_planning.json`
-2. **Review changes.** Answer the ranked questions. For example, "Who is SPEAKER_03?"
-   is answered by mapping the speaker, which re-checks everything without a model call.
-   Then edit or exclude items and approve. Approval is pinned to exactly what you
-   reviewed.
-3. **Task board.** See the approved tasks, blocked ones waiting for prerequisites, and
+2. **Approvals.** A table lists every proposed change with its current and proposed
+   values, computed by the same rules approval applies. Answer the questions (for
+   example, "Who is SPEAKER_03?" is answered by mapping the speaker, which re-checks
+   everything without a model call), open a row for its evidence and history, edit or
+   exclude items, then approve. After every action the page lists what changed.
+   Approval is pinned to exactly what you reviewed.
+3. **Tasks.** The approved tasks as a list (or a board), with dependencies, and
    provenance and revision history in the task drawer.
-4. **Later meeting.** Ingest `demo/synthetic_meeting_2_followup.json`. The review shows
-   **before → after patches to the existing tasks**, and asks before cancelling
-   anything ambiguous.
-5. **Calendar & reminders**, **Next agenda**, **Ask past meetings** (grounded answers
-   with citations), and **Diagnostics** (live services, evaluation runs).
+4. **Later meeting.** Ingest `demo/synthetic_meeting_2_followup.json`. The approval shows
+   **before → after changes to the existing tasks**, and asks before cancelling anything
+   ambiguous.
+5. **Follow-ups** (next-meeting agenda, calendar export, reminders, notifications),
+   **Ask AI** (grounded answers with citations), and **Diagnostics** in the More menu
+   (live services, evaluation runs).
 
 The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 
@@ -80,7 +84,11 @@ The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 
 ```bash
 cd backend && .venv/bin/pytest -q          # offline tests: fold, dates, identity, API flows, providers, metrics
-cd frontend && E2E_TOKEN=<token> npx playwright test   # UI smoke tests against a running server
+cd frontend && npx playwright test e2e/flows --grep-invert "upload → processing|ask with the model|model is down|diagnostics live test"
+                                           # 87 browser tests incl. accessibility, on disposable sandboxes (about 5 min)
+cd frontend && npx playwright test e2e/flows/slow.spec.ts   # 4 live-model flows (Ollama; about 7 min)
+cd frontend && E2E_TOKEN=<token> npx playwright test e2e/smoke.spec.ts   # read-only checks of a running server
+cd frontend && SCREENS=1 VW=390 npx playwright test e2e/screens.spec.ts  # viewport screenshots + overflow/clipping checks
 backend/.venv/bin/python evaluation/run_eval.py --provider ollama --model qwen3:8b   # fixture experiment
 backend/.venv/bin/python evaluation/run_eval.py --fixtures evaluation/fixtures/holdout_v2.json \
     --keys evaluation/annotations/holdout_v2_match_keys.json                         # fresh holdout
@@ -90,8 +98,15 @@ backend/.venv/bin/python evaluation/real_eval.py init|export|report ...         
 
 - API integration tests use recorded LLM JSON (provider `test-fixture`). They test the
   workflow, not the model.
+- Browser tests (`frontend/e2e/flows`) start their own backend per test, with a copy of the
+  demo data (or an empty database) and a random token. They never touch the demo server or
+  its data, and they fail on any page error, console error or unexpected API error.
+  - They need `backend/.venv` and a processed demo database. A pinned copy in
+    `frontend/e2e/.demo-snapshot/` (git-ignored) is used when present.
+  - Every control and its result are listed in
+    [`docs/UX_FUNCTIONAL_AUDIT.md`](docs/UX_FUNCTIONAL_AUDIT.md).
 - Model quality is measured only by the evaluation runs in `evaluation/results/`.
-- CI (GitHub Actions) runs the offline tests and the frontend build.
+- CI (GitHub Actions) runs the offline tests and the frontend build. The browser tests need the local demo data and model, so they run locally.
 
 **Synthetic fixture results** (12 cases; same model per run; pre-registered rubric):
 

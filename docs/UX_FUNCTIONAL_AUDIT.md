@@ -319,4 +319,294 @@ Other findings, not counted as failures:
 
 ## Part B: rebuilt UI
 
-Filled in after the rebuild. See the next commit.
+### What changed structurally
+
+| Before (10deb16) | After |
+|---|---|
+| Seven sidebar destinations, plus a duplicate "New meeting" button, plus a theme toggle and sign-out in the sidebar | Six destinations (Overview, Meetings, Approvals, Tasks, Ask AI, Follow-ups). Diagnostics, theme and sign-out are in a secondary **More** menu. "New meeting" is the primary action of Meetings and Overview only |
+| Overview: four card panels plus an activity feed and a meetings table | One queue: pending approvals, meetings requiring attention, upcoming tasks, blocked work, recent meetings. Compact rows, each opening where you act |
+| No meetings list (meetings only reachable from Overview) | **Meetings**: a searchable table with one plain status per meeting |
+| Meeting page: a column of eight panels | Workspace: transcript beside four tabs (Summary, Actions, Speakers, Processing). Re-run and Delete sit behind a menu with confirmation dialogs |
+| Review: one large card per proposed item, field diffs inside cards | **Approvals**: one table (Task, Change, Current, Proposed, Status) built from the same rules approval applies. Details, evidence, questions, edits and history are in a drawer |
+| Task board: kanban only | **Tasks**: a list by default (owner, due, status, priority, dependencies, meeting). The board is an optional view. `?task=` opens the drawer from anywhere |
+| Ask past meetings: one query box, one result panel | **Ask AI**: a chat with five clearly different outcomes (answer, not supported, nothing found, model unavailable, request failed) |
+| Calendar & reminders and Next agenda as two pages of panels | **Follow-ups**: one page with tabs (Agenda, Calendar, Reminders, Notifications) |
+| Chips, tinted panels and shadows on every element | Status shown as a dot and a word, hairline dividers, no cards. One accent colour, used for the primary action |
+
+### Routes
+
+| Route | Screen |
+|---|---|
+| `/` | Overview |
+| `/meetings` | Meetings |
+| `/meetings/new` | New meeting |
+| `/meetings/:id` | Meeting workspace (`#s12` focuses a line) |
+| `/approvals` | Approvals |
+| `/approvals/:meetingId` | One meeting's proposed changes |
+| `/tasks` | Tasks (`?view=board`, `?task=TASK-3`) |
+| `/ask` | Ask AI |
+| `/follow-ups` | Follow-ups (`?tab=calendar` / `reminders` / `notifications`) |
+| `/diagnostics` | Diagnostics (from the More menu) |
+| `/review`, `/review/:id`, `/memory`, `/follow-up`, `/agenda` | Redirect to the new pages, so old links keep working |
+| `*` | Overview |
+
+That is 10 routes, 5 redirects and the catch-all, all of them audited.
+
+### Test runs (rebuilt UI)
+
+All in a real browser against real sandboxed backends. The fixture fails every test on page
+errors, console errors and undeclared API failures.
+
+| Suite | Tests | Result |
+|---|---|---|
+| `flows/shell.spec.ts` (sign-in, session, navigation, menus, redirects, phone menu, errors, empty database) | 13 | 13 pass |
+| `flows/approvals.spec.ts` | 25 | 25 pass |
+| `flows/questions.spec.ts` (six question types, from recorded test events) | 7 | 7 pass |
+| `flows/meetings.spec.ts` (Overview, Meetings, workspace, upload form) | 15 | 15 pass |
+| `flows/tasks-ask-followups.spec.ts` | 15 | 15 pass |
+| `flows/links.spec.ts` (remaining links, references, orphaned-answer actions, keyboard focus containment) | 9 | 9 pass |
+| `flows/a11y.spec.ts` (axe-core, WCAG 2.1 A and AA: sign-in and 16 routes in both themes, plus the drawers and dialogs) | 3 | 3 pass: 0 violations |
+| `flows/slow.spec.ts` (live local model: upload, processing, re-run, promote, approve; grounded answer; model down; live test) | 4 | 4 pass |
+| `smoke.spec.ts` against the live demo server, read-only | 4 | 4 pass |
+| `screens.spec.ts`: every route at 1440, 1024 and 390 px, plus light theme at 1440 and 390 | 5 runs | 5 pass: no horizontal overflow, no control cut off |
+
+That is 91 flow tests and 4 smoke tests, all passing. The fast set (87 tests) ran in a
+single run of 283 s; the live-model set ran in 5.6 min. Backend: 107 tests pass. The backend is
+unchanged by this rebuild.
+
+**Data used.** Sandboxes copy a pinned snapshot of the demo data
+(`frontend/e2e/.demo-snapshot`, git-ignored): 4 synthetic meetings, meetings 1 and 2
+approved. This keeps results stable while people use the live demo. During this audit a
+"TEST" meeting was uploaded through the live server by hand; it is not in the snapshot.
+
+`questions.spec.ts` seeds one extra sandbox meeting. It uses recorded model events (provider
+`test-fixture`, the same mechanism the backend tests use), so the real reconciliation rules
+raise the question types that no stored proposal contains. Only that sandbox is affected.
+
+### Control inventory and results
+
+Each control was exercised in the browser, and its effect was checked through the API where
+it writes. The Test column names the spec file.
+
+#### Sign in, session, shell
+
+| ID | Control | Expected | Result | API / state | Test |
+|---|---|---|---|---|---|
+| B01 | Organiser token input | Masked; required | PASS | — | shell |
+| B02 | Sign in | Disabled when empty; wrong token refused and not kept; valid token opens Overview | PASS | `GET /api/meetings` | shell |
+| B03 | Sign-in error | Shows the server's reason | PASS | 401 detail | shell |
+| B04 | "You were signed out" notice | After a rotated or expired token, says why; clears on the next sign-in | PASS | 401 → sign-in | shell |
+| B05 | Deep link while signed out | Sign-in; no API call made | PASS | none | shell |
+| B06 | API without a token | 401 everywhere | PASS | 401 | shell |
+| B07 | Brand link | Overview | PASS | route | links |
+| B08–B13 | Overview, Meetings, Approvals, Tasks, Ask AI, Follow-ups | Each opens its page and is marked current | PASS | routes | shell |
+| B14 | Sidebar counts | Equal the API ("2 waiting", "3 open") | PASS | `/api/changesets`, `/api/tasks` | shell |
+| B15 | More menu | Opens; arrow keys move; Esc closes and returns focus | PASS | — | shell |
+| B16 | More → Diagnostics | Opens Diagnostics | PASS | route | shell |
+| B17 | More → Switch theme | Switches; persists after reload | PASS | `localStorage` | shell |
+| B18 | More → Sign out | Clears the token | PASS | `sessionStorage` | shell |
+| B19 | Unknown route | Overview | PASS | redirect | shell |
+| B20 | Five earlier addresses | Redirect to the new pages | PASS | redirects | shell |
+| B21 | Phone menu | Opens; choosing a page closes it | PASS | — | shell |
+| B22 | Phone menu: Diagnostics, theme, sign out | Each works and closes the menu | PASS | — | shell, links |
+| B23 | Toast "Dismiss" | Removes the toast | PASS | — | shell |
+| B24 | "Try again" after a failed load | Recovers once the server answers | PASS | retry | shell |
+| B25 | Unreachable server | Says the server cannot be reached | PASS | network error | shell |
+
+#### Overview and Meetings
+
+| ID | Control | Expected | Result | API / state | Test |
+|---|---|---|---|---|---|
+| B26 | "New meeting" (Overview) | Upload form | PASS | route | meetings |
+| B27 | Pending-approval rows | Match the API; open the approval | PASS | `/api/changesets` | meetings |
+| B28 | "All approvals" | Approvals | PASS | route | links |
+| B29 | Upcoming-task rows | Open the task drawer | PASS | `/tasks?task=` | meetings |
+| B30 | "All tasks" | Tasks | PASS | route | links |
+| B31 | Meetings-requiring-attention rows | Listed; open the meeting | PASS | `/api/meetings` | meetings |
+| B32 | Blocked-work rows | Listed with the prerequisite; open the task drawer | PASS | `/api/tasks` | meetings |
+| B33 | Recent-meeting rows | Open the meeting | PASS | route | meetings |
+| B34 | "All meetings" | Meetings | PASS | route | links |
+| B35 | Empty database: "Add a meeting" | Upload form | PASS | — | links |
+| B36 | "New meeting" (Meetings) | Upload form | PASS | route | links |
+| B37 | Meeting search | Narrows by title | PASS | — | meetings |
+| B38 | Status filter | Narrows by status | PASS | — | meetings |
+| B39 | Meeting row / title | Opens the workspace | PASS | route | meetings |
+
+#### Meeting workspace and New meeting
+
+| ID | Control | Expected | Result | API / state | Test |
+|---|---|---|---|---|---|
+| B40 | Breadcrumb "Meetings" | Meetings | PASS | route | links |
+| B41 | "Review proposed changes" / "View approval" | Opens the approval | PASS | route | meetings, links |
+| B42 | More → Re-run analysis | Dialog; Cancel does nothing; refused with the reason when approved; runs and refreshes when not | PASS | `POST /process` | meetings, slow |
+| B43 | More → Delete meeting | "Keep it" does nothing; refused when approved tasks depend on it; otherwise deleted | PASS | `DELETE /api/meetings/{id}` | meetings |
+| B44 | Tabs | Click and arrow keys | PASS | — | meetings |
+| B45 | Transcript tab (phone) | Shows the transcript | PASS | — | meetings |
+| B46 | Minutes references | Focus the line | PASS | — | meetings |
+| B47 | Decision references | Focus the line | PASS | — | links |
+| B48 | Actions tab and its approval link | Lists actions with status; link opens the approval | PASS | `GET changeset` | meetings, links |
+| B49 | Speaker name + Confirm / Rename | Stored; acknowledged | PASS | `PUT participants` | meetings |
+| B50 | Show / Hide events | Toggles | PASS | — | meetings, links |
+| B51 | Event references | Focus the line | PASS | — | meetings |
+| B52 | Prepare summary / Prepare again | New summary version | PASS | `POST /summary` | meetings |
+| B53 | Copy and mark approved | Copied; approved; nothing sent | PASS | `POST /summaries/{id}/approve` | meetings |
+| B54 | Email recipients + "Approve and send" | Without SMTP: "Approved for email, NOT sent" | PASS | state `approved`, error "NOT sent" | meetings |
+| B55 | Transcript timestamp | Plays from that point | PASS | `<audio>` `currentTime` | meetings |
+| B56 | `#segment` link | Focuses the line | PASS | — | meetings |
+| B57 | Processing notice and self-refresh | Shows the step; refreshes until done, also after a re-run | PASS | poll `GET /api/meetings/{id}` | meetings, slow |
+| B58 | Breadcrumb (New meeting) | Meetings | PASS | route | links |
+| B59–B61 | Title, date and time, time zone | Sent exactly as typed | PASS | `POST /api/meetings` body | meetings |
+| B62 | Choose a file | Selects it | PASS | — | meetings |
+| B63 | Drop a file | Selects it | PASS | — | meetings |
+| B64 | Remove file | Clears it | PASS | — | meetings |
+| B65 | Consent checkbox | Required before upload | PASS | — | meetings |
+| B66 | Upload and process | Valid file → processing → proposal. Refused file → reason shown and **nothing left behind** | PASS | create, upload, cleanup `DELETE` | meetings, slow |
+
+#### Approvals
+
+| ID | Control | Expected | Result | API / state | Test |
+|---|---|---|---|---|---|
+| B67 | Waiting / All tabs | Match the API | PASS | `/api/changesets` | approvals |
+| B68 | Approval row / title | Opens it | PASS | route | approvals |
+| B69 | Breadcrumb "Approvals" | Approvals | PASS | route | links |
+| B70 | "Transcript" | Drawer with the full transcript; Esc closes | PASS | — | approvals |
+| B71 | "Open meeting" | Workspace | PASS | route | links |
+| B72 | Change-table row / task title | Opens the details drawer | PASS | — | approvals |
+| B73 | "Show N items that will not change the board" | Reveals them | PASS | — | approvals |
+| B74 | "Same as TASK-x" | Stores `link` | PASS | `PATCH answers` | approvals |
+| B75 | "It is a new task" | Stores `new` | PASS | PATCH | approvals |
+| B76 | Speaker name + "Map speaker" | Stores the identity (explicit only) | PASS | `PUT participants` | approvals |
+| B77 | Speaker "Leave unassigned" | Stored; if the server stops using it, surfaced (B93–B95) | PASS | PATCH | approvals |
+| B78 | Owner + "Set owner" | Stores `set_owner` | PASS | PATCH | approvals |
+| B79 | Owner "Leave unassigned" | Stores `unassigned` | PASS | PATCH | approvals |
+| B80 | "Yes, X accepted" | Stores `accepted`; X becomes owner | PASS | PATCH | questions |
+| B81 | Deadline candidates | Store `set_due` | PASS | PATCH | approvals |
+| B82 | Due date + "Use this date" | Stores the typed date | PASS | PATCH | approvals |
+| B83 | "No deadline" | Stores `no_deadline` | PASS | PATCH | approvals |
+| B84 | "Cancel the whole task" / "Keep the task" | Stored; cancel shows "Cancel task: To do → Cancelled" | PASS | PATCH | questions |
+| B85 | "It is cancelled" / "Keep it" | Stored with their effect | PASS | PATCH | questions |
+| B86 | "Yes, that task" / "A new task" / "Drop it" | Stored with their effect | PASS | PATCH | questions |
+| B87 | "Not a team action" / "It is a genuine action" | Stored with their effect | PASS | PATCH | questions |
+| B88 | "Remove this dependency" | Stored; asked only once the item is known to be new | PASS | PATCH | questions |
+| B89 | Question "Details of …" | Opens that item's drawer | PASS | — | links |
+| B90 | Question evidence | Opens the transcript at the line | PASS | — | links |
+| B91 | "Your answers" → "Change answer" | Removes the answer | PASS | PATCH `null` | approvals |
+| B92 | "What changed after your last action" + Dismiss | Lists every changed item and question after any action | PASS | diff of versions | approvals |
+| B93 | Orphaned answer: "Leave it unassigned" | Applies the earlier choice; clears the stale answer | PASS | PATCH items + answers | approvals |
+| B94 | Orphaned answer: "Keep the current proposal" | Accepts the proposal; clears the stale answer | PASS | PATCH | approvals |
+| B95 | Orphaned answer: "Make X the owner" / "Use date" / "Remove the due date" | Each applies the earlier answer | PASS | PATCH | links |
+| B96 | Re-check after a board change | Snapshots the current board; answers kept | PASS | `POST recompute` | approvals |
+| B97 | Re-check after a 409 conflict | Recoverable; changes listed | PASS | approve 409 → recompute | approvals |
+| B98 | Drawer: Edit / Save edits / Cancel | Owner, due and priority stored; title only for new tasks | PASS | PATCH items | approvals |
+| B99 | Drawer: Exclude / Include again | Stored; the item's question disappears and returns | PASS | PATCH | approvals |
+| B100 | Drawer: Remove proposed dependency | Stored | PASS | PATCH | approvals |
+| B101 | Drawer: "Make it a task" | A suggestion becomes a proposed task with an owner; approval creates it | PASS | PATCH `promote`; approve | slow |
+| B102 | Drawer: "Show … in transcript" | Transcript at the line | PASS | — | approvals |
+| B103 | Drawer: "Change answer" | Works for items whose questions are hidden because the item is excluded | PASS | PATCH | questions |
+| B104 | Drawer: step references | Transcript at the line | PASS | — | links |
+| B105 | Drawer: Close / Esc | Close | PASS | — | approvals |
+| B106 | Decision checkboxes | Stored; the box follows the click immediately | PASS | PATCH decisions | approvals |
+| B107 | Decision references | Transcript at the line | PASS | — | links |
+| B108 | Checks references | Transcript at the line | PASS | — | links |
+| B109 | "Reject all" dialog | Esc and "Keep reviewing" cancel; confirming rejects with the reason; page becomes read-only | PASS | `POST /reject` | approvals |
+| B110 | Approve | Applies; the page then re-reads the server and shows the recorded result | PASS | `POST /approve` | approvals |
+| B111 | Approve gating | Disabled, with the reason, for open questions, a stale board or orphaned answers | PASS | — | approvals |
+| B112 | Double-click / repeated approval | One request; replay creates nothing | PASS | idempotent replay | approvals |
+| B113 | Slow save | Other choices disabled; one request | PASS | PATCH | approvals |
+| B114 | "Open tasks" (applied) | Tasks | PASS | route | links |
+| B115 | Applied view | Before / After from the task revisions approval recorded | PASS | `GET /api/tasks/{code}` | approvals |
+
+#### Tasks, Ask AI, Follow-ups, Diagnostics
+
+| ID | Control | Expected | Result | API / state | Test |
+|---|---|---|---|---|---|
+| B116 | List / Board tabs | Switch; kept in the address | PASS | `?view=board` | tasks-ask-followups |
+| B117 | Task search | Narrows | PASS | — | tasks-ask-followups |
+| B118 | Owner filter | Narrows | PASS | — | tasks-ask-followups |
+| B119 | Status filter | Narrows (open by default) | PASS | — | tasks-ask-followups |
+| B120 | "Clear" | Resets | PASS | — | tasks-ask-followups |
+| B121 | Task row / title | Opens the drawer | PASS | `?task=` | tasks-ask-followups |
+| B122 | Board card | Opens the drawer | PASS | — | tasks-ask-followups |
+| B123 | `?task=` link | Opens the drawer directly | PASS | — | tasks-ask-followups |
+| B124 | "Move to" | Stored with a new revision | PASS | `PATCH /api/tasks/{code}` | tasks-ask-followups |
+| B125 | Unfinished prerequisite | Start and finish disabled with the reason; server refuses too | PASS | 409 | tasks-ask-followups |
+| B126 | Change made elsewhere | Refused, explained, and the drawer shows the current revision | PASS | 409 → reload | tasks-ask-followups |
+| B127 | "Download .ics" | Valid calendar entry | PASS | `event.ics` | tasks-ask-followups |
+| B128 | Evidence links | Meeting at the line | PASS | route | tasks-ask-followups |
+| B129 | Origin link | Source meeting | PASS | route | tasks-ask-followups |
+| B130 | Drawer Close / Esc | Close | PASS | — | tasks-ask-followups |
+| B131 | Empty: "Go to Approvals" | Approvals | PASS | route | links |
+| B132 | Question box (Enter sends) | Sends | PASS | `POST /api/memory/query` | tasks-ask-followups |
+| B133 | "Ask" | Sends | PASS | same | tasks-ask-followups |
+| B134 | "Write an answer with the model" | Off: passages only | PASS | `use_llm` | tasks-ask-followups |
+| B135 | Outcome: answer from the records | Labelled; only cited passages; citations open the line | PASS | `llm_grounded`, found | slow |
+| B136 | Outcome: not supported by the records | Labelled as not an answer; closest passages shown | PASS* | `llm_grounded`, not found | tasks-ask-followups |
+| B137 | Outcome: nothing found | Labelled | PASS | `retrieval` | tasks-ask-followups |
+| B138 | Outcome: model unavailable | Labelled; passages are not an answer | PASS | `extractive` + `llm_error` | slow |
+| B139 | Outcome: request failed + "Try again" | Labelled differently from "not found"; retry works | PASS | 500 → retry | tasks-ask-followups |
+| B140 | Source links | Meeting at the line | PASS | route | tasks-ask-followups |
+| B141 | "Current approved state" links | Task drawer | PASS | route | links |
+| B142 | Follow-ups tabs | Switch; kept in the address | PASS | `?tab=` | tasks-ask-followups |
+| B143 | Agenda "Download as Markdown" | Downloads | PASS | `agenda.md` | tasks-ask-followups |
+| B144 | Agenda task, meeting and approval links | Open them | PASS | routes | tasks-ask-followups, links |
+| B145 | "Export calendar (.ics)" | Every due date | PASS | `calendar.ics` | tasks-ask-followups |
+| B146 | Calendar task links | Task drawer | PASS | route | links |
+| B147 | "New reminder" dialog (task, when, channel, recipients, Draft, Cancel) | Drafts; Cancel does nothing; email without recipients is refused inside the dialog | PASS | `POST /api/reminders` | tasks-ask-followups, links |
+| B148 | Reminder "Approve" | Draft → scheduled | PASS | `POST /approve` | tasks-ask-followups |
+| B149 | Reminder "Cancel" | → cancelled | PASS | `POST /cancel` | tasks-ask-followups |
+| B150 | "Deliver due reminders now" | In-app delivered; email without SMTP shown as "Not sent" with the reason | PASS | `POST /run-due` | tasks-ask-followups |
+| B151 | Reminder task links | Task drawer | PASS | route | links |
+| B152 | Notification "Mark read" | Stored | PASS | `POST /read` | tasks-ask-followups |
+| B153 | Diagnostics "Run live test" | Reports the real result | PASS | `POST /llm-smoke` | slow |
+| B154 | Diagnostics content | Services and evaluation table, evenly aligned | PASS | `/api/diagnostics` | shell, smoke |
+
+\* **B136.** Whether the live model declines to answer depends on its output, so this test
+drives the UI with a response in exactly the shape `memory.answer` returns for that branch
+(`mode: llm_grounded`, `found: false`). The test checks the labelling; it does not claim the
+model produced that outcome.
+
+For B135, the live run of qwen3:8b answered "Samiksha owns the regression tests, and they
+are due on 2026-10-26", citing five valid passages.
+
+### Totals for the rebuilt UI
+
+| Result | Controls |
+|---|---|
+| PASS | **154** of 154 (B01–B154) |
+| FAIL | 0 |
+| BLOCKED | 0 (the six blocked at 10deb16 are now tested through recorded test events) |
+| NOT IMPLEMENTED | 0 (deadline and blocked rows now open the task) |
+
+### Defects fixed
+
+| # | Severity | Defect | Fix | Verified by |
+|---|---|---|---|---|
+| D1 | **P0** | The review showed changes approval does not apply (renaming existing tasks) and hid ones it does (a priority set by linking or re-checking: TASK-3 Medium → High, TASK-2 none → High) | `lib/changes.ts` builds the table from the same rules `changesets._apply` follows. Existing tasks show their board title and cannot be renamed in the review. Dependencies that approval keeps are explained | approvals: "approving applies exactly…", "P0: after a re-check…" |
+| D2 | **P0** | An organiser answer the server stopped using after a re-check was dropped silently, and the item got an owner anyway | Answers that no longer match a question are listed with their consequence and blocking approval. One click applies the earlier answer, or keeps the proposal | approvals: two "P0" tests; links |
+| D3 | **P0** | An unrelated answer silently changed another item's owner | After every action, the page lists each item and question that changed between versions | approvals: "P0: an unrelated answer…" |
+| D4 | P1 | A refused upload left an empty meeting | The meeting created for the upload is deleted when the upload is refused, and the message says nothing was saved | meetings: two refusal tests |
+| D5 | P2 | The task drawer kept a stale revision after a 409 | The drawer reloads and explains what changed | tasks-ask-followups |
+| D6 | P2 | An expired token returned to sign-in silently | Sign-in says why the session ended | shell |
+| D7 | P2 | Deadline and blocked rows on Overview did not open the task | Rows open the task drawer | meetings |
+| D8 | P1 | **Found while testing the rebuild, also present at 10deb16:** after "Re-run analysis" the meeting page claimed to refresh by itself but never did | Polling is re-armed after every load. The regression test fails on the old code and passes on the fix | meetings: "keeps refreshing…"; slow |
+| D9 | P2 | Found while testing the rebuild: the phone menu stayed open after switching theme | Every phone-menu item closes the menu | links |
+| D10 | P2 | Found in visual QA: on phones, the meeting tabs and the reminder "Cancel" buttons were cut off | Tabs wrap; dates wrap. `screens.spec.ts` now fails on any control outside the viewport | screens at 390 px |
+| D11 | P2 | Found by the accessibility check: secondary ("faint") text was below the 4.5:1 WCAG AA contrast minimum (3.6–4.4:1 dark, 3.1–3.7:1 light) | Faint tokens changed to `#8A929C` (dark) and `#626A74` (light); at least 4.9:1 and 4.6:1 on every surface they sit on | a11y: 0 violations |
+
+### Visual QA
+
+- **Widths and themes:** real viewport screenshots (not full-page) of every route at 1440,
+  1024 and 390 px, plus light theme at 1440 and 390. Long pages are also captured scrolled
+  to the end, which shows the sticky approval bar where it really sits.
+- **Checks on every route:** no horizontal page overflow, and no button, link or field
+  outside the viewport.
+- **Inspected by eye:** the approval table and bar (all widths), the drawers, the phone
+  menu, the tab wrapping, the light theme, and keyboard focus on menus and tabs.
+- **Accessibility:** axe-core with the WCAG 2.1 A and AA rules finds no violations on any
+  route, in either theme, or in the drawers and dialogs. Its first run found only
+  colour-contrast issues, fixed as D11. Keyboard: menus (Enter, arrows, Esc returning
+  focus), tabs (arrows), and dialogs and drawers (Esc, focus kept inside) are tested.
+  A screen-reader walkthrough was not done.
+- **Screenshot locations** (local, not committed):
+  - before (10deb16): the full-page captures from the previous sprint;
+  - after: `final-ux/` in the session scratchpad.
