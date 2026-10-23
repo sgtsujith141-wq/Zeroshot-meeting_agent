@@ -7,8 +7,9 @@ and goes to the grounded LLM path in memory.answer.
 
 Matching is deliberately conservative:
 - an explicit task code (TASK-3) always wins;
-- otherwise a task matches only if at least half of its title's content words appear in the
-  question;
+- otherwise a task matches if at least half of its title's content words appear in the
+  question, or if every content word of the question appears in its title ("Who owns testing?"
+  matches "Run regression tests");
 - several matching tasks produce a clarifying question instead of a guess;
 - no match means "not a task-state question" and falls through to the grounded path.
 """
@@ -38,7 +39,7 @@ PERSON_WORK = re.compile(r"\b(working on|assigned|own|owns|responsible for|tasks
 # Words that express the question itself rather than name a task.
 INTENT = content_tokens("who whose owns owner responsible assigned when date deadline due pending blocked blocking "
                         "waiting stuck open tasks still left remaining doing handling working charge what which "
-                        "there any status done finished")
+                        "there any status done finished currently current now presently right actually")
 MIN_SHARE = 0.5
 
 
@@ -79,9 +80,10 @@ def _resolve(question: str, tasks: list[Task]) -> list[Task]:
     for t in tasks:
         title = content_tokens(t.title)
         if title:
-            share = len(words & title) / len(title)
-            if share >= MIN_SHARE:
-                scored.append((share, t))
+            common = words & title
+            share = len(common) / len(title)
+            if share >= MIN_SHARE or (common and common == words):
+                scored.append((share, t))  # ranked by how much of the title the question names
     if not scored:
         return []
     best = max(s for s, _ in scored)

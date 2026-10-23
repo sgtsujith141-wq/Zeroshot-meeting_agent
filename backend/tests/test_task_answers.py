@@ -74,3 +74,12 @@ def test_discussion_questions_still_use_the_grounded_path(client, llm):
 def test_no_tasks_means_no_fast_answer(client, llm):
     r = ask(client, "What is still pending?", use_llm=False)
     assert r["mode"] == "retrieval" and r["found"] is False
+
+
+def test_a_short_question_naming_part_of_one_title_is_answered_from_the_records(client, llm):
+    tasks = setup(client, llm)
+    test_task = tasks["Test authentication API"]
+    r = ask(client, "Who currently owns testing and when is it due?")  # "testing" names only one title
+    assert r["mode"] == "task_records" and r["found"] is True
+    assert f"owned by {test_task['owner']}" in r["answer"]
+    assert "memory_answer" not in llm.calls
