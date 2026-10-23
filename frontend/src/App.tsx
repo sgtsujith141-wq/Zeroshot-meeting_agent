@@ -172,9 +172,9 @@ function RedirectReview() {
   return <Navigate to={`/approvals/${meetingId}`} replace />
 }
 
-/** /?present=1 opens the presentation intro; nothing else ever shows it. */
+/** The presentation intro plays on every full page load, including a refresh. */
 function wantsIntro() {
-  try { return new URLSearchParams(location.search).get('present') === '1' } catch { return false }
+  return true
 }
 
 export default function App() {
