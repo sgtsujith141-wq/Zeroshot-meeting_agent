@@ -94,6 +94,21 @@ export function Section({ title, count, actions, children, className = '', id }:
   )
 }
 
+/** A white list container with hairline rows; rows are usually links. */
+export function ListBox({ children, empty, label }: { children: ReactNode[]; empty: ReactNode; label?: string }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-rule bg-panel">
+      {children.length ? <ul aria-label={label} className="divide-y divide-rule">{children}</ul>
+        : <p className="px-4 py-3.5 text-[13.5px] text-faint">{empty}</p>}
+    </div>
+  )
+}
+
+/** Marks data that was made up for testing or demonstration. */
+export function SyntheticTag() {
+  return <span title="Synthetic test data, not a real meeting" className="shrink-0 rounded border border-rule-strong px-1 text-[10.5px] font-semibold leading-[16px] tracking-[0.06em] text-slate">SYNTHETIC</span>
+}
+
 // ---- states ----------------------------------------------------------------------------------
 
 export function Skeleton({ className = '' }: { className?: string }) {
@@ -133,7 +148,7 @@ const TEXT: Record<Tone, string> = {
   accent: 'text-accent', sky: 'text-sky', violet: 'text-violet', ask: 'text-ask', cancel: 'text-cancel', done: 'text-done', neutral: 'text-slate',
 }
 const DOT: Record<Tone, string> = {
-  accent: 'bg-accent', sky: 'bg-sky', violet: 'bg-violet', ask: 'bg-ask', cancel: 'bg-cancel', done: 'bg-done', neutral: 'bg-faint',
+  accent: 'bg-accent', sky: 'bg-sky', violet: 'bg-violet', ask: 'bg-ask-dot', cancel: 'bg-cancel-dot', done: 'bg-done-dot', neutral: 'bg-rule-strong',
 }
 const BAR: Record<Tone, string> = {
   accent: 'border-l-accent', sky: 'border-l-sky', violet: 'border-l-violet', ask: 'border-l-ask', cancel: 'border-l-cancel', done: 'border-l-done', neutral: 'border-l-rule-strong',
@@ -205,9 +220,9 @@ function withId(node: ReactNode, id: string): ReactNode {
 export const inputCls = 'h-8 w-full rounded-md border border-rule-strong bg-panel px-2.5 text-[14px] text-ink placeholder:text-faint focus:border-sky focus:outline-none focus-visible:outline-none focus:ring-2 focus:ring-sky/25'
 
 /** Popover menu for secondary actions. Closes on Esc, outside click and selection. */
-export function Menu({ label, items, align = 'right', icon }: {
-  label: string; align?: 'left' | 'right'; icon?: ReactNode
-  items: ({ label: string; onSelect: () => void; danger?: boolean; disabled?: boolean } | null)[]
+export function Menu({ label, items, align = 'right', icon, up, kind = 'secondary' }: {
+  label: string; align?: 'left' | 'right'; icon?: ReactNode; up?: boolean; kind?: 'secondary' | 'ghost'
+  items: ({ label: string; onSelect: () => void; danger?: boolean; disabled?: boolean; icon?: ReactNode } | null)[]
 }) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -229,13 +244,14 @@ export function Menu({ label, items, align = 'right', icon }: {
   }
   return (
     <div ref={box} className="relative" onKeyDown={nav}>
-      <Button ref={btn} kind="secondary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} icon={icon ?? <MoreHorizontal size={15} />}>{label}</Button>
+      <Button ref={btn} kind={kind} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} icon={icon ?? <MoreHorizontal size={15} />}
+        className={kind === 'ghost' ? 'w-full justify-start' : ''}>{label}</Button>
       {open && (
-        <div role="menu" aria-label={label} className={`shadow-pop absolute z-40 mt-1 min-w-[12rem] rounded-md border border-rule-strong bg-panel py-1 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+        <div role="menu" aria-label={label} className={`shadow-pop absolute z-40 min-w-[12rem] rounded-md border border-rule-strong bg-panel py-1 ${up ? 'bottom-full mb-1' : 'mt-1'} ${align === 'right' ? 'right-0' : 'left-0'}`}>
           {items.filter(Boolean).map(it => (
             <button key={it!.label} type="button" role="menuitem" disabled={it!.disabled}
-              className={`block w-full px-3 py-1.5 text-left text-[13.5px] hover:bg-panel-2 focus:bg-panel-2 focus:outline-none disabled:text-faint ${it!.danger ? 'text-cancel' : 'text-ink'}`}
-              onClick={() => { setOpen(false); it!.onSelect() }}>{it!.label}</button>
+              className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[13.5px] hover:bg-panel-2 focus:bg-panel-2 focus:outline-none disabled:text-faint ${it!.danger ? 'text-cancel' : 'text-ink'}`}
+              onClick={() => { setOpen(false); it!.onSelect() }}>{it!.icon && <span className="text-faint">{it!.icon}</span>}{it!.label}</button>
           ))}
         </div>
       )}

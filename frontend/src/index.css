@@ -2,63 +2,63 @@
 @import "@fontsource/instrument-sans/400.css";
 @import "@fontsource/instrument-sans/500.css";
 @import "@fontsource/instrument-sans/600.css";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
 @import "@fontsource/source-serif-4/400.css";
 
-/* Theme tokens. Dark is the default; [data-theme="light"] is the alternative.
-   Neutral surfaces, one accent for the primary action, status colours used as text and
-   small dots rather than tinted blocks. Class names stay stable across themes. */
+/* Sapphire & Ivory. Light is the default; [data-theme="dark"] is the coordinated alternative.
+   The specified palette is used as given for surfaces, accents, borders and status dots. Text
+   uses slightly deeper shades of the same hues where the specified value falls below the WCAG AA
+   4.5:1 ratio on the ivory canvas (secondary, success, warning, error). */
 :root {
-  color-scheme: dark;
-  --bg: #0F1114;
-  --surface: #14171B;
-  --surface-2: #191D22;
-  --surface-3: #20252B;
-  --line: #24292F;
-  --line-strong: #323840;
-  --text: #E8EAED;
-  --muted: #A2A9B2;
-  --faint: #8A929C;
-  --accent: #5FBFB1;
-  --accent-hover: #79CFC3;
-  --on-accent: #06211E;
-  --accent-soft: rgb(95 191 177 / 0.12);
-  --violet: #B3A2F2;   --violet-soft: rgb(179 162 242 / 0.12);
-  --sky: #82B6F5;      --sky-soft: rgb(130 182 245 / 0.12);
-  --rose: #EE8590;     --rose-soft: rgb(238 133 144 / 0.12);
-  --green: #7CCB98;    --green-soft: rgb(124 203 152 / 0.12);
-  --amber: #E2B866;    --amber-soft: rgb(226 184 102 / 0.12);
-  --shadow: 0 16px 40px -20px rgb(0 0 0 / 0.7);
-  --ring: rgb(130 182 245 / 0.75);
-  --flash: rgb(226 184 102 / 0.24);
-}
-[data-theme="light"] {
   color-scheme: light;
-  --bg: #F7F8FA;
+  --bg: #F7F8FC;
   --surface: #FFFFFF;
-  --surface-2: #F3F4F6;
-  --surface-3: #E9EBEF;
-  --line: #E3E6EA;
-  --line-strong: #CCD1D8;
-  --text: #15191E;
-  --muted: #4F5864;
-  --faint: #626A74;
-  --accent: #0E7368;
-  --accent-hover: #0B5D54;
+  --surface-2: #F1F4FA;
+  --surface-3: #E9EDF5;
+  --line: #E5EAF3;
+  --line-strong: #D4DBE7;
+  --text: #19243A;
+  --muted: #5F6C82;
+  --faint: #5F6C82;
+  --accent: #315BE8;
+  --accent-hover: #2449C7;
+  --accent-soft: #EDF2FF;
   --on-accent: #FFFFFF;
-  --accent-soft: rgb(14 115 104 / 0.08);
-  --violet: #6247C9;   --violet-soft: rgb(98 71 201 / 0.08);
-  --sky: #1F5FBF;      --sky-soft: rgb(31 95 191 / 0.08);
-  --rose: #B8293C;     --rose-soft: rgb(184 41 60 / 0.07);
-  --green: #1C7443;    --green-soft: rgb(28 116 67 / 0.08);
-  --amber: #925800;    --amber-soft: rgb(146 88 0 / 0.09);
-  --shadow: 0 16px 40px -22px rgb(16 24 40 / 0.35);
-  --ring: rgb(31 95 191 / 0.6);
-  --flash: rgb(146 88 0 / 0.14);
+  --success: #1F7A5E;  --success-dot: #258568;  --success-soft: #E8F4EF;
+  --warning: #94601A;  --warning-dot: #B77A29;  --warning-soft: #FBF3E6;
+  --error: #B3424A;    --error-dot: #C34D52;    --error-soft: #FBEDEE;
+  --shadow: 0 1px 2px rgb(25 36 58 / 0.05), 0 12px 32px -16px rgb(25 36 58 / 0.18);
+  --ring: rgb(49 91 232 / 0.55);
+  --flash: rgb(49 91 232 / 0.12);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1320;
+  --surface: #141A29;
+  --surface-2: #1B2234;
+  --surface-3: #222B40;
+  --line: #232C40;
+  --line-strong: #2F3A52;
+  --text: #E7EBF3;
+  --muted: #9AA6BC;
+  --faint: #93A0B6;
+  --accent: #7C9CFF;
+  --accent-hover: #9AB3FF;
+  --accent-soft: rgb(124 156 255 / 0.13);
+  --on-accent: #0B1226;
+  --success: #5FC29E;  --success-dot: #5FC29E;  --success-soft: rgb(95 194 158 / 0.12);
+  --warning: #E0A85A;  --warning-dot: #E0A85A;  --warning-soft: rgb(224 168 90 / 0.12);
+  --error: #EE8A8E;    --error-dot: #EE8A8E;    --error-soft: rgb(238 138 142 / 0.12);
+  --shadow: 0 16px 40px -20px rgb(0 0 0 / 0.7);
+  --ring: rgb(124 156 255 / 0.7);
+  --flash: rgb(124 156 255 / 0.16);
 }
 
 @theme inline {
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
   --color-paper: var(--bg);
   --color-panel: var(--surface);
   --color-panel-2: var(--surface-2);
@@ -72,28 +72,33 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
-  --color-sky: var(--sky);
-  --color-sky-soft: var(--sky-soft);
-  --color-violet: var(--violet);
-  --color-violet-soft: var(--violet-soft);
-  --color-ask: var(--amber);
-  --color-ask-soft: var(--amber-soft);
-  --color-cancel: var(--rose);
-  --color-cancel-soft: var(--rose-soft);
-  --color-done: var(--green);
-  --color-done-soft: var(--green-soft);
+  /* Links and informational text use the sapphire accent. */
+  --color-sky: var(--accent);
+  --color-sky-soft: var(--accent-soft);
+  --color-violet: var(--accent);
+  --color-violet-soft: var(--accent-soft);
+  --color-ask: var(--warning);
+  --color-ask-soft: var(--warning-soft);
+  --color-ask-dot: var(--warning-dot);
+  --color-cancel: var(--error);
+  --color-cancel-soft: var(--error-soft);
+  --color-cancel-dot: var(--error-dot);
+  --color-done: var(--success);
+  --color-done-soft: var(--success-soft);
+  --color-done-dot: var(--success-dot);
 }
 
 html { background: var(--bg); color: var(--text); }
 body {
   background: var(--bg);
-  font-family: var(--font-sans); font-size: 14px; line-height: 1.5; letter-spacing: -0.002em;
+  font-family: var(--font-sans); font-size: 14px; line-height: 1.55; letter-spacing: -0.003em;
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 ::selection { background: var(--accent-soft); }
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
 /* Words somebody actually said are set in a serif, so evidence never reads like system text. */
 .spoken { font-family: var(--font-serif); font-size: 15px; line-height: 1.55; letter-spacing: 0; }
+.display { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; }
 .tnum { font-variant-numeric: tabular-nums; }
 .shadow-pop { box-shadow: var(--shadow); }
 input, select, textarea { color: inherit; }
@@ -104,7 +109,11 @@ input[type="date"], input[type="datetime-local"] { color-scheme: inherit; }
 @keyframes ps-spin { to { transform: rotate(360deg); } }
 @keyframes ps-shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
 @keyframes ps-flash { 0% { background: var(--flash); } 100% { background: transparent; } }
+@keyframes ps-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ps-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 .anim-spin { animation: ps-spin 0.8s linear infinite; }
+.anim-rise { animation: ps-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.anim-pulse { animation: ps-pulse 1.6s ease-in-out infinite; }
 .seg-flash { animation: ps-flash 1.8s ease-out both; }
 .skeleton {
   background: linear-gradient(90deg, var(--surface-2) 0px, var(--surface-3) 120px, var(--surface-2) 240px);

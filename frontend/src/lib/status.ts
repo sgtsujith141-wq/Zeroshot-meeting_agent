@@ -44,5 +44,8 @@ export function reminderStatus(s: string): { label: string; tone: Tone } {
   } as Record<string, { label: string; tone: Tone }>)[s] ?? { label: s, tone: 'neutral' }
 }
 
+/** Demo and test meetings say so in their title or file name; real meetings never do. */
+export const isSynthetic = (m: { title: string; file_name?: string | null }) => /synthetic/i.test(`${m.title} ${m.file_name ?? ''}`)
+
 export const todayIso = () => new Date().toISOString().slice(0, 10)
-export const shortDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+export const shortDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })

@@ -11,7 +11,7 @@
 //   the same approval.
 import type { Tone } from '../components/ui'
 import type { ChangeSet, Clarification, ProposalItem, Task, TaskDetail } from '../types'
-import { fmtDate } from './api'
+import { fmtDate, fmtDay } from './api'
 import { taskLabel } from './status'
 
 export const ACTIONABLE = ['create', 'update', 'cancel', 'complete', 'create_completed']
@@ -31,7 +31,7 @@ export interface Planned {
 
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 const owner = (v: string | null | undefined) => v || 'Unassigned'
-const due = (v: string | null | undefined) => (v ? fmtDate(v) : 'No date')
+const due = (v: string | null | undefined) => (v ? fmtDay(v) : 'No date')
 const prio = (v: string | null | undefined) => (v ? cap(v) : 'Not set')
 
 const NOT_APPLIED: Record<string, { action: string; label: string; tone: Tone; note: string; group: Planned['group'] }> = {
@@ -44,6 +44,9 @@ const NOT_APPLIED: Record<string, { action: string; label: string; tone: Tone; n
   completed: { action: 'Reported done', label: 'Not added', tone: 'neutral', group: 'none', note: 'Reported as already finished. It is not added to the board.' },
   no_change: { action: 'No change', label: 'No change', tone: 'neutral', group: 'none', note: 'Mentioned in the meeting; nothing about the task changes.' },
 }
+
+/** The word people see for each field ("Deadline", not "Due"). */
+export const fieldLabel = (f: FieldChange['field']) => (f === 'Due' ? 'Deadline' : f)
 
 const VERB: Record<FieldChange['field'], string> = {
   Title: 'rename', Owner: 'reassign', Due: 'move deadline', Priority: 'change priority', Status: 'change status', 'Waits for': 'add dependency',

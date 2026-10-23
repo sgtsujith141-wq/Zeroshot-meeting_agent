@@ -68,13 +68,19 @@ export function fmtTime(sec: number | null | undefined) {
   return (h ? `${h}:${String(m).padStart(2, '0')}` : `${m}`) + `:${String(r).padStart(2, '0')}`
 }
 
+// Day-first dates ("Mon 26 Oct 2026") read naturally for the teams this is built for.
 export function fmtDate(iso: string | null | undefined) {
   if (!iso) return '—'
   const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso)
-  return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(',', '')
+}
+
+export function fmtDay(iso: string | null | undefined) {
+  if (!iso) return '—'
+  return new Date(iso.length === 10 ? iso + 'T00:00:00' : iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
 }
 
 export function fmtDateTime(iso: string | null | undefined) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
