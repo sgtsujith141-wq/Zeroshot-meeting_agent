@@ -22,7 +22,6 @@ function Deps({ t }: { t: Task }) {
   if (t.dependents.length) return <span className="text-slate">Blocks {t.dependents.map(p => p.code).join(', ')}</span>
   return <span className="text-faint">—</span>
 }
-const prio = (p: string | null) => (p ? <span className={`capitalize ${p === 'high' ? 'text-ink' : 'text-slate'}`}>{p}</span> : <span className="text-faint">—</span>)
 
 export default function TasksPage() {
   const [params, setParams] = useSearchParams()
@@ -44,7 +43,7 @@ export default function TasksPage() {
 
   return (
     <>
-      <PageHeader title="Tasks" sub="Only approved tasks appear here. Each one links back to the words that created or changed it." />
+      <PageHeader title="Tasks" sub="Approved tasks from your meetings. Each one links back to the words that created or changed it." />
       <ErrorBox error={error} onRetry={reload} />
       {loading && !data ? <Loading /> : !data?.tasks.length ? (
         <Empty action={<Link to="/approvals" className="font-medium text-sky hover:underline">Go to Approvals</Link>}>No approved tasks yet. Tasks appear here after you approve a meeting’s proposed changes.</Empty>
@@ -66,29 +65,28 @@ export default function TasksPage() {
           </div>
 
           {view === 'list' ? (!tasks.length ? <Empty>No task matches.</Empty> : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-rule bg-panel">
               <table className="w-full text-left text-[14px]">
                 <thead className="text-[12.5px] text-faint">
                   <tr className="border-b border-rule">
-                    <th className="py-2 pr-4 font-medium">Task</th><th className="py-2 pr-4 font-medium">Owner</th><th className="py-2 pr-4 font-medium">Due</th>
-                    <th className="py-2 pr-4 font-medium">Status</th><th className="hidden py-2 pr-4 font-medium md:table-cell">Priority</th>
-                    <th className="hidden py-2 pr-4 font-medium lg:table-cell">Dependencies</th><th className="hidden py-2 font-medium xl:table-cell">From meeting</th>
+                    <th className="py-2 pl-4 pr-4 font-medium">Task</th><th className="py-2 pr-4 font-medium">Assigned to</th><th className="py-2 pr-4 font-medium">Deadline</th>
+                    <th className="py-2 pr-4 font-medium">Status</th><th className="hidden py-2 pr-4 font-medium md:table-cell">Dependency</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tasks.map(t => (
-                    <tr key={t.code} className="cursor-pointer border-b border-rule hover:bg-panel-2" onClick={() => setParam('task', t.code)}>
-                      <td className="py-2.5 pr-4">
-                        <button type="button" className="text-left text-ink hover:underline" onClick={e => { e.stopPropagation(); setParam('task', t.code) }}>
-                          <span className="tnum mr-2 text-[13px] text-faint">{t.code}</span>{t.title}
+                    <tr key={t.code} className="cursor-pointer border-b border-rule last:border-b-0 hover:bg-panel-2" onClick={() => setParam('task', t.code)}>
+                      <td className="py-3 pl-4 pr-4">
+                        <button type="button" className="text-left font-medium text-ink hover:underline" onClick={e => { e.stopPropagation(); setParam('task', t.code) }}>
+                          <span className="tnum mr-2 text-[13px] font-normal text-faint">{t.code}</span>{t.title}
                         </button>
+                        {/* On phones the Dependency column is hidden; a waiting task still says so. */}
+                        {t.prerequisites.some(p => p.status !== 'done') && <div className="text-[12.5px] md:hidden"><Deps t={t} /></div>}
                       </td>
-                      <td className="py-2.5 pr-4 text-slate">{t.owner ?? 'Unassigned'}</td>
-                      <td className="whitespace-nowrap py-2.5 pr-4"><Due t={t} /></td>
-                      <td className="py-2.5 pr-4"><Status tone={taskTone(t.status)}>{taskLabel(t.status)}</Status></td>
-                      <td className="hidden py-2.5 pr-4 md:table-cell">{prio(t.priority)}</td>
-                      <td className="hidden py-2.5 pr-4 text-[13.5px] lg:table-cell"><Deps t={t} /></td>
-                      <td className="hidden max-w-[16rem] truncate py-2.5 text-[13.5px] text-slate xl:table-cell">{meeting(t.origin_meeting_id)}</td>
+                      <td className="py-3 pr-4 text-ink">{t.owner ?? <span className="text-faint">Unassigned</span>}</td>
+                      <td className="whitespace-nowrap py-3 pr-4"><Due t={t} /></td>
+                      <td className="py-3 pr-4"><Status tone={taskTone(t.status)}>{taskLabel(t.status)}</Status></td>
+                      <td className="hidden py-3 pr-4 text-[13.5px] md:table-cell"><Deps t={t} /></td>
                     </tr>))}
                 </tbody>
               </table>
@@ -146,7 +144,7 @@ function TaskDrawer({ code, onClose, onChanged, meeting }: { code: string; onClo
   }
   const waiting = t?.prerequisites.filter(p => p.status !== 'done') ?? []
   return (
-    <Drawer open onClose={onClose} title={t?.title ?? code} sub={t ? `${code}, revision ${t.revision}` : code}>
+    <Drawer open onClose={onClose} title={t?.title ?? code} sub={code}>
       <ErrorBox error={error} onRetry={reload} />
       {!t ? <div className="space-y-3"><Skeleton className="h-6 w-40" /><Skeleton className="h-24" /></div> : (
         <div className="space-y-6 text-[14px]">
@@ -162,8 +160,8 @@ function TaskDrawer({ code, onClose, onChanged, meeting }: { code: string; onClo
           </section>
 
           <dl className="grid grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-2">
-            <dt className="text-faint">Owner</dt><dd>{t.owner ?? 'Unassigned'} <span className="text-[12.5px] text-faint">{t.owner_certainty.replace(/_/g, ' ')}</span></dd>
-            <dt className="text-faint">Due</dt><dd>{fmtDate(t.due_date)} {t.deadline_raw && <span className="block text-[12.5px] text-faint">Said “{t.deadline_raw}”, {t.deadline_kind?.replace(/_/g, ' ')}</span>}</dd>
+            <dt className="text-faint">Assigned to</dt><dd>{t.owner ?? 'Unassigned'} <span className="text-[12.5px] text-faint">{t.owner_certainty.replace(/_/g, ' ')}</span></dd>
+            <dt className="text-faint">Deadline</dt><dd>{fmtDate(t.due_date)} {t.deadline_raw && <span className="block text-[12.5px] text-faint">Said “{t.deadline_raw}”, {t.deadline_kind?.replace(/_/g, ' ')}</span>}</dd>
             <dt className="text-faint">Priority</dt><dd>{t.priority ? <span className="capitalize">{t.priority}</span> : 'Not set'} {t.priority_basis && <span className="block text-[12.5px] text-faint">{t.priority_basis}</span>}</dd>
             <dt className="text-faint">Waits for</dt><dd>{t.prerequisites.length ? t.prerequisites.map(p => <span key={p.code} className="mr-3 inline-block">{p.code} <span className="text-faint">{taskLabel(p.status)}</span></span>) : 'Nothing'}</dd>
             {t.dependents.length > 0 && <><dt className="text-faint">Blocks</dt><dd>{t.dependents.map(p => p.code).join(', ')}</dd></>}

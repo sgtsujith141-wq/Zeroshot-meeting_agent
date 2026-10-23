@@ -39,7 +39,7 @@ export default function FollowUpsPage() {
 
 function TaskRows({ rows }: { rows: Row[] }) {
   return (
-    <ul className="divide-y divide-rule border-y border-rule">{rows.map(r => (
+    <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4">{rows.map(r => (
       <li key={r.code} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2">
         <Link to={`/tasks?task=${r.code}`} className="min-w-0 flex-1 text-ink hover:underline"><span className="tnum mr-2 text-[13px] text-faint">{r.code}</span>{r.title}</Link>
         <span className="text-[13.5px] text-slate">{r.owner ?? 'Unassigned'}, due {fmtDate(r.due_date)}{r.waiting_for?.length ? `, waiting for ${r.waiting_for.join(', ')}` : ''}</span>
@@ -70,14 +70,14 @@ function AgendaTab() {
           {groups.map(([k, label]) => (s[k] as Row[]).length > 0 && <Section key={k} title={label} count={(s[k] as Row[]).length}><TaskRows rows={s[k] as Row[]} /></Section>)}
           {s.open_questions.length > 0 && (
             <Section title="Unresolved questions" count={s.open_questions.length}>
-              <ul className="divide-y divide-rule border-y border-rule">{s.open_questions.map(q => (
+              <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4">{s.open_questions.map(q => (
                 <li key={q.id} className="flex flex-wrap items-baseline justify-between gap-2 py-2"><span className="text-ink">{q.text}</span><Link to={`/meetings/${q.meeting_id}`} className="text-[13px] text-sky hover:underline">from {q.meeting_title}</Link></li>))}
               </ul>
             </Section>
           )}
           {s.pending_reviews.length > 0 && (
             <Section title="Approvals not yet done" count={s.pending_reviews.length}>
-              <ul className="divide-y divide-rule border-y border-rule">{s.pending_reviews.map(p => (
+              <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4">{s.pending_reviews.map(p => (
                 <li key={p.change_set_id} className="py-2"><Link to={`/approvals/${p.meeting_id}`} className="font-medium text-sky hover:underline">{p.meeting_title}</Link>
                   {p.unanswered_questions.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-5 text-[13.5px] text-slate">{p.unanswered_questions.map((q, i) => <li key={i}>{q}</li>)}</ul>}
                 </li>))}
@@ -102,6 +102,7 @@ function CalendarTab() {
         <Button onClick={() => download('/api/calendar.ics', 'ps53-tasks.ics').catch(e => toast('error', errText(e)))} disabled={!data?.length}>Export calendar (.ics)</Button>
       </div>
       {!data?.length ? <Empty>Approved tasks with a due date appear here.</Empty> : (
+        <div className="overflow-x-auto rounded-lg border border-rule bg-panel [&_td:first-child]:pl-4 [&_th:first-child]:pl-4 [&_tr:last-child]:border-b-0">
         <table className="w-full text-left text-[14px]">
           <thead className="text-[12.5px] text-faint"><tr className="border-b border-rule"><th className="py-2 pr-4 font-medium">Date</th><th className="py-2 pr-4 font-medium">Task</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">Owner</th><th className="hidden py-2 font-medium md:table-cell">Entry</th></tr></thead>
           <tbody>{data.map(e => (
@@ -113,6 +114,7 @@ function CalendarTab() {
             </tr>))}
           </tbody>
         </table>
+        </div>
       )}
     </>
   )
@@ -169,7 +171,7 @@ function RemindersTab() {
       )}
       {ran && <p role="status" className="mb-3 text-[13.5px] text-ink">{ran}</p>}
       {!data?.reminders.length ? <Empty>No reminders yet. Approving a task with a due date schedules one automatically.</Empty> : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-lg border border-rule bg-panel [&_td:first-child]:pl-4 [&_th:first-child]:pl-4 [&_tr:last-child]:border-b-0">
           <table className="w-full text-left text-[14px]">
             <thead className="text-[12.5px] text-faint"><tr className="border-b border-rule"><th className="py-2 pr-4 font-medium">Task</th><th className="py-2 pr-4 font-medium">When</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">Channel</th><th className="py-2 pr-4 font-medium">Status</th><th className="py-2" /></tr></thead>
             <tbody>{data.reminders.map(r => {
@@ -217,7 +219,7 @@ function NotificationsTab({ notes }: { notes: ReturnType<typeof useLoad<Note[]>>
     <>
       <ErrorBox error={notes.error} onRetry={notes.reload} />
       {!notes.data?.length ? <Empty>No reminder has fired yet. In-app reminders appear here when they are delivered.</Empty> : (
-        <ul className="divide-y divide-rule border-y border-rule">{notes.data.map(n => (
+        <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4">{notes.data.map(n => (
           <li key={n.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5">
             <span className={`min-w-0 flex-1 ${n.read ? 'text-slate' : 'font-medium text-ink'}`}>{n.message}</span>
             <span className="tnum text-[12.5px] text-faint">{fmtDateTime(n.created_at)}</span>

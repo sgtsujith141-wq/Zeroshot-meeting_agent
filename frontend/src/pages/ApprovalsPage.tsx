@@ -4,15 +4,15 @@ import { Check, Info, RefreshCw } from 'lucide-react'
 import { api, ApiError, fmtDate, fmtDateTime } from '../lib/api'
 import type { ChangeSet, Clarification, MeetingDetail, MeetingSummary, Task, TaskDetail } from '../types'
 import {
-  Button, Dialog, Drawer, Empty, ErrorBox, Field, Loading, Notice, PageHeader, Quote, SegRef, Section, Status, Tabs,
+  Button, Dialog, Drawer, Empty, ErrorBox, Field, Loading, Notice, PageHeader, Quote, SegRef, Section, Status, SyntheticTag, Tabs,
   errText, inputCls, plural, useLoad, useToast,
 } from '../components/ui'
 import Transcript, { type Focus } from '../components/Transcript'
 import {
-  OWNER_KINDS, Q_LABEL, actionFor, answerLabel, diffProposals, orphanAnswers, plan, revisionChanges, summarize,
+  OWNER_KINDS, Q_LABEL, actionFor, answerLabel, diffProposals, fieldLabel, orphanAnswers, plan, revisionChanges, summarize,
   type FieldChange, type Orphan, type Planned,
 } from '../lib/changes'
-import { OPEN_TASK, changeSetStatus } from '../lib/status'
+import { OPEN_TASK, changeSetStatus, isSynthetic } from '../lib/status'
 
 export default function ApprovalsPage() {
   const { meetingId } = useParams()
@@ -36,7 +36,7 @@ function ApprovalList() {
   const rows = tab === 'waiting' ? waiting : data?.rows ?? []
   return (
     <>
-      <PageHeader title="Approvals" sub="Each processed meeting proposes changes to the task board. Nothing reaches the board until you approve it here." />
+      <PageHeader title="Approvals" sub="Each analysed meeting proposes tasks and changes. Nothing reaches the task board until you approve it here." />
       <ErrorBox error={error} onRetry={reload} />
       {loading && !data ? <Loading /> : !data?.rows.length ? (
         <Empty action={<Link to="/meetings/new" className="font-medium text-sky hover:underline">Add a meeting</Link>}>
@@ -46,12 +46,12 @@ function ApprovalList() {
         <>
           <Tabs label="Show" value={tab} onChange={setTab} tabs={[{ key: 'waiting', label: <>Waiting <span className="text-faint tnum">{waiting.length}</span></> }, { key: 'all', label: <>All <span className="text-faint tnum">{data.rows.length}</span></> }]} />
           {!rows.length ? <Empty>Nothing is waiting for approval.</Empty> : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-lg border border-rule bg-panel">
               <table className="w-full text-left text-[14px]">
                 <thead className="text-[12.5px] text-faint">
                   <tr className="border-b border-rule">
-                    <th className="py-2 pr-4 font-medium">Meeting</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">Meeting date</th>
-                    <th className="hidden py-2 pr-4 font-medium md:table-cell">Proposed items</th><th className="py-2 pr-4 font-medium">Open questions</th><th className="py-2 font-medium">Status</th>
+                    <th className="py-2 pl-4 pr-4 font-medium">Meeting</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">Meeting date</th>
+                    <th className="hidden py-2 pr-4 font-medium md:table-cell">Proposed changes</th><th className="py-2 pr-4 font-medium">Questions</th><th className="py-2 pr-4 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -59,12 +59,12 @@ function ApprovalList() {
                     const st = changeSetStatus(r.state)
                     const m = data.meetings.get(r.meeting_id)
                     return (
-                      <tr key={r.id} className="cursor-pointer border-b border-rule hover:bg-panel-2" onClick={() => nav(`/approvals/${r.meeting_id}`)}>
-                        <td className="py-2.5 pr-4"><Link to={`/approvals/${r.meeting_id}`} className="font-medium text-ink hover:underline" onClick={e => e.stopPropagation()}>{r.meeting_title}</Link></td>
-                        <td className="tnum hidden py-2.5 pr-4 text-slate sm:table-cell">{m ? fmtDate(m.scheduled_at) : '—'}</td>
-                        <td className="tnum hidden py-2.5 pr-4 text-slate md:table-cell">{r.items}</td>
-                        <td className="tnum py-2.5 pr-4 text-slate">{r.open_questions || '—'}</td>
-                        <td className="py-2.5"><Status tone={st.tone}>{st.label}</Status></td>
+                      <tr key={r.id} className="cursor-pointer border-b border-rule last:border-b-0 hover:bg-panel-2" onClick={() => nav(`/approvals/${r.meeting_id}`)}>
+                        <td className="py-3 pl-4 pr-4"><span className="flex items-center gap-2"><Link to={`/approvals/${r.meeting_id}`} className="font-medium text-ink hover:underline" onClick={e => e.stopPropagation()}>{r.meeting_title}</Link>{m && isSynthetic(m) && <SyntheticTag />}</span></td>
+                        <td className="tnum hidden py-3 pr-4 text-slate sm:table-cell">{m ? fmtDate(m.scheduled_at) : '—'}</td>
+                        <td className="tnum hidden py-3 pr-4 text-slate md:table-cell">{r.items}</td>
+                        <td className="tnum py-3 pr-4 text-slate">{r.open_questions || '—'}</td>
+                        <td className="py-3 pr-4"><Status tone={st.tone}>{st.label}</Status></td>
                       </tr>)
                   })}
                 </tbody>
@@ -108,7 +108,7 @@ function Approval({ mid }: { mid: number }) {
     return { cs, meeting, board }
   }, [mid])
   const [busy, setBusy] = useState(false)
-  const [diff, setDiff] = useState<{ from: number; to: number; lines: string[] } | null>(null)
+  const [diff, setDiff] = useState<string[] | null>(null)
   const [conflict, setConflict] = useState(false)
   const [openKey, setOpenKey] = useState<string | null>(null)
   const [focus, setFocus] = useState<Focus | null>(null)
@@ -171,7 +171,7 @@ function Approval({ mid }: { mid: number }) {
       const next = await fn()
       setData(d => d && { ...d, cs: next })
       const lines = diffProposals(prev, next)
-      setDiff(lines.length ? { from: prev.version, to: next.version, lines } : null)
+      setDiff(lines.length ? lines : null)
       if (ok) toast('ok', ok)
       return true
     } catch (e) { toast('error', errText(e)); return false } finally { setBusy(false) }
@@ -230,12 +230,12 @@ function Approval({ mid }: { mid: number }) {
   return (
     <div className="pb-24">
       <PageHeader title={meeting.title} crumbs={[{ label: 'Approvals', to: '/approvals' }]}
-        sub="Proposed changes to the task board from this meeting. Nothing changes until you approve."
+        sub="Check each proposed task and change. Nothing changes on the task board until you approve."
         meta={<>
+          {isSynthetic(meeting) && <SyntheticTag />}
           <Status tone={st.tone}>{st.label}</Status>
           <span>Meeting on {fmtDate(meeting.scheduled_at)}</span>
           <span>{isAudio ? `Recording, transcribed by ${meeting.stt_provider ?? 'unknown'}` : 'Imported transcript'}</span>
-          <span>Version {cs.version}</span>
         </>}
         actions={<>
           <Button onClick={() => setTranscript(true)}>Transcript</Button>
@@ -258,9 +258,9 @@ function Approval({ mid }: { mid: number }) {
           </Notice>
         )}
         {diff && (
-          <Notice tone="sky" role="status" title={`What changed after your last action (version ${diff.from} → ${diff.to})`}
+          <Notice tone="sky" role="status" title="What changed after your last action"
             actions={<Button size="sm" kind="ghost" onClick={() => setDiff(null)}>Dismiss</Button>}>
-            <ul className="mt-1 list-disc space-y-0.5 pl-5">{diff.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+            <ul className="mt-1 list-disc space-y-0.5 pl-5">{diff.map((l, i) => <li key={i}>{l}</li>)}</ul>
           </Notice>
         )}
         {derived.orphans.length > 0 && <OrphanNotice orphans={derived.orphans} ctx={ctx} />}
@@ -278,13 +278,13 @@ function Approval({ mid }: { mid: number }) {
       {derived.openQs.length > 0 && (
         <Section title="Questions to answer" count={derived.openQs.length} className="mt-6">
           <p className="mb-2 text-[13.5px] text-slate">Ordered by how much each blocks: whether the work exists first, then who owns it, then dates.</p>
-          <ul className="divide-y divide-rule border-y border-rule">{derived.openQs.map(c => <QuestionRow key={c.id} c={c} ctx={ctx} />)}</ul>
+          <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4">{derived.openQs.map(c => <QuestionRow key={c.id} c={c} ctx={ctx} />)}</ul>
         </Section>
       )}
 
       {derived.answered.length > 0 && (
         <Section title="Your answers" count={derived.answered.length} className="mt-6">
-          <ul className="divide-y divide-rule border-y border-rule text-[13.5px]">
+          <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4 text-[13.5px]">
             {derived.answered.map(c => (
               <li key={c.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
                 <span className="text-faint">{Q_LABEL[c.kind] ?? 'Question'}</span>
@@ -303,7 +303,7 @@ function Approval({ mid }: { mid: number }) {
           <div className="shadow-pop flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rule-strong bg-panel px-4 py-3">
             <p className="min-w-0 text-[13.5px]">
               {blockedBy ? <span className="text-ink">{blockedBy}</span>
-                : <><span className="text-ink">Approving applies {summarize(planned)}, exactly as listed.</span> <span className="text-faint">Version {cs.version}.</span></>}
+                : <span className="text-ink">Approving applies {summarize(planned)}, exactly as listed.</span>}
             </p>
             <div className="flex gap-2">
               <Button kind="ghost" onClick={() => setRejectOpen(true)} disabled={busy}>Reject all</Button>
@@ -330,13 +330,15 @@ function Approval({ mid }: { mid: number }) {
 
 // ---- table of changes -------------------------------------------------------------------------
 
-function Lines({ changes, side }: { changes: FieldChange[]; side: 'from' | 'to' }) {
+/** One line per field: "Owner: Priya → Samiksha", or "Deadline: 26 October" for a new value. */
+function Lines({ changes }: { changes: FieldChange[] }) {
   return (
     <ul className="space-y-0.5">
       {changes.map((c, i) => (
         <li key={i} className="text-[13.5px]">
-          <span className="text-faint">{c.field}: </span>
-          <span className={side === 'to' ? 'font-medium text-ink' : 'text-slate'}>{side === 'from' ? c.from ?? '—' : c.to}</span>
+          <span className="text-slate">{fieldLabel(c.field)}: </span>
+          {c.from != null && <><span className="text-slate">{c.from}</span><span aria-hidden className="mx-1.5 text-faint">→</span><span className="sr-only"> changes to </span></>}
+          <span className="font-medium text-ink">{c.to}</span>
         </li>))}
     </ul>
   )
@@ -347,13 +349,11 @@ function ChangesTable({ rows, cs, applied, onOpen }: { rows: Planned[]; cs: Chan
   const done = cs.state === 'APPLIED'
   const codeFor = (p: Planned) => cs.applied_result.created?.[p.item.key] ?? p.item.existing_task_id
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-lg border border-rule bg-panel">
       <table className="w-full text-left text-[14px]">
         <thead className="text-[12.5px] text-faint">
           <tr className="border-b border-rule">
-            <th className="py-2 pr-4 font-medium">Task</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">Change</th>
-            <th className="hidden py-2 pr-4 font-medium md:table-cell">{done ? 'Before' : 'Current'}</th>
-            <th className="py-2 pr-4 font-medium">{done ? 'After' : 'Proposed'}</th><th className="py-2 font-medium">Status</th>
+            <th className="py-2 pl-4 pr-4 font-medium">Task</th><th className="hidden py-2 pr-4 font-medium sm:table-cell">{done ? 'What approval changed' : 'What approval changes'}</th><th className="py-2 pr-4 font-medium">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -363,17 +363,16 @@ function ChangesTable({ rows, cs, applied, onOpen }: { rows: Planned[]; cs: Chan
             const isNew = !p.item.existing_task_id
             const title = p.task?.title ?? p.item.title
             return (
-              <tr key={p.item.key} data-item={p.item.key} className="cursor-pointer border-b border-rule align-top hover:bg-panel-2" onClick={() => onOpen(p.item.key)}>
-                <td className="py-2.5 pr-4">
+              <tr key={p.item.key} data-item={p.item.key} className="cursor-pointer border-b border-rule align-top last:border-b-0 hover:bg-panel-2" onClick={() => onOpen(p.item.key)}>
+                <td className="py-3 pl-4 pr-4">
                   <button type="button" className="text-left font-medium text-ink hover:underline" onClick={e => { e.stopPropagation(); onOpen(p.item.key) }}>{title}</button>
                   <div className="text-[12.5px] text-faint">{isNew ? (done && code ? code : 'New task') : p.item.existing_task_id}
-                    {/* On phones the Change column is hidden; its words move here. */}
-                    {!isNew && <span className="sm:hidden">: {(done && code && applied[code] ? actionFor(ch, isNew) : p.action).toLowerCase()}</span>}</div>
+                    {!isNew && <>: {(done && code && applied[code] ? actionFor(ch, isNew) : p.action).toLowerCase()}</>}</div>
+                  {/* On phones the change column moves under the title. */}
+                  {ch.length > 0 && <div className="mt-1.5 sm:hidden"><Lines changes={ch} /></div>}
                 </td>
-                <td className="hidden py-2.5 pr-4 text-slate sm:table-cell">{done && code && applied[code] ? actionFor(ch, isNew) : p.action}</td>
-                <td className="hidden py-2.5 pr-4 md:table-cell">{isNew && !(done && ch.some(c => c.from)) ? <span className="text-[13.5px] text-faint">Not on the board</span> : <Lines changes={ch} side="from" />}</td>
-                <td className="py-2.5 pr-4">{ch.length ? <Lines changes={ch} side="to" /> : <span className="text-[13.5px] text-faint">—</span>}</td>
-                <td className="py-2.5"><Status tone={p.status.tone}>{p.status.label}</Status></td>
+                <td className="hidden py-3 pr-4 sm:table-cell">{ch.length ? <Lines changes={ch} /> : <span className="text-[13.5px] text-faint">{p.group === 'waiting' ? 'Answer its question first' : 'Nothing changes'}</span>}</td>
+                <td className="py-3 pr-4"><Status tone={p.status.tone}>{p.status.label}</Status></td>
               </tr>)
           })}
         </tbody>
@@ -505,7 +504,7 @@ function ChangeDrawer({ p, ctx, applied, onClose }: { p: Planned; ctx: Ctx; appl
             <table className="w-full text-[13.5px]"><tbody>
               {ch.map((c, i) => (
                 <tr key={i} className="border-b border-rule last:border-0">
-                  <td className="w-24 py-1.5 pr-3 text-faint">{c.field}</td>
+                  <td className="w-24 py-1.5 pr-3 text-faint">{fieldLabel(c.field)}</td>
                   <td className="py-1.5 pr-3 text-slate">{c.from ?? (isNew ? 'Not on the board' : '—')}</td>
                   <td className="py-1.5 font-medium text-ink">{c.to}</td>
                 </tr>))}
@@ -611,7 +610,7 @@ function Decisions({ cs, ctx }: { cs: ChangeSet; ctx: Ctx }) {
   return (
     <Section title="Decisions to record" count={cs.proposal.decisions_review.length} className="mt-6">
       <p className="mb-2 text-[13.5px] text-slate">Ticked decisions are recorded as approved with this meeting.</p>
-      <ul className="divide-y divide-rule border-y border-rule">{cs.proposal.decisions_review.map(d => (
+      <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4">{cs.proposal.decisions_review.map(d => (
         <li key={d.id} className="py-2.5">
           <label className="flex items-start gap-2.5">
             <input type="checkbox" className="mt-1 accent-[var(--accent)]" disabled={!ctx.editable || ctx.busy} checked={pending[d.id] ?? d.include}
@@ -634,7 +633,7 @@ function Checks({ cs, ctx }: { cs: ChangeSet; ctx: Ctx }) {
   if (!p.warnings.length && !p.rejected_events.length && !unc.length) return null
   return (
     <Section title="Checks" className="mt-6">
-      <ul className="divide-y divide-rule border-y border-rule text-[13.5px]">
+      <ul className="divide-y divide-rule rounded-lg border border-rule bg-panel [&>li]:px-4 text-[13.5px]">
         {p.warnings.map((w, i) => (
           <li key={i} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
             <span className={w.kind === 'possible_prompt_injection' ? 'text-cancel' : 'text-faint'}>{cap(w.kind.replace(/_/g, ' '))}</span>
