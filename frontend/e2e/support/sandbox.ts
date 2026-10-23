@@ -3,7 +3,7 @@
 // token, so destructive tests never touch the demo server or its data.
 import { execFileSync, spawn, type ChildProcess } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdirSync, mkdtempSync, openSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, openSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -13,9 +13,12 @@ const HERE = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(HERE, '../../..')
 const BACKEND = path.join(ROOT, 'backend')
 const PY = path.join(BACKEND, '.venv/bin/python')
-const SOURCE = process.env.SANDBOX_SOURCE ?? path.join(BACKEND, 'data')
+// Sandboxes copy a pinned snapshot of the demo data when one exists (e2e/.demo-snapshot, git-ignored),
+// so tests do not change meaning when someone uses the live demo; otherwise the live demo data.
+const SNAPSHOT = path.join(HERE, '..', '.demo-snapshot', 'data')
+const SOURCE = process.env.SANDBOX_SOURCE ?? (existsSync(path.join(SNAPSHOT, 'app.db')) ? SNAPSHOT : path.join(BACKEND, 'data'))
 
-export interface Sandbox { url: string; token: string; dir: string; stop: () => Promise<void> }
+export interface Sandbox { url: string; token: string; dir: string; seeded?: { meeting_id: number; kinds: string[] }; stop: () => Promise<void> }
 
 function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -43,6 +46,12 @@ export async function startSandbox(seed: 'demo' | 'empty' = 'demo', name = 'sb',
   const data = path.join(dir, 'data')
   if (seed === 'demo') execFileSync(PY, ['-I', path.join(HERE, 'copy_db.py'), SOURCE, data], { stdio: 'pipe' })
   else mkdirSync(data, { recursive: true })
+  // Optional: one meeting whose recorded test events raise every remaining question type.
+  let seeded: Sandbox['seeded']
+  if (env.SEED_QUESTIONS) {
+    const out = execFileSync(PY, ['-I', path.join(HERE, 'seed_questions.py'), data, BACKEND], { stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim().split('\n')
+    seeded = JSON.parse(out[out.length - 1])
+  }
   const port = await freePort()
   const token = `sandbox-${randomBytes(9).toString('hex')}`
   const log = path.join(dir, 'server.log')
@@ -54,7 +63,7 @@ export async function startSandbox(seed: 'demo' | 'empty' = 'demo', name = 'sb',
   const url = `http://127.0.0.1:${port}`
   await waitUp(url, proc, log)
   return {
-    url, token, dir,
+    url, token, dir, seeded,
     stop: () => new Promise<void>(resolve => {
       if (proc.exitCode !== null) return resolve()
       proc.once('exit', () => resolve())
