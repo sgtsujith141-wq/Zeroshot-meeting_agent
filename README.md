@@ -18,8 +18,12 @@ The differentiator is a **commitment reconciliation engine**:
 
 > **Honest status**, as of the last commit:
 > - Live LLM verified with a **local Ollama model (qwen3:8b)**.
-> - Audio upload verified through the UI with a **local Whisper** fallback (no diarization),
->   on a synthetic TTS clip.
+> - **Recording in the browser** (Record audio) verified end to end in Chromium with its capture
+>   device playing recorded speech: transcript on screen about 6.5 s after *Transcribe recording*,
+>   using **local Whisper** (no diarization). A person speaking into the demo laptop's own
+>   microphone has **not** been verified by the developers (macOS denied the tools microphone
+>   access); see [`docs/LIVE_AUDIO_DEMO.md`](docs/LIVE_AUDIO_DEMO.md).
+> - **Meeting report PDF** generated from the stored records and checked page by page.
 > - Gemini and Sarvam adapters are implemented and checked against their SDKs, but
 >   **unverified live (no API keys)**.
 > - The official **three-real-meeting evaluation is NOT MEASURED** (no recordings yet).
@@ -59,16 +63,18 @@ The reminder worker runs inside the backend process, polling every
 
 ## Using it (about 3-minute demo path)
 
-0. **Presenting?** Open http://127.0.0.1:8000/?present=1 for a short intro; Esc skips it.
-   It never appears otherwise.
-1. **Your workspace** lists what needs review, upcoming tasks and recent meetings.
-2. **New meeting.** Confirm consent and upload a transcript (`demo/*.json`, `.txt`,
-   `.vtt`, `.srt`) or a recording (needs `SARVAM_API_KEY`, or the optional local Whisper),
-   or choose *Use the synthetic demo transcript*. *Analyze meeting* uploads and starts
-   processing; the meeting page shows each real processing stage as it finishes. Or use the CLI:
-   `backend/.venv/bin/python scripts/api.py ingest demo/synthetic_meeting_1_planning.json`
+0. **Intro.** A short intro plays when the page loads; Esc or *Skip intro* leaves it.
+1. **Overview** lists meetings awaiting review, upcoming tasks and recently processed meetings.
+2. **New meeting.** Choose *Record audio* (the browser's microphone), *Upload recording*
+   (needs `SARVAM_API_KEY` or the optional local Whisper) or *Upload transcript*
+   (`demo/*.json`, `.txt`, `.vtt`, `.srt`, or *Use the synthetic demo transcript*). A
+   recording is transcribed first: the words appear in seconds and can be corrected, then
+   *Analyze meeting* finds decisions and tasks. Each real processing stage is shown as it
+   finishes. Live route and preflight: [`docs/LIVE_AUDIO_DEMO.md`](docs/LIVE_AUDIO_DEMO.md).
+   Or use the CLI: `backend/.venv/bin/python scripts/api.py ingest demo/synthetic_meeting_1_planning.json`
 3. **Results.** Summary, key discussions, decisions, action items and questions to
-   clarify, each linked to the transcript lines it came from.
+   clarify, each linked to the transcript lines it came from. *Download meeting report*
+   gives an A4 PDF built from the stored records (`GET /api/meetings/{id}/report.pdf`).
 4. **Approvals.** Every proposed change reads as before → after, computed by the same
    rules approval applies. Answer the questions (for example, "Who is SPEAKER_03?" is
    answered by mapping the speaker, which re-checks everything without a model call),
@@ -93,7 +99,7 @@ The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 ```bash
 cd backend && .venv/bin/pytest -q          # offline tests: fold, dates, identity, API flows, providers, metrics
 cd frontend && npx playwright test e2e/flows --grep-invert "upload → processing|ask with the model|model is down|diagnostics live test"
-                                           # 99 browser tests incl. accessibility, on disposable sandboxes (about 5 min)
+                                           # 101 browser tests incl. live recording and accessibility, on disposable sandboxes (about 6 min)
 cd frontend && npx playwright test e2e/flows/slow.spec.ts   # 4 live-model flows (Ollama; about 7 min)
 cd frontend && E2E_TOKEN=<token> npx playwright test e2e/smoke.spec.ts   # read-only checks of a running server
 cd frontend && SCREENS=1 VW=390 npx playwright test e2e/screens.spec.ts  # viewport screenshots + overflow/clipping checks

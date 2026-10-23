@@ -1,5 +1,8 @@
 # Demo script (5–7 minutes)
 
+For the **live recording** route (record in the browser, transcript in seconds, then analysis
+and the PDF report), with its preflight and fallbacks, see [`LIVE_AUDIO_DEMO.md`](LIVE_AUDIO_DEMO.md).
+
 Use **pre-processed meetings**. Local model calls take about 90 s each on a CPU, so
 process the meetings before the session. Every claim below matches something that runs.
 Say "synthetic" whenever showing the demo transcripts. If real recordings have been
