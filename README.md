@@ -59,24 +59,32 @@ The reminder worker runs inside the backend process, polling every
 
 ## Using it (about 3-minute demo path)
 
-1. **Meetings → New meeting.** Confirm consent and upload a transcript (`demo/*.json`, `.txt`,
-   `.vtt`, `.srt`) or a recording (needs `SARVAM_API_KEY`, or the optional local Whisper).
-   Or use the CLI:
+0. **Presenting?** Open http://127.0.0.1:8000/?present=1 for a short intro; Esc skips it.
+   It never appears otherwise.
+1. **Your workspace** lists what needs review, upcoming tasks and recent meetings.
+2. **New meeting.** Confirm consent and upload a transcript (`demo/*.json`, `.txt`,
+   `.vtt`, `.srt`) or a recording (needs `SARVAM_API_KEY`, or the optional local Whisper),
+   or choose *Use the synthetic demo transcript*. *Analyze meeting* uploads and starts
+   processing; the meeting page shows each real processing stage as it finishes. Or use the CLI:
    `backend/.venv/bin/python scripts/api.py ingest demo/synthetic_meeting_1_planning.json`
-2. **Approvals.** A table lists every proposed change with its current and proposed
-   values, computed by the same rules approval applies. Answer the questions (for
-   example, "Who is SPEAKER_03?" is answered by mapping the speaker, which re-checks
-   everything without a model call), open a row for its evidence and history, edit or
-   exclude items, then approve. After every action the page lists what changed.
-   Approval is pinned to exactly what you reviewed.
-3. **Tasks.** The approved tasks as a list (or a board), with dependencies, and
+3. **Results.** Summary, key discussions, decisions, action items and questions to
+   clarify, each linked to the transcript lines it came from.
+4. **Approvals.** Every proposed change reads as before → after, computed by the same
+   rules approval applies. Answer the questions (for example, "Who is SPEAKER_03?" is
+   answered by mapping the speaker, which re-checks everything without a model call),
+   open a row for its evidence and history, edit or exclude items, then approve. After
+   every action the page lists what changed. Approval is pinned to exactly what you reviewed.
+5. **Tasks.** The approved tasks as a list (or a board), with dependencies, and
    provenance and revision history in the task drawer.
-4. **Later meeting.** Ingest `demo/synthetic_meeting_2_followup.json`. The approval shows
+6. **Later meeting.** Ingest `demo/synthetic_meeting_2_followup.json`. The approval shows
    **before → after changes to the existing tasks**, and asks before cancelling anything
    ambiguous.
-5. **Follow-ups** (next-meeting agenda, calendar export, reminders, notifications),
-   **Ask AI** (grounded answers with citations), and **Diagnostics** in the More menu
-   (live services, evaluation runs).
+7. **Ask AI.** Owner, deadline, pending, blocked and "what is X working on" questions are
+   answered straight from the approved task records, without a model call. Other
+   questions get grounded answers with citations; matching passages show while the model
+   writes. Each answer shows its measured time.
+8. **Follow-ups** (next-meeting agenda, calendar export, reminders, notifications) and
+   **Diagnostics** in the More menu (live services, evaluation runs).
 
 The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 
@@ -85,7 +93,7 @@ The full talk track is in [`docs/demo-script.md`](docs/demo-script.md).
 ```bash
 cd backend && .venv/bin/pytest -q          # offline tests: fold, dates, identity, API flows, providers, metrics
 cd frontend && npx playwright test e2e/flows --grep-invert "upload → processing|ask with the model|model is down|diagnostics live test"
-                                           # 87 browser tests incl. accessibility, on disposable sandboxes (about 5 min)
+                                           # 99 browser tests incl. accessibility, on disposable sandboxes (about 5 min)
 cd frontend && npx playwright test e2e/flows/slow.spec.ts   # 4 live-model flows (Ollama; about 7 min)
 cd frontend && E2E_TOKEN=<token> npx playwright test e2e/smoke.spec.ts   # read-only checks of a running server
 cd frontend && SCREENS=1 VW=390 npx playwright test e2e/screens.spec.ts  # viewport screenshots + overflow/clipping checks

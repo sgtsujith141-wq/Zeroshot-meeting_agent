@@ -5,6 +5,36 @@ process the meetings before the session. Every claim below matches something tha
 Say "synthetic" whenever showing the demo transcripts. If real recordings have been
 processed by then, show them instead and say so.
 
+## Live walkthrough (the final UI)
+
+This is the route through the app, in order. The talk track below fills in what to say.
+
+1. **Intro.** Open `http://127.0.0.1:8000/?present=1`. Four lines, then *Meeting Actions:
+   From conversation to completed work*. Space or → moves on, Esc or *Skip intro* leaves
+   at once, and *Enter workspace* opens the app. It only appears at `?present=1`.
+2. **Your workspace.** *Needs your review*, *Upcoming tasks* (blocked work says what it
+   waits for) and *Recent meetings*. Every row opens its record. Demo meetings carry a
+   SYNTHETIC tag.
+3. **New meeting.** Choose *Use the synthetic demo transcript* (bundled, no real people),
+   tick consent, then *Analyze meeting*. Dragging a file in or choosing one works the same.
+4. **Processing.** Four stages follow the server's real status: Preparing meeting,
+   Processing transcript, Identifying decisions and tasks, Preparing results. Times are
+   measured from the server's log; there are no percentages. With a local model the third
+   stage takes a few minutes.
+   - If time is short, use *Open a sample processed earlier*. Say it out loud: it is a
+     separate synthetic meeting analysed before the talk, not the result of this upload.
+5. **Results.** Meeting summary, Key discussions, Decisions made, Action items (task,
+   owner, due, priority, dependency) and Questions to clarify. Each speaker-and-time
+   reference opens the transcript at that line. Then *Review and approve tasks*.
+6. **Approvals.** Each row reads as before → after ("Owner: Priya → Samiksha",
+   "Deadline: 26 October → 27 October"). Questions appear only when something is
+   unclear; approval stays blocked until they are answered.
+7. **Tasks.** The compact list; open a task for its evidence and history.
+8. **Ask AI.** Ask "Who owns the regression tests?": answered from the approved task
+   board without the model, with its measured time. Then ask a "why" question: the
+   matching passages appear while the model writes the answer.
+9. **Follow-ups.** Agenda, calendar export and reminders.
+
 **Setup before going on stage:**
 - Backend running and the UI open.
 - Meetings 1 and 2 processed and approved.

@@ -1,10 +1,12 @@
 # UX and functional audit
 
-This audit covers every screen and interactive control of the organiser web app. It has two
-parts:
+This audit covers every screen and interactive control of the organiser web app. It has
+three parts:
 
 - **Part A** audits the UI as it was at commit `10deb16`, before the UX rebuild.
 - **Part B** covers the rebuilt UI. It is filled in after the rebuild, with its own test run.
+- **Part C** covers the final visual and demo pass (Sapphire & Ivory, presentation intro,
+  processing view, results page, fast task answers in Ask AI), with its own test run.
 
 ## How the audit was run
 
@@ -610,3 +612,85 @@ are due on 2026-10-26", citing five valid passages.
 - **Screenshot locations** (local, not committed):
   - before (10deb16): the full-page captures from the previous sprint;
   - after: `final-ux/` in the session scratchpad.
+
+## Part C: final UI (Sapphire & Ivory)
+
+### What changed
+
+| Screen | Before (3f42272) | After |
+|---|---|---|
+| Theme | Dark by default; neutral accent | **Sapphire & Ivory**, light by default (`#F7F8FC` canvas, white surfaces, `#315BE8` accent); dark stays in More → theme. Text colours that fell below 4.5:1 on ivory use deeper shades of the same hue |
+| Shell | 216 px sidebar, counts on Approvals and Tasks | 200 px sidebar with icons; only Approvals shows a (waiting) count; More holds Diagnostics, theme and sign-out |
+| Intro | None | `/?present=1` only: four lines, then *Meeting Actions — From conversation to completed work*, *Enter workspace*. Space/→ advance, ← goes back, Esc or *Skip intro* leaves at once. Reduced motion shows static linework. It requests no data |
+| Overview | Five queues on bare hairlines | **Your workspace**: *Needs your review* (waiting approvals plus failed or empty meetings), *Upcoming tasks* (soonest first; blocked tasks say what they wait for) and *Recent meetings*, in white lists. Synthetic meetings carry a SYNTHETIC tag |
+| New meeting | Title, date, time zone, file, consent; *Upload and process* | Title, date, file, consent; time zone under *More options*; *Analyze meeting*. *Use the synthetic demo transcript* attaches the bundled synthetic file and its title and date |
+| Meeting page while processing | A notice above the tabs | A processing view of four stages tied to the backend status and log: Preparing meeting (`queued`), Processing transcript (`transcribing`, or "Transcript imported" for transcript files), Identifying decisions and tasks (`interpreting`), Preparing results (`writing_minutes` and the proposal). Elapsed and per-stage times come from the server's log timestamps; there are no percentages. A failed run says where it stopped and offers *Try again*. While a run is in progress, *Open a sample processed earlier* links a separate, earlier synthetic meeting and says it is not the result of this upload |
+| Meeting results | Transcript beside four tabs | One column: Meeting summary, Key discussions, Decisions made, Action items (Task, Owner, Due, Priority, Dependency; stacked on phones), Questions to clarify (open questions for approval and questions raised in the meeting). *Review and approve tasks* is the primary action. Every speaker-and-time reference opens the transcript drawer at that line. Speakers, Share summary and Technical details are secondary tabs at the end |
+| Approvals | Columns Change, Current, Proposed | One *What approval changes* column of before → after lines ("Owner: Priya → Samiksha", "Deadline: 26 October → 27 October"); version numbers removed from the page. All protections unchanged (stale-board check, pinned approval, orphaned answers, blocking questions) |
+| Tasks | Seven columns | Task, Assigned to, Deadline, Status, Dependency; priority and origin are in the drawer |
+| Ask AI | Every question went to grounded retrieval and the model | Task-state questions (owner, due date, pending, blocked, a person's work, due soon, a task's status) are answered from the approved task records without a model call; several matching tasks give "Which task do you mean?" with one button per task. Other questions use the grounded path; the matching passages are shown while the model writes. Every answer shows its measured time. Suggestions are built from the stored tasks |
+| Follow-ups, Diagnostics | — | Restyled only; behaviour unchanged |
+
+The backend change is one new module, `services/task_answers.py`, called first by
+`memory.answer`. No existing rule changed. One backend test was also fixed: it failed on
+any day after 23 Oct 2026 09:00 IST because it used the real clock.
+
+### Ask AI latency (measured)
+
+Measured over HTTP on a disposable copy of the demo data, with the local model
+(Ollama `qwen3:8b`) and nothing else running. Script: one request at a time, wall-clock
+from request to full response.
+
+| Question type | Path | Runs | Time |
+|---|---|---|---|
+| Owner, due date, pending, blocked, a person's tasks, a task's status (6 questions × 3) | Task records, no model | 18 | median **4.0 ms**, 3.3–35.8 ms (the 35.8 ms one was the first request) |
+| Passages for the same "why" questions (`GET /api/memory/search`) | Retrieval | 3 | 3.3–7.7 ms |
+| "Why" and "what did X say" questions | Grounded model answer | 3 | **17.9 s, 27.2 s, 40.0 s** (all three answered with citations) |
+
+The same three task-state questions on the previous code (`3f42272`), against the same data
+and model:
+
+| Question | Before | After |
+|---|---|---|
+| Who owns the regression tests? | 21.9 s via the model ("Samiksha") | about 4 ms from the records ("TASK-2 … is owned by Samiksha") |
+| When is the release notes task due? | 33.4 s via the model, and the answer said the task "was cancelled"; the approved board has TASK-3 open | about 4 ms: "TASK-3 is due Fri 23 Oct 2026" |
+| What is still pending? | 4 ms, "not found in stored meetings" | about 4 ms: the 3 open tasks |
+
+In the browser, the answer shows its own measured time (for example "Answered in 28 ms" for
+the first question). For model answers, the passages appear after the retrieval call
+(milliseconds) while the model is still writing; `slow.spec.ts` checks this with the live
+model.
+
+### Test runs (final UI)
+
+| Suite | Tests | Result |
+|---|---|---|
+| Backend `pytest` | 113 | 113 pass |
+| Fast browser suite `e2e/flows` (without the 4 live-model tests), one clean run | 99 | 99 pass, 0 fail (5.1 min) |
+| of which `flows/final-ui.spec.ts` (new) | 12 | 12 pass |
+| of which `flows/a11y.spec.ts` (axe-core, WCAG 2.1 A/AA: sign-in and 18 routes in both themes, drawers and dialogs, the intro on a line and on its closing screen) | 4 | 4 pass: 0 violations |
+| Live-model suite `flows/slow.spec.ts` (Ollama `qwen3:8b`: upload, processing, re-run, approve; grounded answer with passages shown while the model writes; model down; live test) | 4 | 4 pass (5.7 min) |
+| `screens.spec.ts` (every route; overflow and controls outside the viewport) at 1440, 1024 and 390 px light, 1440 and 390 px dark | 5 runs | 5 pass |
+| Production build (`npm run build`) | — | passes |
+
+Existing specs were updated only where labels, dates or layout changed (for example
+"Analyze meeting", "Your workspace", day-first dates, before → after lines, the transcript
+in a drawer). Their checks against the API are unchanged.
+
+### Visual QA (final UI)
+
+- Screenshots of every route at 1440, 1024 and 390 px in light, at 1440 px in dark, the
+  intro at 1440 and 390 px, the processing view and an answered Ask question. The 38 route
+  captures were checked for horizontal page overflow and console errors: none. (The
+  fast suite's own phone checks cover overflow on the meeting and approval pages.) Local
+  only (session scratchpad, `final-ui-shots/`), not committed.
+- Fixed during this pass: the action-items table scrolled sideways on phones (now stacked);
+  question text was squeezed into a narrow column on phones; the sidebar surface stopped
+  at the first screen on long pages; a double focus ring on the Ask box.
+- Not done: a screen-reader walkthrough.
+
+### Still open
+
+- The official evaluation on three real meetings is **NOT MEASURED** (no recordings).
+- Gemini, Sarvam and SMTP remain **unverified live** (no keys or server configured).
+- Model answers take 18–40 s with the local model; only task-state questions are fast.
