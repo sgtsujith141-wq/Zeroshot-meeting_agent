@@ -184,7 +184,7 @@ export default function AskPage() {
       </div>
       <form onSubmit={send} className="sticky bottom-3 mt-6 max-w-[760px] rounded-xl border border-rule-strong bg-panel p-2.5 shadow-pop focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20">
         <div className="flex items-end gap-2">
-          <textarea aria-label="Question" rows={2} className="min-h-[2.75rem] flex-1 resize-none bg-transparent px-2 py-1.5 text-[14.5px] text-ink placeholder:text-faint focus:outline-none"
+          <textarea aria-label="Question" rows={2} className="min-h-[2.75rem] flex-1 resize-none bg-transparent px-2 py-1.5 text-[14.5px] text-ink placeholder:text-faint focus:outline-none focus-visible:outline-none" /* the form shows the focus ring */
             placeholder="Who owns the regression tests, and when are they due?" value={q} onChange={e => setQ(e.target.value)} onKeyDown={key} />
           <Button kind="primary" type="submit" aria-label="Ask" className="h-9 w-9 rounded-lg px-0" disabled={q.trim().length < 2 || busy} loading={busy} icon={busy ? undefined : <ArrowUp size={16} />} />
         </div>

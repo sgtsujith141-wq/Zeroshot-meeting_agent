@@ -60,10 +60,15 @@ test('ask with the model: an answer only from cited passages, whose citations op
   const sb = await startSandbox('demo', 'slow-ask')
   try {
     await signIn(page, sb, '/ask')
-    await main(page).getByLabel('Question').fill('Who owns the regression tests and when are they due?')
+    // A question about the discussion: owner and due-date questions are answered from the task records.
+    await main(page).getByLabel('Question').fill('Why did Samiksha take over the regression tests?')
     await main(page).getByRole('button', { name: 'Ask' }).click()
+    // Retrieved passages appear while the model is still writing.
+    await expect(main(page).getByRole('heading', { name: /^Passages found in \d+ ms, while the answer is written/ })).toBeVisible({ timeout: 10_000 })
+    await expect(main(page).getByRole('status').filter({ hasText: 'writing an answer' })).toBeVisible()
     const outcome = main(page).getByText(/^(Answer from the meeting records|Not supported by the meeting records)$/)
     await expect(outcome).toBeVisible({ timeout: 7 * 60_000 })
+    await expect(main(page).getByText(/^Answered in \d+(\.\d)? s$/)).toBeVisible()
     if ((await outcome.innerText()) === 'Answer from the meeting records') {
       await expect(main(page).getByText(/using only the cited passages/)).toBeVisible()
       await main(page).getByRole('link', { name: /segment s\d+/ }).first().click()
@@ -77,7 +82,7 @@ test('ask when the model is down: says so and shows passages, never "nothing fou
   const sb = await startSandbox('demo', 'slow-nollm', { OLLAMA_BASE_URL: 'http://127.0.0.1:9', LLM_PROVIDER: 'ollama' })
   try {
     await signIn(page, sb, '/ask')
-    await main(page).getByLabel('Question').fill('Who owns the regression tests?')
+    await main(page).getByLabel('Question').fill('Why do we keep Stripe as the payment provider?')
     await main(page).getByRole('button', { name: 'Ask' }).click()
     await expect(main(page).getByText('Model unavailable', { exact: true })).toBeVisible({ timeout: 2 * 60_000 })
     await expect(main(page).getByText(/closest stored passages, not an answer/)).toBeVisible()
